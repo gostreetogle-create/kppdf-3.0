@@ -154,19 +154,16 @@
   }
 
   &__logout {
-    background: none;
-    border: none;
-    color: var(--color-sidebar-text);
-    cursor: pointer;
-    padding: 6px;
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    transition: all 0.15s;
+    // Override PrimeNG button for dark sidebar
+    :host ::ng-deep &.p-button.p-button-sm.p-button-danger {
+      background: transparent;
+      border: none;
+      color: var(--color-sidebar-text);
 
-    &:hover {
-      color: #ef4444;
-      background: rgba(239, 68, 68, 0.1);
+      &:hover {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+      }
     }
   }
 

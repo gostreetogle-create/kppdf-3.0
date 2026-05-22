@@ -44,9 +44,14 @@ interface MenuItem {
               <span class="layout__user-name">{{ user()?.username }}</span>
               <span class="layout__user-role">{{ user()?.role }}</span>
             </div>
-            <button class="layout__logout" (click)="logout()" pTooltip="Выйти">
-              <i class="pi pi-sign-out"></i>
-            </button>
+            <p-button
+              icon="pi pi-sign-out"
+              severity="danger"
+              size="small"
+              (click)="logout()"
+              pTooltip="Выйти"
+              styleClass="layout__logout"
+            />
           </div>
         </div>
       </aside>

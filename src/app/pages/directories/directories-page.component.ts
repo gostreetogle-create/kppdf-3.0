@@ -59,17 +59,18 @@ interface DirectoryConfig {
 
       <!-- Навигация по справочникам -->
       <div class="dir-tabs">
-        <button
+        <p-button
           *ngFor="let dir of directories"
-          class="dir-tabs__btn"
-          [class.dir-tabs__btn--active]="activeKey() === dir.key"
+          [label]="dir.label"
+          [icon]="dir.icon"
+          [severity]="activeKey() === dir.key ? 'primary' : 'secondary'"
+          [outlined]="activeKey() !== dir.key"
           (click)="selectDir(dir.key)"
           [pTooltip]="dir.label"
           tooltipPosition="bottom"
-        >
-          <i [class]="dir.icon"></i>
-          <span class="dir-tabs__label">{{ dir.label }}</span>
-        </button>
+          size="small"
+          styleClass="dir-tabs__btn"
+        />
       </div>
 
       <!-- Панель инструментов -->
