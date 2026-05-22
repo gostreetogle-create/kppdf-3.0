@@ -1,0 +1,124 @@
+/* ===== Dashboard — Сетка карточек статистики ===== */
+
+:host {
+  display: block;
+}
+
+.page__subtitle {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--space-md);
+
+  &__card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+    }
+
+    :host ::ng-deep .p-card {
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+      &:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        border-color: var(--color-primary);
+      }
+
+      .p-card-body { padding: 0; }
+      .p-card-content { padding: 20px; }
+    }
+  }
+
+  &__card-body {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  &__card-icon {
+    font-size: 1.75rem;
+    color: var(--color-primary);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+  }
+
+  &__card-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__card-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--color-text);
+  }
+
+  &__card-label {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Skeleton loading */
+  &--loading {
+    pointer-events: none;
+  }
+
+  &__skeleton {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    animation: pulse 1.5s infinite;
+  }
+
+  &__skeleton-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(90deg, var(--color-border) 25%, #e8e8e8 50%, var(--color-border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  &__skeleton-text {
+    width: 100px;
+    height: 32px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--color-border) 25%, #e8e8e8 50%, var(--color-border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

@@ -18,39 +18,6 @@ import { ButtonModule } from 'primeng/button';
       </div>
     </div>
   `,
-  styles: [`
-    .not-found {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background: var(--color-bg);
-
-      &__content {
-        text-align: center;
-      }
-
-      &__code {
-        font-size: 6rem;
-        font-weight: 800;
-        color: var(--color-primary);
-        line-height: 1;
-        margin-bottom: var(--space-md);
-      }
-
-      &__title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: var(--space-sm);
-        color: var(--color-text);
-      }
-
-      &__desc {
-        color: var(--color-text-secondary);
-        margin-bottom: var(--space-lg);
-        font-size: 1rem;
-      }
-    }
-  `]
+  styleUrl: './not-found-page.component.scss',
 })
 export class NotFoundPageComponent {}

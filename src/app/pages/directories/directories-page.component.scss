@@ -1,0 +1,153 @@
+/* ===== Directories — Универсальная таблица ===== */
+
+:host {
+  display: block;
+}
+
+/* Вкладки справочников */
+.dir-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
+
+  &__btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 450;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    box-shadow: var(--shadow-sm);
+
+    i { font-size: 14px; }
+
+    &:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+      background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
+    }
+
+    &--active {
+      background: var(--color-primary) !important;
+      color: #fff !important;
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+  }
+
+  &__label {
+    @media (max-width: 700px) { display: none; }
+  }
+}
+
+/* Панель инструментов */
+.dir-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  &__count {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    background: var(--color-bg);
+    padding: 2px 10px;
+    border-radius: 10px;
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+}
+
+/* Поиск */
+.dir-search {
+  &__input {
+    width: 220px;
+    font-size: 13px !important;
+    padding: 0.45rem 0.75rem 0.45rem 2.2rem !important;
+    border-radius: var(--radius-md) !important;
+    transition: all 0.15s;
+
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+    }
+  }
+}
+
+/* Загрузка */
+.dir-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  color: var(--color-text-secondary);
+  gap: var(--space-md);
+
+  &__spinner {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Кнопки действий */
+.dir-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Форма в диалоге */
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding-top: var(--space-xs);
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.01em;
+    }
+  }
+
+  &__required {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+}
+
+/* Empty state styling */
+:host ::ng-deep .p-datatable .p-datatable-emptymessage td {
+  padding: 3rem 1rem !important;
+}

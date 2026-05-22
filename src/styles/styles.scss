@@ -2,24 +2,24 @@
 
 /* Дизайн-токены: минималистичная светлая тема */
 :root {
-  --color-bg: #f8f9fa;
+  --color-bg: #f4f5f7;
   --color-surface: #ffffff;
-  --color-text: #1e1e2e;
-  --color-text-secondary: #6c757d;
-  --color-border: #e0e0e0;
+  --color-text: #1a1a2e;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
   --color-primary: #3b82f6;
   --color-primary-hover: #2563eb;
-  --color-sidebar: #1e1e2e;
-  --color-sidebar-text: #cdd6f4;
-  --color-sidebar-hover: #313244;
+  --color-sidebar: #1a1a2e;
+  --color-sidebar-text: #a5b4fc;
+  --color-sidebar-hover: #2a2a4a;
   --color-sidebar-active: #3b82f6;
 
   --radius-sm: 4px;
   --radius-md: 6px;
-  --radius-lg: 8px;
+  --radius-lg: 10px;
 
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
 
   --space-xs: 4px;
   --space-sm: 8px;
@@ -33,76 +33,95 @@
 }
 
 /* Базовый сброс */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body {
+html,
+body {
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
   font-size: var(--font-md);
   color: var(--color-text);
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* PrimeNG компактные переопределения */
-.p-datatable.p-datatable-sm .p-datatable-tbody > tr > td {
-  padding: 0.5rem 0.75rem;
-  font-size: var(--font-sm);
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.p-datatable .p-datatable-thead > tr > th {
-  padding: 0.6rem 0.75rem;
-  font-size: var(--font-sm);
-  font-weight: 600;
-  background: var(--color-bg);
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.p-button.p-button-sm {
-  font-size: var(--font-sm);
-  padding: 0.4rem 0.75rem;
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+
+  &:hover {
+    background: #c0c4cc;
+  }
 }
 
-.p-card {
-  box-shadow: var(--shadow-sm);
-  border-radius: var(--radius-md);
-}
-
-.p-inputtext, .p-password input {
-  font-size: var(--font-md);
-  padding: 0.5rem 0.75rem;
-}
-
-/* Layout обёртки */
+/* Layout обёртки страниц */
 .page {
   padding: var(--space-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: calc(100vh - 48px);
+}
 
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--space-lg);
+.page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
 
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--color-text);
-    }
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.02em;
   }
+}
 
-  &__toolbar {
-    display: flex;
-    gap: var(--space-sm);
-    align-items: center;
-  }
+.page__toolbar {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
 
-  &__content {
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    padding: var(--space-lg);
-    box-shadow: var(--shadow-sm);
-  }
+.page__content {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* PrimeNG: скругление таблиц */
+.p-datatable {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* PrimeNG: анимация загрузки */
+@keyframes kp-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page__content,
+.dashboard {
+  animation: kp-fade-in 0.2s ease-out;
 }

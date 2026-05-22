@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
@@ -12,7 +12,7 @@ import { AuthService } from '../../core/auth.service';
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [RouterLink, InputTextModule, PasswordModule, ButtonModule, CardModule, FormsModule, ToastModule],
+  imports: [InputTextModule, PasswordModule, ButtonModule, CardModule, FormsModule, ToastModule],
   template: `
     <div class="login">
       <p-card header="KPPDF 3.0" subheader="Платформа управления производством">
@@ -53,36 +53,7 @@ import { AuthService } from '../../core/auth.service';
     </div>
     <p-toast position="top-center" />
   `,
-  styles: [`
-    .login {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background: var(--color-bg);
-
-      &__form {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-md);
-      }
-
-      &__field {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-xs);
-        label { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); }
-      }
-
-      &__hint {
-        margin-top: var(--space-md);
-        text-align: center;
-        font-size: 12px;
-        color: var(--color-text-secondary);
-        p { margin: 0; }
-      }
-    }
-  `]
+  styleUrl: './login-page.component.scss',
 })
 export class LoginPageComponent {
   private readonly auth = inject(AuthService);
