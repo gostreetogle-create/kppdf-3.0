@@ -51,11 +51,11 @@ const KppdfPreset = definePreset(Aura, {
   components: {
     datatable: {
       headerCell: {
-        padding: '0.75rem 1rem',
+        padding: '0.85rem 1.25rem',
         background: '{surface.50}',
       },
       bodyCell: {
-        padding: '0.65rem 1rem',
+        padding: '0.75rem 1.25rem',
       },
       row: {
         background: '{surface.0}',
@@ -69,7 +69,7 @@ const KppdfPreset = definePreset(Aura, {
         shadow: '0 1px 3px rgba(0,0,0,0.04)',
       },
       body: {
-        padding: '1.5rem',
+        padding: '1.75rem',
       },
     },
     button: {
@@ -94,10 +94,10 @@ const KppdfPreset = definePreset(Aura, {
         fontWeight: '600',
       },
       header: {
-        padding: '1.25rem 1.5rem',
+        padding: '1.25rem 1.75rem',
       },
       content: {
-        padding: '0.75rem 1.5rem 1.25rem',
+        padding: '0.75rem 1.75rem 1.5rem',
       },
     },
     tag: {

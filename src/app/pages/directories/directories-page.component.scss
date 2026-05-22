@@ -89,8 +89,8 @@
 .dialog-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
-  padding-top: var(--space-xs);
+  gap: var(--space-lg);
+  padding-top: var(--space-sm);
 
   &__field {
     display: flex;
