@@ -23,13 +23,14 @@
 
   --space-xs: 4px;
   --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
+  --space-md: 20px;
+  --space-lg: 28px;
+  --space-xl: 40px;
 
   --font-sm: 13px;
   --font-md: 14px;
   --font-lg: 16px;
+  --font-xl: 20px;
 }
 
 /* Базовый сброс */
@@ -86,9 +87,11 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
 
   h1 {
-    font-size: 1.5rem;
+    font-size: 1.625rem;
     font-weight: 700;
     color: var(--color-text);
     letter-spacing: -0.02em;
@@ -107,6 +110,7 @@ body {
   padding: var(--space-lg);
   box-shadow: var(--shadow-sm);
   border: 1px solid rgba(255, 255, 255, 0.8);
+  margin-bottom: var(--space-lg);
 }
 
 /* PrimeNG: скругление таблиц */
