@@ -113,5 +113,21 @@
 
 /* Empty state styling */
 :host ::ng-deep .p-datatable .p-datatable-emptymessage td {
-  padding: 3rem 1rem !important;
+  padding: 4rem 1rem !important;
+}
+
+.dir-empty {
+  text-align: center;
+
+  &__icon {
+    font-size: 2rem !important;
+    display: block !important;
+    margin-bottom: 12px !important;
+    color: var(--color-border) !important;
+  }
+
+  &__text {
+    color: var(--color-text-secondary);
+    font-size: 14px;
+  }
 }

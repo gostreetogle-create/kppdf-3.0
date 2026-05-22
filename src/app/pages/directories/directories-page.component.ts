@@ -176,10 +176,10 @@ interface DirectoryConfig {
             <tr>
               <td
                 [attr.colspan]="(currentDir()?.columns?.length || 0) + 1"
-                style="text-align:center;padding:2rem;"
+                class="dir-empty"
               >
-                <i class="pi pi-inbox" style="font-size:1.5rem;display:block;margin-bottom:8px;color:#ccc;"></i>
-                Нет данных. Нажмите «Добавить» чтобы создать запись.
+                <i class="pi pi-inbox dir-empty__icon"></i>
+                <div class="dir-empty__text">Нет данных. Нажмите «Добавить» чтобы создать запись.</div>
               </td>
             </tr>
           </ng-template>
