@@ -1,0 +1,42 @@
+#!/bin/sh
+# Pre-commit hook: запускает ESLint на изменённых файлах
+# Установка: .githooks/pre-commit
+
+echo "🔍 Running pre-commit checks..."
+
+# Получаем список изменённых .ts и .html файлов
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|html)$')
+
+if [ -z "$STAGED_FILES" ]; then
+  echo "✅ No staged .ts/.html files to check"
+  exit 0
+fi
+
+# Проверяем ESLint для Angular (корневой проект)
+if command -v npx &> /dev/null; then
+  echo "📝 Checking staged files..."
+
+  # Проверка только файлов из src/ (Angular)
+  ANGULAR_FILES=$(echo "$STAGED_FILES" | grep '^src/' || true)
+  if [ -n "$ANGULAR_FILES" ]; then
+    echo "$ANGULAR_FILES" | xargs npx eslint --fix 2>/dev/null || {
+      echo "❌ ESLint errors found. Please fix them before committing."
+      echo "   Run: npx eslint --fix <file>"
+      exit 1
+    }
+  fi
+
+  # Проверка файлов из backend/
+  BACKEND_FILES=$(echo "$STAGED_FILES" | grep '^backend/' || true)
+  if [ -n "$BACKEND_FILES" ]; then
+    cd backend
+    echo "$BACKEND_FILES" | sed 's|^backend/||' | xargs npx eslint --fix 2>/dev/null || {
+      echo "❌ ESLint errors found in backend. Please fix them before committing."
+      cd ..
+      exit 1
+    }
+    cd ..
+  fi
+fi
+
+echo "✅ Pre-commit checks passed"

@@ -1,0 +1,108 @@
+/* ===== KPPDF 3.0 — Глобальные стили ===== */
+
+/* Дизайн-токены: минималистичная светлая тема */
+:root {
+  --color-bg: #f8f9fa;
+  --color-surface: #ffffff;
+  --color-text: #1e1e2e;
+  --color-text-secondary: #6c757d;
+  --color-border: #e0e0e0;
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-sidebar: #1e1e2e;
+  --color-sidebar-text: #cdd6f4;
+  --color-sidebar-hover: #313244;
+  --color-sidebar-active: #3b82f6;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  --font-sm: 13px;
+  --font-md: 14px;
+  --font-lg: 16px;
+}
+
+/* Базовый сброс */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: var(--font-md);
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* PrimeNG компактные переопределения */
+.p-datatable.p-datatable-sm .p-datatable-tbody > tr > td {
+  padding: 0.5rem 0.75rem;
+  font-size: var(--font-sm);
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  padding: 0.6rem 0.75rem;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  background: var(--color-bg);
+}
+
+.p-button.p-button-sm {
+  font-size: var(--font-sm);
+  padding: 0.4rem 0.75rem;
+}
+
+.p-card {
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+}
+
+.p-inputtext, .p-password input {
+  font-size: var(--font-md);
+  padding: 0.5rem 0.75rem;
+}
+
+/* Layout обёртки */
+.page {
+  padding: var(--space-lg);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-lg);
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+  }
+
+  &__toolbar {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+  }
+
+  &__content {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+  }
+}

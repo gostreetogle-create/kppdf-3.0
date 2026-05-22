@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "orchestrator",
+  "instructions": [
+    ".opencode/rules/rules.md",
+    ".opencode/rules/project-context.md",
+    ".opencode/rules/architecture-layers.md",
+    ".opencode/rules/angular-signals.md",
+    ".opencode/rules/ui-standards.md",
+    ".opencode/rules/ui-library.md",
+    ".opencode/agents/orchestrator.md",
+    ".opencode/plans/00-plan-index.md",
+    "AGENTS.md"
+  ]
+}

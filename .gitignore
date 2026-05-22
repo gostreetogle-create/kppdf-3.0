@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+Thumbs.db
+backend/uploads/
+backend/*.log
+backend/*.err
+backend/dev-*.log
+backend/run-*.log
+backend/out.*
+backend/dev-*
+coverage/
+.angular/
+*.tgz
