@@ -14,7 +14,7 @@ import { TagModule } from 'primeng/tag';
 import { CardModule } from 'primeng/card';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
@@ -51,7 +51,6 @@ interface DirectoryConfig {
     TagModule, CardModule, ToastModule, ConfirmDialogModule,
     TooltipModule, ProgressSpinnerModule,
   ],
-  providers: [ConfirmationService, MessageService],
   template: `
     <div class="page">
       <div class="page__header">

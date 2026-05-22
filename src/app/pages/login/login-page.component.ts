@@ -13,7 +13,6 @@ import { AuthService } from '../../core/auth.service';
   selector: 'app-login-page',
   standalone: true,
   imports: [RouterLink, InputTextModule, PasswordModule, ButtonModule, CardModule, FormsModule, ToastModule],
-  providers: [MessageService],
   template: `
     <div class="login">
       <p-card header="KPPDF 3.0" subheader="Платформа управления производством">

@@ -6,6 +6,7 @@ import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
 import { definePreset } from '@primeuix/themes';
 import { routes } from './app.routes';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { AuthInterceptor } from './core/auth.interceptor';
 
 const KppdfPreset = definePreset(Aura, {
@@ -40,6 +41,8 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptorsFromDi()),
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     provideAnimationsAsync(),
+    MessageService,
+    ConfirmationService,
     providePrimeNG({
       theme: {
         preset: KppdfPreset,
