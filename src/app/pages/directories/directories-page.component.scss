@@ -1,133 +1,381 @@
-/* ===== Directories — Универсальная таблица ===== */
+/* ============================================================
+   KPPDF 3.0 — Directories Table (PrimeNG)
+   Style: clean, airy, Linear × Vercel inspired
+   ============================================================ */
 
 :host {
   display: block;
+  animation: kp-fade-in 0.25s ease-out;
 }
 
-/* Вкладки справочников */
+/* ── Directory Tabs ── */
 .dir-tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: var(--space-lg);
+  gap: 5px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
-/* Панель инструментов */
+:host ::ng-deep .dir-tabs__btn {
+  padding: 0.4rem 0.85rem !important;
+  font-size: 13px !important;
+  border-radius: 8px !important;
+}
+
+/* ── Toolbar ── */
 .dir-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-lg);
+  margin-bottom: 16px;
   flex-wrap: wrap;
-  gap: var(--space-sm);
+  gap: 12px;
 
   &__left {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 12px;
   }
 
   &__title {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
-    color: var(--color-text);
+    color: #1F2937;
+    letter-spacing: -0.01em;
   }
 
   &__count {
-    font-size: 13px;
-    color: var(--color-text-secondary);
-    background: var(--color-bg);
-    padding: 2px 10px;
-    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #9CA3AF;
+    background: #F3F4F6;
+    padding: 3px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.01em;
   }
 
   &__right {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 8px;
   }
 }
 
-/* Поиск */
+/* ── Search ── */
 .dir-search {
-  &__input {
-    width: 220px;
+  position: relative;
+
+  i {
+    left: 11px !important;
+    color: #9CA3AF !important;
     font-size: 13px !important;
-    padding: 0.45rem 0.75rem 0.45rem 2.2rem !important;
-    border-radius: var(--radius-md) !important;
-    transition: all 0.15s;
+  }
+
+  &__input {
+    width: 220px !important;
+    font-size: 13px !important;
+    font-family: inherit !important;
+    padding: 0.5rem 0.75rem 0.5rem 2.2rem !important;
+    border-radius: 8px !important;
+    border: 1.5px solid #E5E7EB !important;
+    background: #FFFFFF !important;
+    transition: all 0.2s ease !important;
+
+    &::placeholder {
+      color: #9CA3AF;
+    }
 
     &:focus {
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+      border-color: #4F46E5 !important;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
+      outline: none;
     }
   }
 }
 
-/* Загрузка */
+/* ── Loading ── */
 .dir-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem;
-  color: var(--color-text-secondary);
-  gap: var(--space-md);
+  padding: 64px 0;
+  gap: 16px;
+  color: #6B7280;
+  font-size: 14px;
 
   &__spinner {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
   }
 }
 
-/* Кнопки действий */
-.dir-actions {
-  display: flex;
-  gap: 6px;
-}
+/* ── PrimeNG Table Overrides ── */
+:host ::ng-deep {
+  .p-datatable-wrapper {
+    border-radius: 10px;
+    overflow: hidden;
+  }
 
-/* Форма в диалоге */
-.dialog-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-  padding-top: var(--space-sm);
+  .p-datatable {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13.5px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
 
-  &__field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    /* ── Header ── */
+    .p-datatable-thead > tr > th {
+      background: #F9FAFB;
+      color: #4B5563;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1.5px solid #E5E7EB;
 
-    label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--color-text-secondary);
-      letter-spacing: 0.01em;
+      &:first-child { padding-left: 1.5rem; }
+    }
+
+    /* ── Body rows ── */
+    .p-datatable-tbody > tr {
+      transition: background 0.15s ease;
+
+      > td {
+        padding: 0.65rem 1.25rem;
+        color: #374151;
+        border-bottom: 1px solid #F3F4F6;
+        vertical-align: middle;
+
+        &:first-child { padding-left: 1.5rem; }
+      }
+
+      &:hover {
+        background: #F9FAFB;
+
+        > td {
+          border-bottom-color: #E5E7EB;
+        }
+      }
+    }
+
+    /* ── Striped rows ── */
+    &.p-datatable-striped .p-datatable-tbody > tr:nth-child(even) {
+      background: #FAFBFC;
+
+      &:hover {
+        background: #F3F4F6;
+      }
+    }
+
+    /* ── Empty message ── */
+    .p-datatable-emptymessage td {
+      padding: 3rem 1rem !important;
+      text-align: center;
+      color: #9CA3AF;
     }
   }
 
-  &__required {
-    color: var(--color-primary);
-    font-weight: 600;
+  /* ── Tag (status) styling ── */
+  .p-tag {
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Action buttons ── */
+  .p-button.p-button-sm.p-button-icon-only {
+    padding: 0.35rem !important;
+    width: 30px;
+    height: 30px;
+
+    &.p-button-secondary {
+      background: transparent !important;
+      border: 1px solid transparent !important;
+      color: #6B7280 !important;
+
+      &:hover {
+        background: #F3F4F6 !important;
+        border-color: #E5E7EB !important;
+        color: #374151 !important;
+      }
+    }
+
+    &.p-button-danger {
+      background: transparent !important;
+      border: 1px solid transparent !important;
+      color: #9CA3AF !important;
+
+      &:hover {
+        background: #FEF2F2 !important;
+        border-color: #FECACA !important;
+        color: #DC2626 !important;
+      }
+    }
+  }
+
+  /* ── Action buttons container ── */
+  .dir-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-start;
+  }
+
+  /* ── Paginator ── */
+  .p-paginator {
+    padding: 0.75rem 0;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+
+    .p-paginator-pages .p-paginator-page {
+      min-width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      font-weight: 500;
+      color: #6B7280;
+      transition: all 0.15s ease;
+      margin: 0 1px;
+
+      &:hover {
+        background: rgba(79, 70, 229, 0.06);
+        color: #4F46E5;
+      }
+
+      &.p-highlight {
+        background: #4F46E5;
+        color: #fff;
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+      }
+    }
+
+    .p-paginator-first,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-last {
+      min-width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      color: #9CA3AF;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: rgba(79, 70, 229, 0.06);
+        color: #4F46E5;
+      }
+
+      &.p-disabled {
+        opacity: 0.35;
+      }
+    }
+
+    .p-paginator-current {
+      font-size: 12.5px;
+      color: #9CA3AF;
+    }
+
+    .p-paginator-rpp-options {
+      .p-select-label {
+        font-size: 12.5px !important;
+      }
+    }
+  }
+
+  /* ── Dialog form ── */
+  .dialog-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 4px 0;
+
+    &__field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      label {
+        font-size: 13px;
+        font-weight: 500;
+        color: #6B7280;
+      }
+
+      /* All controls full width */
+      .p-inputtext,
+      .p-inputnumber,
+      .p-select {
+        width: 100%;
+      }
+
+      .p-inputtext {
+        padding: 0.45rem 0.75rem;
+        font-size: 13.5px;
+        border-radius: 8px;
+      }
+
+      .p-inputnumber {
+        .p-inputnumber-input {
+          padding: 0.45rem 0.75rem;
+          font-size: 13.5px;
+          border-radius: 8px;
+          width: 100%;
+        }
+      }
+
+      .p-select {
+        border-radius: 8px;
+        font-size: 13.5px;
+        min-height: 38px;
+
+        .p-select-label {
+          padding: 0.4rem 0.75rem;
+          font-size: 13.5px;
+        }
+      }
+    }
+
+    &__required {
+      color: #4F46E5;
+      font-weight: 600;
+    }
+  }
+
+  /* ── Dialog footer buttons ── */
+  .p-dialog-footer {
+    padding: 0.75rem 1.5rem 1.25rem !important;
+    gap: 8px;
+
+    .p-button {
+      padding: 0.45rem 1rem !important;
+      font-size: 13px !important;
+      border-radius: 8px !important;
+    }
+  }
+
+  /* ── Search input ── */
+  .p-inputtext {
+    padding: 0.45rem 0.75rem !important;
+    font-size: 13.5px !important;
   }
 }
 
-/* Empty state styling */
-:host ::ng-deep .p-datatable .p-datatable-emptymessage td {
-  padding: 4rem 1rem !important;
-}
-
+/* ── Empty state inside table ── */
 .dir-empty {
   text-align: center;
+  padding: 2rem;
 
   &__icon {
-    font-size: 2rem !important;
+    font-size: 1.75rem !important;
     display: block !important;
-    margin-bottom: 12px !important;
-    color: var(--color-border) !important;
+    margin-bottom: 10px !important;
+    color: #D1D5DB !important;
   }
 
   &__text {
-    color: var(--color-text-secondary);
-    font-size: 14px;
+    color: #9CA3AF;
+    font-size: 13.5px;
   }
 }

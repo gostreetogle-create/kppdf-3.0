@@ -12,6 +12,7 @@
 | [angular-signals.md](angular-signals.md) | Signals, inject(), строгая типизация |
 | [ui-standards.md](ui-standards.md) | Standalone, OnPush, SCSS + BEM, Dumb/Smart |
 | [ui-library.md](ui-library.md) | PrimeNG + Aura + PrimeIcons |
+| [ui-audit-checklist.md](ui-audit-checklist.md) | UI-аудит — чеклист проверки перед сдачей |
 
 ## Основные принципы
 

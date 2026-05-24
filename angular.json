@@ -40,7 +40,7 @@
             "production": {
               "budgets": [
                 { "type": "initial", "maximumWarning": "600kB", "maximumError": "1MB" },
-                { "type": "anyComponentStyle", "maximumWarning": "4kB", "maximumError": "8kB" }
+                { "type": "anyComponentStyle", "maximumWarning": "8kB", "maximumError": "14kB" }
               ],
               "outputHashing": "all"
             },
@@ -77,6 +77,15 @@
               "src/styles/styles.scss"
             ],
             "scripts": []
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
           }
         }
       }

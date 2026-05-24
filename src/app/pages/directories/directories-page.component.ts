@@ -207,10 +207,12 @@ interface DirectoryConfig {
             pInputText
             [(ngModel)]="editRow[col.field]"
             [attr.required]="col.required ? '' : null"
+            style="width:100%"
           />
           <p-inputNumber
             *ngIf="col.type === 'number'"
             [(ngModel)]="editRow[col.field]"
+            style="width:100%"
           />
           <p-select
             *ngIf="col.type === 'select'"
@@ -220,6 +222,7 @@ interface DirectoryConfig {
             optionValue="value"
             placeholder="Выберите..."
             [showClear]="!col.required"
+            style="width:100%"
           />
         </div>
       </div>
@@ -227,11 +230,13 @@ interface DirectoryConfig {
         <p-button
           label="Отмена"
           severity="secondary"
+          size="small"
           (click)="closeDialog()"
           [disabled]="saving()"
         />
         <p-button
           label="Сохранить"
+          size="small"
           (click)="save()"
           [loading]="saving()"
         />

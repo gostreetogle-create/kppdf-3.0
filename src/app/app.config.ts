@@ -50,13 +50,6 @@ const KppdfPreset = definePreset(Aura, {
   },
   components: {
     datatable: {
-      headerCell: {
-        padding: '0.85rem 1.25rem',
-        background: '{surface.50}',
-      },
-      bodyCell: {
-        padding: '0.75rem 1.25rem',
-      },
       row: {
         background: '{surface.0}',
         hoverBackground: '{surface.100}',
@@ -74,13 +67,13 @@ const KppdfPreset = definePreset(Aura, {
     },
     button: {
       root: {
-        borderRadius: '6px',
+        borderRadius: '8px',
         paddingX: '0.85rem',
-        paddingY: '0.5rem',
+        paddingY: '0.45rem',
         sm: {
           fontSize: '13px',
-          paddingX: '0.65rem',
-          paddingY: '0.4rem',
+          paddingX: '0.7rem',
+          paddingY: '0.35rem',
         },
       },
     },

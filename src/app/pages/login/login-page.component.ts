@@ -26,6 +26,7 @@ import { AuthService } from '../../core/auth.service';
               placeholder="admin"
               (keyup.enter)="doLogin()"
               [disabled]="loading"
+              style="width:100%"
             />
           </div>
           <div class="login__field">
@@ -36,12 +37,14 @@ import { AuthService } from '../../core/auth.service';
               [feedback]="false"
               [disabled]="loading"
               (keyup.enter)="doLogin()"
+              style="width:100%"
             />
           </div>
           <p-button
             label="Войти"
             icon="pi pi-sign-in"
             styleClass="w-full"
+            size="small"
             (click)="doLogin()"
             [loading]="loading"
           />

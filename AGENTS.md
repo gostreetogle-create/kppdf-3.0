@@ -26,6 +26,7 @@
 | `@meta-architect` | EAV-атрибуты, BOM-деревья |
 | `@production-planner` | Расчёт себестоимости и планирование |
 | `@compliance-validator` | Проверка соответствия |
+| `@ui-auditor` | UI-аудит — проверка всех страниц по чеклисту перед сдачей |
 
 ## Выбор режима
 
@@ -41,6 +42,7 @@
 - `angular-signals.md` — Signals, inject(), строгая типизация
 - `ui-standards.md` — Standalone, OnPush, SCSS + BEM, Dumb/Smart
 - `ui-library.md` — PrimeNG + Aura + PrimeIcons
+- `ui-audit-checklist.md` — UI-аудит и чеклист проверки
 
 ## Планы разработки
 

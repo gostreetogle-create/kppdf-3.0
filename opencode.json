@@ -8,6 +8,7 @@
     ".opencode/rules/angular-signals.md",
     ".opencode/rules/ui-standards.md",
     ".opencode/rules/ui-library.md",
+    ".opencode/rules/ui-audit-checklist.md",
     ".opencode/agents/orchestrator.md",
     ".opencode/plans/00-plan-index.md",
     "AGENTS.md"

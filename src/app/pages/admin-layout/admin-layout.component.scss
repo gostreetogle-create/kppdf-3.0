@@ -159,10 +159,16 @@
       background: transparent;
       border: none;
       color: var(--color-sidebar-text);
+      transform: none !important;
 
       &:hover {
         background: rgba(239, 68, 68, 0.12);
         color: #ef4444;
+        transform: none !important;
+      }
+
+      &:active {
+        transform: none !important;
       }
     }
   }

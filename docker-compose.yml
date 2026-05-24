@@ -1,0 +1,27 @@
+# KPPDF 3.0 — MongoDB
+# Используется для production-запуска или когда нужна постоянная БД.
+# В development-режиме проект использует MongoMemoryServer (in-memory).
+#
+# Запуск: docker compose up -d
+# URI:    mongodb://localhost:27017/kppdf-3.0
+
+services:
+  mongodb:
+    image: mongo:8
+    container_name: kppdf-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: kppdf-3.0
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb_data:
+    name: kppdf-mongodb-data
