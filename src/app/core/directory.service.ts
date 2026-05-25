@@ -8,6 +8,9 @@ export interface DirectoryQuery {
   page?: number;
   limit?: number;
   search?: string;
+  sort?: string;
+  order?: 'asc' | 'desc';
+  all?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,6 +26,10 @@ export class DirectoryService {
     if (query.page) params['page'] = query.page;
     if (query.limit) params['limit'] = query.limit;
     if (query.search) params['search'] = query.search;
+
+    if (query.sort) params['sort'] = query.sort;
+    if (query.order) params['order'] = query.order;
+    if (query.all) params['all'] = 'true';
 
     return this.http.get<PaginatedResponse<T>>(`${this.baseUrl}/${entity}`, { params });
   }

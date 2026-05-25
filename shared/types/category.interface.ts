@@ -8,3 +8,4 @@ export interface ICategory {
   createdAt?: string;
   updatedAt?: string;
 }
+

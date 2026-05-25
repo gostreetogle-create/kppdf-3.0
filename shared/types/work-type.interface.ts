@@ -7,3 +7,4 @@ export interface IWorkType {
   createdAt?: string;
   updatedAt?: string;
 }
+

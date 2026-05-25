@@ -16,7 +16,7 @@
 |---|---|
 | `@guardian` | Проверка архитектуры, импортов, слоёв |
 | `@reviewer` | Code Review |
-| `@ui-specialist` | UI-компоненты, стили |
+| `@ui-specialist` | UI-Coder: пишет/исправляет UI-компоненты по Golden Samples и UI Manifest |
 | `@tester` | Тестирование |
 | `@backend-specialist` | Express сервер, БД |
 | `@api-specialist` | API-контракты |
@@ -26,7 +26,8 @@
 | `@meta-architect` | EAV-атрибуты, BOM-деревья |
 | `@production-planner` | Расчёт себестоимости и планирование |
 | `@compliance-validator` | Проверка соответствия |
-| `@ui-auditor` | UI-аудит — проверка всех страниц по чеклисту перед сдачей |
+| `@ui-qa` | Red Team QA — гибридный аудит (JSON + [БАГ]), проверка кода против Manifest и Golden Samples |
+| `@ui-auditor` | Финальный UI-аудит по чеклисту перед сдачей |
 
 ## Выбор режима
 
@@ -43,6 +44,7 @@
 - `ui-standards.md` — Standalone, OnPush, SCSS + BEM, Dumb/Smart
 - `ui-library.md` — PrimeNG + Aura + PrimeIcons
 - `ui-audit-checklist.md` — UI-аудит и чеклист проверки
+- `ui-manifest.md` — UI-манифест, Конституция интерфейсов + YAML-проверки
 
 ## Планы разработки
 

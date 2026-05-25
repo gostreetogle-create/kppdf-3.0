@@ -1,0 +1,278 @@
+/* ============================================================
+   KPPDF 3.0 — Design Tokens (Linear-inspired)
+   Strict, minimal, data-dense. Single accent. Border hierarchy.
+   Base unit: 4px. Font: Inter → system-ui fallback.
+   ============================================================ */
+
+@mixin kp-light-tokens {
+  /* ── Brand Accent (Linear Lavender #5e6ad2) ── */
+  --kp-primary: #5e6ad2;
+  --kp-primary-hover: #4f5bc7;
+  --kp-primary-active: #434db8;
+  --kp-primary-soft: #eeeffc;
+  --kp-primary-muted: #f6f6fd;
+
+  --kp-danger: #e5484d;
+  --kp-danger-hover: #dc2626;
+  --kp-danger-soft: #fef2f2;
+
+  --kp-success: #30a46c;
+  --kp-success-soft: #ecfdf5;
+
+  --kp-warning: #f59e0b;
+  --kp-warning-soft: #fef3c7;
+
+  --kp-info: #5e6ad2;
+  --kp-info-soft: #eeeffc;
+
+  /* ── Surfaces (strict gray scale, no blue tint) ── */
+  --kp-bg: #f5f5f5;
+  --kp-bg-soft: #fafafa;
+  --kp-bg-muted: #f0f0f0;
+  --kp-surface: #ffffff;
+  --kp-surface-soft: #fafafa;
+  --kp-surface-hover: #f5f5f5;
+
+  /* ── Text (high contrast, no muddy grays) ── */
+  --kp-text: #1a1a1a;
+  --kp-text-secondary: #6b6b6b;
+  --kp-text-soft: #8f8f8f;
+  --kp-text-muted: #b0b0b0;
+  --kp-text-on-primary: #ffffff;
+
+  /* ── Borders (hairline hierarchy) ── */
+  --kp-border: #e5e5e5;
+  --kp-border-light: #f0f0f0;
+  --kp-border-strong: #d4d4d4;
+
+  /* ── Shadows (minimal — only for modals/dropdowns) ── */
+  --kp-shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --kp-shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --kp-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --kp-shadow-lg: 0 8px 24px rgba(0,0,0,0.10);
+  --kp-shadow-xl: 0 16px 48px rgba(0,0,0,0.12);
+
+  /* ── Border Radius (Linear scale: 4/6/8/12/16) ── */
+  --kp-radius-xs: 4px;
+  --kp-radius-sm: 6px;
+  --kp-radius-md: 8px;
+  --kp-radius-lg: 12px;
+  --kp-radius-xl: 16px;
+  --kp-radius-full: 9999px;
+
+  /* ── Spacing (4px grid) ── */
+  --kp-space-1: 4px;
+  --kp-space-2: 8px;
+  --kp-space-3: 12px;
+  --kp-space-4: 16px;
+  --kp-space-5: 24px;
+  --kp-space-6: 32px;
+  --kp-space-8: 48px;
+  --kp-space-10: 64px;
+  --kp-space-12: 80px;
+  --kp-space-16: 96px;
+
+  /* ── Typography (Inter → system-ui, Linear scale 12/13/14/16) ── */
+  --kp-font-family: 'Inter', -apple-system, BlinkMacSystemFont,
+    'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --kp-font-size-caption: 11.5px;
+  --kp-font-size-sm: 12px;
+  --kp-font-size-body: 13px;
+  --kp-font-size-body-lg: 14px;
+  --kp-font-size-h3: 16px;
+  --kp-font-size-h2: 20px;
+  --kp-font-size-h1: 24px;
+
+  --kp-line-height-tight: 1.2;
+  --kp-line-height-body: 1.45;
+  --kp-line-height-relaxed: 1.55;
+
+  --kp-font-weight-normal: 400;
+  --kp-font-weight-medium: 500;
+  --kp-font-weight-semibold: 600;
+  --kp-font-weight-bold: 700;
+
+  /* ── Control Heights (compact) ── */
+  --kp-control-height-sm: 28px;
+  --kp-control-height: 32px;
+  --kp-control-height-lg: 40px;
+
+  /* ── Touch target ── */
+  --kp-touch-target: 32px;
+
+  /* ── Transitions ── */
+  --kp-transition-fast: 100ms ease;
+  --kp-transition-base: 150ms ease;
+  --kp-transition-slow: 200ms ease;
+
+  /* ── Z-Index Scale ── */
+  --kp-z-base: 0;
+  --kp-z-dropdown: 100;
+  --kp-z-sticky: 200;
+  --kp-z-overlay: 300;
+  --kp-z-modal: 400;
+  --kp-z-dialog: 500;
+  --kp-z-tooltip: 600;
+
+  /* ── Layout ── */
+  --kp-layout-sidebar-width: 220px;
+  --kp-layout-page-max: 1400px;
+  --kp-layout-page-padding-x: 24px;
+  --kp-layout-page-padding-y: 24px;
+  --kp-layout-content-gap: 16px;
+
+  /* ── Sidebar (dark, Linear-inspired) ── */
+  --kp-sidebar-bg: #0f1117;
+  --kp-sidebar-text: #8a8f98;
+  --kp-sidebar-hover: #1a1d27;
+  --kp-sidebar-active: #5e6ad2;
+  --kp-sidebar-active-text: #ffffff;
+  --kp-sidebar-border: #1e2030;
+
+  /* ── Focus ring ── */
+  --kp-focus-ring: 0 0 0 2px rgba(94,106,210,0.4);
+
+  /* ════════════════════════════════════════════════════════════
+     PRIMENG COMPONENT TOKENS (compact Linear aesthetic)
+     ════════════════════════════════════════════════════════════ */
+
+  /* Dialog */
+  --p-dialog-border-radius: 12px;
+  --p-dialog-header-padding: 0.75rem 1rem 0.5rem;
+  --p-dialog-content-padding: 0 1rem 0.5rem;
+  --p-dialog-footer-padding: 0.5rem 1rem 0.75rem;
+  --p-dialog-header-font-size: 14px;
+  --p-dialog-header-font-weight: 600;
+
+  /* InputText */
+  --p-inputtext-padding-y: 0.35rem;
+  --p-inputtext-padding-x: 0.65rem;
+  --p-inputtext-font-size: 13px;
+  --p-inputtext-border-radius: 6px;
+  --p-inputtext-sm-font-size: 12px;
+  --p-inputtext-sm-padding-y: 0.25rem;
+  --p-inputtext-sm-padding-x: 0.55rem;
+
+  /* InputNumber */
+  --p-inputnumber-padding-y: 0.35rem;
+  --p-inputnumber-padding-x: 0.65rem;
+  --p-inputnumber-border-radius: 6px;
+
+  /* Select / Dropdown */
+  --p-select-padding-y: 0.3rem;
+  --p-select-padding-x: 0.65rem;
+  --p-select-border-radius: 6px;
+  --p-select-font-size: 13px;
+  --p-select-sm-font-size: 12px;
+  --p-select-sm-padding-y: 0.2rem;
+
+  /* Button */
+  --p-button-sm-padding-y: 0.3rem;
+  --p-button-sm-padding-x: 0.7rem;
+  --p-button-sm-font-size: 12.5px;
+  --p-button-border-radius: 6px;
+  --p-button-icon-only-width: 28px;
+  --p-button-icon-only-height: 28px;
+  --p-button-icon-only-sm-width: 26px;
+  --p-button-icon-only-sm-height: 26px;
+
+  /* DatePicker */
+  --p-datepicker-border-radius: 8px;
+
+  /* Table */
+  --p-datatable-header-cell-padding: 0.55rem 0.85rem;
+  --p-datatable-body-cell-padding: 0.45rem 0.85rem;
+  --p-datatable-header-cell-font-size: 11.5px;
+  --p-datatable-body-cell-font-size: 13px;
+}
+
+@mixin kp-dark-tokens {
+  --kp-primary: #828fff;
+  --kp-primary-hover: #5e6ad2;
+  --kp-primary-active: #4f5bc7;
+  --kp-primary-soft: #1c1f3a;
+  --kp-primary-muted: #15172a;
+
+  --kp-danger: #f87171;
+  --kp-danger-hover: #ef4444;
+  --kp-danger-soft: #2d1212;
+
+  --kp-success: #34d399;
+  --kp-success-soft: #0a3622;
+
+  --kp-warning: #fbbf24;
+  --kp-warning-soft: #3b2f0a;
+
+  --kp-bg: #0f1117;
+  --kp-bg-soft: #161821;
+  --kp-bg-muted: #1e2030;
+  --kp-surface: #1a1d27;
+  --kp-surface-soft: #1e2030;
+  --kp-surface-hover: #252838;
+
+  --kp-text: #e4e4e8;
+  --kp-text-secondary: #8a8f98;
+  --kp-text-soft: #62666d;
+  --kp-text-muted: #484b55;
+
+  --kp-border: #252838;
+  --kp-border-light: #1e2030;
+  --kp-border-strong: #34384a;
+
+  --kp-shadow-xs: 0 1px 2px rgba(0,0,0,0.25);
+  --kp-shadow-sm: 0 1px 3px rgba(0,0,0,0.30);
+  --kp-shadow-md: 0 4px 12px rgba(0,0,0,0.35);
+  --kp-shadow-lg: 0 8px 24px rgba(0,0,0,0.40);
+
+  --kp-sidebar-bg: #0b0d13;
+  --kp-sidebar-text: #62666d;
+  --kp-sidebar-hover: #161821;
+  --kp-sidebar-active: #5e6ad2;
+  --kp-sidebar-active-text: #ffffff;
+  --kp-sidebar-border: #1a1d27;
+}
+
+/* ── Sass aliases for component SCSS ── */
+$kp-primary: var(--kp-primary);
+$kp-primary-hover: var(--kp-primary-hover);
+$kp-danger: var(--kp-danger);
+$kp-success: var(--kp-success);
+$kp-warning: var(--kp-warning);
+$kp-text: var(--kp-text);
+$kp-text-secondary: var(--kp-text-secondary);
+$kp-text-soft: var(--kp-text-soft);
+$kp-bg: var(--kp-bg);
+$kp-surface: var(--kp-surface);
+$kp-border: var(--kp-border);
+$kp-border-light: var(--kp-border-light);
+
+$space-1: var(--kp-space-1);
+$space-2: var(--kp-space-2);
+$space-3: var(--kp-space-3);
+$space-4: var(--kp-space-4);
+$space-5: var(--kp-space-5);
+$space-6: var(--kp-space-6);
+$space-8: var(--kp-space-8);
+$space-10: var(--kp-space-10);
+$space-12: var(--kp-space-12);
+
+$font-caption: var(--kp-font-size-caption);
+$font-sm: var(--kp-font-size-sm);
+$font-body: var(--kp-font-size-body);
+$font-body-lg: var(--kp-font-size-body-lg);
+$font-h3: var(--kp-font-size-h3);
+$font-h2: var(--kp-font-size-h2);
+$font-h1: var(--kp-font-size-h1);
+
+$radius-sm: var(--kp-radius-sm);
+$radius-md: var(--kp-radius-md);
+$radius-lg: var(--kp-radius-lg);
+$radius-xl: var(--kp-radius-xl);
+
+$shadow-sm: var(--kp-shadow-sm);
+$shadow-md: var(--kp-shadow-md);
+
+$transition-fast: var(--kp-transition-fast);
+$transition-base: var(--kp-transition-base);
+$transition-slow: var(--kp-transition-slow);

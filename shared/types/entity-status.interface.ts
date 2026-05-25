@@ -11,3 +11,4 @@ export interface IEntityStatus {
   createdAt?: string;
   updatedAt?: string;
 }
+

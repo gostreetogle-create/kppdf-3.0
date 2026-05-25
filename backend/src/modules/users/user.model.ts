@@ -2,7 +2,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
 import type { IUser } from '../../../../shared/types/user.interface';
 
-export interface IUserDocument extends IUser, Document {
+// Note: Omit<IUser, '_id'> — иначе конфликт string vs ObjectId с Document._id
+export interface IUserDocument extends Omit<IUser, '_id'>, Document {
   passwordHash: string;
   comparePassword(candidate: string): Promise<boolean>;
 }
@@ -13,7 +14,7 @@ const userSchema = new Schema<IUserDocument>(
     email: { type: String, unique: true, sparse: true, lowercase: true },
     displayName: { type: String, required: true },
     passwordHash: { type: String, required: true },
-    role: { type: String, enum: ['admin', 'manager', 'viewer'], default: 'viewer' },
+    role: { type: String, enum: ['admin', 'manager', 'viewer', 'engineer', 'storekeeper'], default: 'viewer' },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: String },
   },

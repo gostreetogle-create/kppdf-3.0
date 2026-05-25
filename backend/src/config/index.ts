@@ -3,7 +3,7 @@ dotenv.config();
 
 export const config = {
   port: parseInt(process.env.PORT || '3000', 10),
-  mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/kppdf-3.0',
+  mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/kppdf30',
   jwtSecret: process.env.JWT_SECRET || 'dev-secret',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',

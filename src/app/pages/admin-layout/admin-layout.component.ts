@@ -66,6 +66,7 @@ export class AdminLayoutComponent {
 
   readonly menuItems: MenuItem[] = [
     { label: 'Дашборд', icon: 'pi pi-home', route: '/dashboard' },
+    { label: 'Бизнес-процессы', icon: 'pi pi-cubes', route: '/modules' },
     { label: 'Справочники', icon: 'pi pi-book', route: '/directories' },
   ];
 

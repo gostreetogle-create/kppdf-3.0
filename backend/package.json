@@ -2,7 +2,7 @@
   "name": "kppdf-3.0-backend",
   "version": "3.0.0",
   "description": "KPPDF 3.0 — Backend API",
-  "main": "dist/index.js",
+  "main": "dist/backend/src/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "dev:full": "node dev.js",

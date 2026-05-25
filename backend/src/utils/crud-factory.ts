@@ -2,7 +2,26 @@ import { Router, Request, Response } from 'express';
 import { Model } from 'mongoose';
 import { success, paginated, error } from '../utils/api-response';
 
-export function createCrudRouter<T>(model: Model<T>): Router {
+/**
+ * Creates a generic CRUD router for any Mongoose model.
+ *
+ * Query params (all optional):
+ *   ?page=1&limit=50        — pagination
+ *   ?search=text             — regex search across searchFields (case-insensitive)
+ *   ?sort=field&order=asc    — sort by field (default: createdAt desc)
+ *   ?all=true                — include inactive records (default: isActive:true only)
+ *
+ * @param model          Mongoose model
+ * @param searchFields   Field names to search with regex (default: ['name', 'number', 'label'])
+ * @param hooks          Lifecycle hooks (e.g. beforeCreate for auto-numbering)
+ */
+export function createCrudRouter<T>(
+  model: Model<T>,
+  searchFields: string[] = ['name', 'number', 'label'],
+  hooks?: {
+    beforeCreate?: (body: Record<string, unknown>) => Promise<void>;
+  },
+): Router {
   const router = Router();
 
   // LIST
@@ -13,12 +32,26 @@ export function createCrudRouter<T>(model: Model<T>): Router {
       const skip = (page - 1) * limit;
       const filter: Record<string, unknown> = {};
 
-      if (req.query.search) {
-        filter.$text = { $search: req.query.search };
+      // isActive filter — only active records by default
+      const showAll = req.query.all === 'true';
+      if (!showAll) {
+        filter.isActive = true;
       }
 
+      // Regex search on designated fields
+      const search = req.query.search as string | undefined;
+      if (search && searchFields.length > 0) {
+        const regex = { $regex: search, $options: 'i' };
+        filter.$or = searchFields.map((field) => ({ [field]: regex }));
+      }
+
+      // Sort
+      const sortField = (req.query.sort as string) || 'createdAt';
+      const sortOrder = (req.query.order as string) === 'asc' ? 1 : -1;
+      const sort: Record<string, 1 | -1> = { [sortField]: sortOrder };
+
       const [data, total] = await Promise.all([
-        model.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+        model.find(filter).sort(sort).skip(skip).limit(limit),
         model.countDocuments(filter),
       ]);
 
@@ -44,6 +77,9 @@ export function createCrudRouter<T>(model: Model<T>): Router {
   // CREATE
   router.post('/', async (req: Request, res: Response) => {
     try {
+      if (hooks?.beforeCreate) {
+        await hooks.beforeCreate(req.body);
+      }
       const doc = await model.create(req.body);
       res.status(201).json(success(doc, 'Created'));
     } catch (err: unknown) {

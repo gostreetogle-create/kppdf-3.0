@@ -1,0 +1,58 @@
+# KPPDF 3.0 — Production stack for Synology NAS
+# Запуск: docker compose -f docker-compose.prod.yml up -d
+# Остановка: docker compose -f docker-compose.prod.yml down
+# Логи:    docker compose -f docker-compose.prod.yml logs -f
+#
+# После запуска:
+#   API:       http://192.168.1.134:3000/api/v1/health
+#   Frontend:  http://192.168.1.134:3000 (Angular SPA через backend)
+#   MongoDB:   mongodb://kppdf-mongodb:27017/kppdf30
+
+services:
+  mongodb:
+    image: mongo:4.4
+    container_name: kppdf-mongodb
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:27017:27017"  # только локально, не наружу
+    volumes:
+      - kppdf_mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: kppdf30
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: kppdf-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app/frontend:ro  # Angular SPA (собранный)
+    environment:
+      NODE_ENV: production
+      MONGO_URI: mongodb://kppdf-mongodb:27017/kppdf30
+      JWT_SECRET: "${JWT_SECRET:?JWT_SECRET is required! Set it in .env or shell}"
+      JWT_REFRESH_SECRET: "${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required!}"
+      CORS_ORIGIN: "https://sport-set.ru"
+      PORT: "3000"
+      FRONTEND_PATH: /app/frontend/browser
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/v1/health', r => process.exit(r.statusCode===200?0:1)).on('error', () => process.exit(1))"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  kppdf_mongodb_data:
+    name: kppdf-mongodb-data

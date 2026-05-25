@@ -9,8 +9,11 @@
     ".opencode/rules/ui-standards.md",
     ".opencode/rules/ui-library.md",
     ".opencode/rules/ui-audit-checklist.md",
+    ".opencode/rules/ui-manifest.md",
+    ".opencode/golden-samples.ts",
     ".opencode/agents/orchestrator.md",
     ".opencode/plans/00-plan-index.md",
-    "AGENTS.md"
+    "AGENTS.md",
+    "mcp://yougile"
   ]
 }

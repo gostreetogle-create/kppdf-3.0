@@ -7,3 +7,4 @@ export interface ISetting {
   createdAt?: string;
   updatedAt?: string;
 }
+

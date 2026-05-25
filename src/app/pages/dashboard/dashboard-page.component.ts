@@ -10,9 +10,11 @@ interface StatItem {
   total: number;
   label: string;
   icon: string;
+  group?: string;
 }
 
 interface DashboardStats {
+  // Original directories
   products: StatItem;
   categories: StatItem;
   counterparties: StatItem;
@@ -21,6 +23,25 @@ interface DashboardStats {
   statuses: StatItem;
   workTypes: StatItem;
   settings: StatItem;
+  // New PLM/ERP modules
+  quotations: StatItem;
+  orders: StatItem;
+  boms: StatItem;
+  operations: StatItem;
+  techProcesses: StatItem;
+  purchaseRequests: StatItem;
+  purchaseOrders: StatItem;
+  warehouses: StatItem;
+  stockMovements: StatItem;
+  reservations: StatItem;
+  workOrders: StatItem;
+  workOrderOperations: StatItem;
+  costCalculations: StatItem;
+  actualCosts: StatItem;
+  shipments: StatItem;
+  shippingDocs: StatItem;
+  counters: StatItem;
+  interactions: StatItem;
   total: number;
 }
 
@@ -38,22 +59,48 @@ interface DashboardStats {
       </div>
 
       <div class="dashboard" *ngIf="!loading(); else loadingTpl">
-        <div
-          class="dashboard__card"
-          *ngFor="let item of statList()"
-          [routerLink]="item.route"
-        >
-          <p-card>
-            <ng-template pTemplate="content">
-              <div class="dashboard__card-body">
-                <i [class]="item.icon + ' dashboard__card-icon'"></i>
-                <div class="dashboard__card-info">
-                  <span class="dashboard__card-value">{{ item.total }}</span>
-                  <span class="dashboard__card-label">{{ item.label }}</span>
+        <!-- Секция: Справочники -->
+        <h3 class="dashboard__section">📚 Справочники</h3>
+        <div class="dashboard__grid">
+          <div
+            class="dashboard__card"
+            *ngFor="let item of dirStats()"
+            [routerLink]="'/directories'"
+          >
+            <p-card>
+              <ng-template pTemplate="content">
+                <div class="dashboard__card-body">
+                  <i [class]="item.icon + ' dashboard__card-icon'"></i>
+                  <div class="dashboard__card-info">
+                    <span class="dashboard__card-value">{{ item.total }}</span>
+                    <span class="dashboard__card-label">{{ item.label }}</span>
+                  </div>
                 </div>
-              </div>
-            </ng-template>
-          </p-card>
+              </ng-template>
+            </p-card>
+          </div>
+        </div>
+
+        <!-- Секция: Бизнес-процессы -->
+        <h3 class="dashboard__section">🏭 Бизнес-процессы</h3>
+        <div class="dashboard__grid">
+          <div
+            class="dashboard__card"
+            *ngFor="let item of moduleStats()"
+            [routerLink]="'/modules'"
+          >
+            <p-card>
+              <ng-template pTemplate="content">
+                <div class="dashboard__card-body">
+                  <i [class]="item.icon + ' dashboard__card-icon'"></i>
+                  <div class="dashboard__card-info">
+                    <span class="dashboard__card-value">{{ item.total }}</span>
+                    <span class="dashboard__card-label">{{ item.label }}</span>
+                  </div>
+                </div>
+              </ng-template>
+            </p-card>
+          </div>
         </div>
       </div>
 
@@ -73,7 +120,8 @@ export class DashboardPageComponent implements OnInit {
   private readonly http = inject(HttpClient);
   readonly loading = signal(true);
   readonly stats = signal<DashboardStats | null>(null);
-  readonly statList = signal<(StatItem & { route: string })[]>([]);
+  readonly dirStats = signal<StatItem[]>([]);
+  readonly moduleStats = signal<StatItem[]>([]);
 
   ngOnInit(): void {
     this.http
@@ -81,15 +129,35 @@ export class DashboardPageComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.stats.set(res.data);
-          this.statList.set([
-            { ...res.data.products, route: '/directories' },
-            { ...res.data.categories, route: '/directories' },
-            { ...res.data.counterparties, route: '/directories' },
-            { ...res.data.users, route: '/directories' },
-            { ...res.data.roles, route: '/directories' },
-            { ...res.data.statuses, route: '/directories' },
-            { ...res.data.workTypes, route: '/directories' },
-            { ...res.data.settings, route: '/directories' },
+          this.dirStats.set([
+            res.data.products,
+            res.data.categories,
+            res.data.counterparties,
+            res.data.users,
+            res.data.roles,
+            res.data.statuses,
+            res.data.workTypes,
+            res.data.settings,
+          ]);
+          this.moduleStats.set([
+            res.data.quotations,
+            res.data.orders,
+            res.data.boms,
+            res.data.operations,
+            res.data.techProcesses,
+            res.data.purchaseRequests,
+            res.data.purchaseOrders,
+            res.data.warehouses,
+            res.data.stockMovements,
+            res.data.reservations,
+            res.data.workOrders,
+            res.data.workOrderOperations,
+            res.data.costCalculations,
+            res.data.actualCosts,
+            res.data.shipments,
+            res.data.shippingDocs,
+            res.data.counters,
+            res.data.interactions,
           ]);
           this.loading.set(false);
         },

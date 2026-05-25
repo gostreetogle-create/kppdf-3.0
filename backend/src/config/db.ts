@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import { config } from '../config';
 
-let memoryServer: MongoMemoryServer | null = null;
+// Динамический импорт — mongodb-memory-server только для dev-режима
+// (не устанавливается в production: npm ci --only=production)
+let memoryServer: Awaited<ReturnType<typeof import('mongodb-memory-server').MongoMemoryServer.create>> | null = null;
 
 /**
  * Подключается к MongoDB.
@@ -13,7 +14,7 @@ export async function connectDb(): Promise<void> {
   let uri = config.mongoUri;
 
   // Если URI задан явно — пробуем подключиться без fallback
-  if (uri !== 'mongodb://localhost:27017/kppdf-3.0') {
+  if (uri !== 'mongodb://localhost:27017/kppdf30') {
     try {
       await mongoose.connect(uri);
       console.log('✅ MongoDB connected:', uri);
@@ -31,8 +32,9 @@ export async function connectDb(): Promise<void> {
   } catch {
     console.log('⚠️  Local MongoDB unavailable, starting in-memory server...');
     try {
+      const { MongoMemoryServer } = await import('mongodb-memory-server');
       memoryServer = await MongoMemoryServer.create({
-        instance: { dbName: 'kppdf-3.0' },
+        instance: { dbName: 'kppdf30' },
       });
       uri = memoryServer.getUri();
       await mongoose.connect(uri);

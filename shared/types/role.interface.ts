@@ -24,3 +24,4 @@ export const ALL_PERMISSIONS = [
   { code: 'roles.edit', label: 'Управление ролями', group: 'settings' },
   { code: 'statuses.edit', label: 'Управление статусами', group: 'settings' },
 ] as const;
+

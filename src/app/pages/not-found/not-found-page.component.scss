@@ -1,11 +1,11 @@
-/* ===== 404 — Страница не найдена ===== */
+/* ===== 404 — Страница не найдена (Linear-inspired) ===== */
 
 :host {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f4ff 0%, #f8f9fa 50%, #e8ecf4 100%);
+  background: var(--kp-bg);
 }
 
 .not-found {
@@ -13,31 +13,28 @@
   padding: 24px;
 
   &__code {
-    font-size: 7rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, var(--color-primary), #6366f1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-size: 6rem;
+    font-weight: 700;
+    color: var(--kp-primary);
     line-height: 1;
-    margin-bottom: var(--space-md);
-    letter-spacing: -4px;
+    margin-bottom: var(--kp-space-4);
+    letter-spacing: -2px;
   }
 
   &__title {
-    font-size: 1.5rem;
+    font-size: 20px;
     font-weight: 600;
-    margin-bottom: var(--space-sm);
-    color: var(--color-text);
+    margin-bottom: var(--kp-space-2);
+    color: var(--kp-text);
   }
 
   &__desc {
-    color: var(--color-text-secondary);
-    margin-bottom: var(--space-lg);
-    font-size: 1rem;
-    max-width: 380px;
+    color: var(--kp-text-secondary);
+    margin-bottom: var(--kp-space-5);
+    font-size: 13px;
+    max-width: 360px;
     margin-left: auto;
     margin-right: auto;
-    line-height: 1.5;
+    line-height: 1.45;
   }
 }

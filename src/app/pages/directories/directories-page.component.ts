@@ -16,7 +16,10 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
+
+// Shared UI
+import { PageLayoutComponent } from '../../shared/ui/page-layout/page-layout.component';
+import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
 
 // Services
 import { DirectoryService } from '../../core/directory.service';
@@ -39,6 +42,8 @@ interface DirectoryConfig {
   apiPath: string;
   columns: ColumnDef[];
   idField: string;
+  /** Быстрые действия / часто используемые значения для этого справочника */
+  quickAddPresets?: { label: string; value: Record<string, unknown> }[];
 }
 
 @Component({
@@ -49,12 +54,14 @@ interface DirectoryConfig {
     FormsModule, TableModule, ButtonModule, DialogModule,
     InputTextModule, InputNumberModule, SelectModule,
     TagModule, CardModule, ToastModule, ConfirmDialogModule,
-    TooltipModule, ProgressSpinnerModule,
+    TooltipModule,
+    PageLayoutComponent, EmptyStateComponent,
   ],
   template: `
-    <div class="page">
-      <div class="page__header">
+    <app-page-layout>
+      <div page-header class="page__header">
         <h1>Справочники</h1>
+        <p class="page__subtitle">Часто используемые данные — редактируйте, добавляйте, управляйте</p>
       </div>
 
       <!-- Навигация по справочникам -->
@@ -73,173 +80,244 @@ interface DirectoryConfig {
         />
       </div>
 
-      <!-- Панель инструментов -->
-      <div class="page__content">
-        <div class="dir-toolbar">
-          <div class="dir-toolbar__left">
-            <span class="dir-toolbar__title">{{ currentDir()?.label }}</span>
-            <span class="dir-toolbar__count" *ngIf="!loading()">
-              {{ totalRecords() }} записей
-            </span>
-          </div>
-          <div class="dir-toolbar__right">
-            <span class="p-input-icon-left dir-search">
-              <i class="pi pi-search"></i>
-              <input
-                pInputText
-                type="text"
-                class="dir-search__input"
-                placeholder="Поиск..."
-                [ngModel]="searchQuery()"
-                (ngModelChange)="onSearch($event)"
-              />
-            </span>
-            <p-button
-              label="Добавить"
-              icon="pi pi-plus"
-              size="small"
-              (click)="showAdd()"
+      <div page-toolbar class="dir-toolbar">
+        <div class="dir-toolbar__left">
+          <span class="dir-toolbar__title">{{ currentDir()?.label }}</span>
+          <span class="dir-toolbar__count" *ngIf="!loading()">
+            {{ totalRecords() }} {{ totalRecords() === 1 ? 'запись' : (totalRecords() >= 2 && totalRecords() <= 4 ? 'записи' : 'записей') }}
+          </span>
+        </div>
+        <div class="dir-toolbar__right">
+          <span class="p-input-icon-left dir-search">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              class="dir-search__input"
+              placeholder="Поиск..."
+              [ngModel]="searchQuery()"
+              (ngModelChange)="onSearch($event)"
             />
-          </div>
+          </span>
+          <p-button
+            label="Добавить"
+            icon="pi pi-plus"
+            size="small"
+            (click)="showAdd()"
+          />
         </div>
+      </div>
 
-        <!-- Спиннер загрузки -->
-        <div class="dir-loading" *ngIf="loading()">
-          <p-progressSpinner styleClass="dir-loading__spinner" />
-          <span>Загрузка...</span>
-        </div>
-
-        <!-- Таблица -->
-        <p-table
-          *ngIf="!loading()"
-          [value]="rows()"
-          [paginator]="true"
-          [rows]="limit()"
-          [totalRecords]="totalRecords()"
-          [rowsPerPageOptions]="[10, 15, 25, 50]"
-          [lazy]="true"
-          (onPage)="onPageChange($event)"
+      <!-- Быстрый доступ / часто используемые -->
+      <div class="quick-access" *ngIf="hasQuickPresets() && !loading() && rows().length > 0">
+        <span class="quick-access__label">Часто используемые:</span>
+        <p-button
+          *ngFor="let preset of currentDir()?.quickAddPresets"
+          [label]="preset.label"
           size="small"
-          styleClass="p-datatable-striped"
-          [showCurrentPageReport]="true"
-          currentPageReportTemplate="Записи {first}–{last} из {totalRecords}"
-        >
-          <ng-template pTemplate="header">
-            <tr>
-              <th *ngFor="let col of currentDir()?.columns" [style.width]="col.width">
-                {{ col.header }}
-              </th>
-              <th style="width:90px">Действия</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-row>
-            <tr>
-              <td *ngFor="let col of currentDir()?.columns">
-                <ng-container [ngSwitch]="col.type">
-                  <p-tag
-                    *ngSwitchCase="'tag'"
-                    [value]="row[col.field]"
-                    [severity]="getSeverity(row[col.field])"
-                  />
-                  <span *ngSwitchCase="'boolean'">
-                    <i
-                      class="pi"
-                      [class.pi-check-circle]="row[col.field]"
-                      [class.pi-circle]="!row[col.field]"
-                      [style.color]="row[col.field] ? 'var(--color-primary)' : '#ccc'"
-                    ></i>
-                  </span>
-                  <span *ngSwitchDefault>{{ row[col.field] }}</span>
-                </ng-container>
-              </td>
-              <td>
-                <div class="dir-actions">
+          severity="secondary"
+          [outlined]="true"
+          (click)="addFromPreset(preset.value)"
+          styleClass="quick-access__chip"
+        />
+      </div>
+
+      <!-- Спиннер загрузки -->
+      <div class="loading-state" *ngIf="loading()">Загрузка данных...</div>
+
+      <!-- Таблица -->
+      <p-table
+        *ngIf="!loading()"
+        [value]="rows()"
+        [stripedRows]="true"
+        [paginator]="true"
+        [rows]="limit()"
+        [totalRecords]="totalRecords()"
+        [rowsPerPageOptions]="[10, 15, 25, 50]"
+        [lazy]="true"
+        [sortField]="sortField()"
+        [sortOrder]="sortOrder()"
+        (onPage)="onPageChange($event)"
+        (onSort)="onSort($event)"
+        size="small"
+        styleClass="p-datatable-striped"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Записи {first}–{last} из {totalRecords}"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th *ngFor="let col of currentDir()?.columns; trackBy: trackByField" [style.width]="col.width">
+              {{ col.header }}
+            </th>
+            <th style="width:90px">Действия</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td *ngFor="let col of currentDir()?.columns; trackBy: trackByField">
+              <ng-container [ngSwitch]="col.type">
+                <p-tag
+                  *ngSwitchCase="'tag'"
+                  [value]="row[col.field]"
+                  [severity]="getSeverity(row[col.field])"
+                />
+                <span *ngSwitchCase="'boolean'">
+                  <i
+                    class="pi boolean-indicator"
+                    [class.pi-check-circle]="row[col.field]"
+                    [class.pi-circle]="!row[col.field]"
+                    [class.boolean-indicator--yes]="row[col.field]"
+                    [class.boolean-indicator--no]="!row[col.field]"
+                  ></i>
+                </span>
+                <span *ngSwitchDefault>{{ row[col.field] }}</span>
+              </ng-container>
+            </td>
+            <td>
+              <div class="table-actions">
+                <p-button
+                  icon="pi pi-pencil"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="secondary"
+                  size="small"
+                  (click)="showEdit(row)"
+                  pTooltip="Редактировать"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="danger"
+                  size="small"
+                  (click)="confirmDelete(row)"
+                  pTooltip="Удалить"
+                />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td [attr.colspan]="(currentDir()?.columns?.length || 0) + 1">
+              <app-empty-state
+                [compact]="true"
+                [description]="'Нет данных. Нажмите «Добавить» чтобы создать запись.'"
+              >
+                <i empty-icon class="pi pi-inbox"></i>
+                <div empty-actions>
                   <p-button
-                    icon="pi pi-pencil"
+                    label="Создать"
+                    icon="pi pi-plus"
+                    size="small"
+                    (click)="showAdd()"
+                  />
+                  <p-button
+                    *ngIf="hasQuickPresets()"
+                    label="Использовать шаблон"
                     severity="secondary"
                     size="small"
-                    (click)="showEdit(row)"
-                    pTooltip="Редактировать"
-                  />
-                  <p-button
-                    icon="pi pi-trash"
-                    severity="danger"
-                    size="small"
-                    (click)="confirmDelete(row)"
-                    pTooltip="Удалить"
+                    (click)="addFromPreset(currentDir()?.quickAddPresets?.[0]?.value || {})"
                   />
                 </div>
-              </td>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td
-                [attr.colspan]="(currentDir()?.columns?.length || 0) + 1"
-                class="dir-empty"
-              >
-                <i class="pi pi-inbox dir-empty__icon"></i>
-                <div class="dir-empty__text">Нет данных. Нажмите «Добавить» чтобы создать запись.</div>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-    </div>
+              </app-empty-state>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </app-page-layout>
 
-    <!-- Диалог создания/редактирования -->
+    <!-- ════════════════════════════════════════════════════════════
+         Диалог создания/редактирования — жёсткая раскладка:
+         - ширина 480px, max 90vw, modal, недраг, нерес
+         - Flex-col gap-4 между полями
+         - Flex-col gap-1 внутри поля (label + control)
+         - w-full на всех контролах
+         - Footer прижат вправо (justify-end gap-2)
+         ════════════════════════════════════════════════════════════ -->
     <p-dialog
       [(visible)]="dialogVisible"
       [header]="dialogTitle"
       [modal]="true"
-      [style]="{ width: '520px' }"
-      (onHide)="closeDialog()"
       [draggable]="false"
+      [resizable]="false"
+      [style]="{ width: '480px', maxWidth: '90vw' }"
+      (onHide)="closeDialog()"
     >
-      <div class="dialog-form">
-        <div *ngFor="let col of (currentDir()?.columns || [])" class="dialog-form__field">
-          <label>
-            {{ col.header }}
-            <span *ngIf="col.required" class="dialog-form__required">*</span>
-          </label>
-          <input
-            *ngIf="col.type === 'text'"
-            pInputText
-            [(ngModel)]="editRow[col.field]"
-            [attr.required]="col.required ? '' : null"
-            style="width:100%"
+      <!-- Body: flex-col gap-4 между полями -->
+      <div class="flex flex-col gap-4">
+        <ng-container *ngFor="let col of (currentDir()?.columns || []); trackBy: trackByField">
+          <!-- Каждое поле: label + control в flex-col gap-1 -->
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">
+              {{ col.header }}
+              <span *ngIf="col.required" class="text-secondary">*</span>
+            </label>
+
+            <!-- Text -->
+            <input
+              *ngIf="col.type === 'text'"
+              pInputText
+              [(ngModel)]="editRow[col.field]"
+              [attr.required]="col.required ? '' : null"
+              class="w-full"
+              size="small"
+            />
+
+            <!-- Number -->
+            <p-inputNumber
+              *ngIf="col.type === 'number'"
+              [(ngModel)]="editRow[col.field]"
+              class="w-full"
+              size="small"
+            />
+
+            <!-- Select (если есть опции) -->
+            <p-select
+              *ngIf="col.options && col.options.length > 0"
+              [options]="col.options || []"
+              [(ngModel)]="editRow[col.field]"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Выберите..."
+              [showClear]="!col.required"
+              class="w-full"
+              size="small"
+            />
+
+            <!-- Boolean -->
+            <p-select
+              *ngIf="col.type === 'boolean'"
+              [options]="booleanOptions"
+              [(ngModel)]="editRow[col.field]"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Выберите..."
+              class="w-full"
+              size="small"
+            />
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- Footer: кнопки прижаты вправо -->
+      <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-2">
+          <p-button
+            label="Отмена"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            (click)="closeDialog()"
+            [disabled]="saving()"
           />
-          <p-inputNumber
-            *ngIf="col.type === 'number'"
-            [(ngModel)]="editRow[col.field]"
-            style="width:100%"
-          />
-          <p-select
-            *ngIf="col.type === 'select'"
-            [options]="col.options || []"
-            [(ngModel)]="editRow[col.field]"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Выберите..."
-            [showClear]="!col.required"
-            style="width:100%"
+          <p-button
+            label="Сохранить"
+            size="small"
+            (click)="save()"
+            [loading]="saving()"
           />
         </div>
-      </div>
-      <ng-template pTemplate="footer">
-        <p-button
-          label="Отмена"
-          severity="secondary"
-          size="small"
-          (click)="closeDialog()"
-          [disabled]="saving()"
-        />
-        <p-button
-          label="Сохранить"
-          size="small"
-          (click)="save()"
-          [loading]="saving()"
-        />
       </ng-template>
     </p-dialog>
 
@@ -261,8 +339,10 @@ export class DirectoriesPageComponent implements OnInit {
   readonly saving = signal(false);
   readonly totalRecords = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(15);
+  readonly limit = signal(25);
   readonly searchQuery = signal('');
+  readonly sortField = signal('createdAt');
+  readonly sortOrder = signal<-1 | 1>(-1);
 
   // Диалог
   dialogVisible = false;
@@ -274,7 +354,7 @@ export class DirectoriesPageComponent implements OnInit {
   // Debounced search
   private readonly searchSubject = new Subject<string>();
 
-  // Определения справочников
+  // ===== Определения справочников =====
   readonly directories: DirectoryConfig[] = [
     {
       key: 'products',
@@ -282,6 +362,11 @@ export class DirectoriesPageComponent implements OnInit {
       icon: 'pi pi-box',
       apiPath: 'products',
       idField: '_id',
+      quickAddPresets: [
+        { label: '+ Лист стальной', value: { name: 'Лист стальной', unit: 'м²', kind: 'ITEM', status: 'active' } },
+        { label: '+ Крепёж', value: { name: 'Болт оцинк.', unit: 'шт', kind: 'ITEM', status: 'active' } },
+        { label: '+ Услуга', value: { name: 'Работа', unit: 'ч', kind: 'WORK', status: 'active' } },
+      ],
       columns: [
         { field: 'name', header: 'Наименование', type: 'text', required: true },
         { field: 'sku', header: 'Артикул', type: 'text' },
@@ -303,6 +388,12 @@ export class DirectoriesPageComponent implements OnInit {
       icon: 'pi pi-sitemap',
       apiPath: 'categories',
       idField: '_id',
+      quickAddPresets: [
+        { label: '+ Металлопрокат', value: { name: 'Металлопрокат', sortOrder: 1, isActive: true } },
+        { label: '+ Крепёж', value: { name: 'Крепёж', sortOrder: 2, isActive: true } },
+        { label: '+ Электроника', value: { name: 'Электроника', sortOrder: 3, isActive: true } },
+        { label: '+ Инструмент', value: { name: 'Инструмент', sortOrder: 5, isActive: true } },
+      ],
       columns: [
         { field: 'name', header: 'Название', type: 'text', required: true },
         { field: 'parentId', header: 'Родитель', type: 'text' },
@@ -316,6 +407,11 @@ export class DirectoriesPageComponent implements OnInit {
       icon: 'pi pi-users',
       apiPath: 'counterparties',
       idField: '_id',
+      quickAddPresets: [
+        { label: '+ Поставщик (ООО)', value: { name: 'Новый поставщик', legalForm: 'ООО', roles: ['supplier'], isActive: true } },
+        { label: '+ Клиент (ООО)', value: { name: 'Новый клиент', legalForm: 'ООО', roles: ['client'], isActive: true } },
+        { label: '+ ИП', value: { name: 'Новый ИП', legalForm: 'ИП', roles: ['client'], isActive: true } },
+      ],
       columns: [
         { field: 'name', header: 'Наименование', type: 'text', required: true },
         { field: 'inn', header: 'ИНН', type: 'text' },
@@ -341,7 +437,7 @@ export class DirectoriesPageComponent implements OnInit {
         { field: 'displayName', header: 'Имя', type: 'text' },
         { field: 'email', header: 'Email', type: 'text' },
         {
-          field: 'role', header: 'Роль', type: 'select',
+          field: 'role', header: 'Роль', type: 'tag',
           options: [
             { label: 'Админ', value: 'admin' },
             { label: 'Менеджер', value: 'manager' },
@@ -358,7 +454,7 @@ export class DirectoriesPageComponent implements OnInit {
       idField: '_id',
       columns: [
         { field: 'name', header: 'Код', type: 'text', required: true },
-        { field: 'label', header: 'Название', type: 'text' },
+        { field: 'label', header: 'Название', type: 'tag' },
         { field: 'description', header: 'Описание', type: 'text' },
         { field: 'isSystem', header: 'Системная', type: 'boolean' },
       ],
@@ -369,6 +465,11 @@ export class DirectoriesPageComponent implements OnInit {
       icon: 'pi pi-tag',
       apiPath: 'statuses',
       idField: '_id',
+      quickAddPresets: [
+        { label: '+ Черновик', value: { statusId: 'draft', label: 'Черновик', color: '#6b7280', entityType: 'ORDER', isInitial: true } },
+        { label: '+ В работе', value: { statusId: 'in_progress', label: 'В работе', color: '#f59e0b', entityType: 'ORDER' } },
+        { label: '+ Выполнен', value: { statusId: 'completed', label: 'Выполнен', color: '#10b981', entityType: 'ORDER', isFinal: true } },
+      ],
       columns: [
         { field: 'statusId', header: 'Код', type: 'text', required: true },
         { field: 'label', header: 'Название', type: 'text' },
@@ -390,6 +491,12 @@ export class DirectoriesPageComponent implements OnInit {
       icon: 'pi pi-wrench',
       apiPath: 'work-types',
       idField: '_id',
+      quickAddPresets: [
+        { label: '+ Сварка', value: { name: 'Сварка', section: 'work', isActive: true } },
+        { label: '+ Резка', value: { name: 'Резка металла', section: 'work', isActive: true } },
+        { label: '+ Закупка', value: { name: 'Закупка материала', section: 'task', isActive: true } },
+        { label: '+ Чертеж', value: { name: 'Разработка чертежа', section: 'drawing', isActive: true } },
+      ],
       columns: [
         { field: 'name', header: 'Название', type: 'text', required: true },
         {
@@ -419,8 +526,15 @@ export class DirectoriesPageComponent implements OnInit {
 
   currentDir = () => this.directories.find((d) => d.key === this.activeKey()) ?? null;
 
+  /** Есть ли быстрые пресеты для текущего справочника */
+  hasQuickPresets = (): boolean =>
+    (this.currentDir()?.quickAddPresets?.length ?? 0) > 0;
+
+  // ===== TrackBy =====
+  trackByField = (index: number, item: ColumnDef): string =>
+    item.field || String(index);
+
   constructor() {
-    // Debounced search — через 300мс после остановки ввода
     this.searchSubject
       .pipe(debounceTime(300))
       .subscribe(() => this.loadData());
@@ -430,7 +544,7 @@ export class DirectoriesPageComponent implements OnInit {
     this.loadData();
   }
 
-  // ===== Загрузка данных =====
+  // ===== Загрузка =====
   loadData(): void {
     const dir = this.currentDir();
     if (!dir) return;
@@ -441,6 +555,8 @@ export class DirectoriesPageComponent implements OnInit {
         page: this.page(),
         limit: this.limit(),
         search: this.searchQuery() || undefined,
+        sort: this.sortField(),
+        order: this.sortOrder() === 1 ? 'asc' : 'desc',
       })
       .pipe(
         tap({
@@ -459,11 +575,13 @@ export class DirectoriesPageComponent implements OnInit {
       .subscribe(() => this.loading.set(false));
   }
 
-  // ===== Переключение справочника =====
+  // ===== Переключение =====
   selectDir(key: string): void {
     this.activeKey.set(key);
     this.page.set(1);
     this.searchQuery.set('');
+    this.sortField.set('createdAt');
+    this.sortOrder.set(-1);
     this.loadData();
   }
 
@@ -474,6 +592,13 @@ export class DirectoriesPageComponent implements OnInit {
     this.searchSubject.next(value);
   }
 
+  // ===== Сортировка =====
+  onSort(event: { field: string; order: number }): void {
+    this.sortField.set(event.field || 'createdAt');
+    this.sortOrder.set(event.order === 1 ? 1 : -1);
+    this.loadData();
+  }
+
   // ===== Пагинация =====
   onPageChange(event: { first: number; rows: number }): void {
     const page = Math.floor(event.first / event.rows) + 1;
@@ -482,11 +607,20 @@ export class DirectoriesPageComponent implements OnInit {
     this.loadData();
   }
 
+  // ===== Быстрое добавление из пресета =====
+  addFromPreset(preset: Record<string, unknown>): void {
+    this.isEditing = false;
+    this.editId = null;
+    this.dialogTitle = `Создание ${this.currentDir()?.label} (шаблон)`;
+    this.editRow = { ...preset };
+    this.dialogVisible = true;
+  }
+
   // ===== Показать диалог добавления =====
   showAdd(): void {
     this.isEditing = false;
     this.editId = null;
-    this.dialogTitle = `Добавить — ${this.currentDir()?.label}`;
+    this.dialogTitle = `Добавление ${this.currentDir()?.label}`;
     this.editRow = {};
     this.dialogVisible = true;
   }
@@ -495,8 +629,8 @@ export class DirectoriesPageComponent implements OnInit {
   showEdit(row: Record<string, unknown>): void {
     this.isEditing = true;
     this.editId = (row[this.currentDir()?.idField || '_id'] as string) ?? null;
-    this.dialogTitle = `Редактировать — ${this.currentDir()?.label}`;
-    this.editRow = { ...row };
+    this.dialogTitle = `Редактирование ${this.currentDir()?.label}`;
+    this.editRow = { ...row, _id: undefined };
     this.dialogVisible = true;
   }
 
@@ -536,12 +670,12 @@ export class DirectoriesPageComponent implements OnInit {
       .subscribe(() => this.saving.set(false));
   }
 
-  // ===== Сохранение (создание / обновление) =====
+  // ===== Сохранение =====
   save(): void {
     const dir = this.currentDir();
     if (!dir) return;
 
-    // Простейшая валидация required полей
+    // Валидация required полей
     for (const col of dir.columns) {
       if (col.required && !this.editRow[col.field]) {
         this.notification.warn('Проверьте форму', `Поле «${col.header}» обязательно`);
@@ -552,7 +686,6 @@ export class DirectoriesPageComponent implements OnInit {
     this.saving.set(true);
 
     if (this.isEditing && this.editId) {
-      // UPDATE
       this.directoryService
         .update(dir.apiPath, this.editId, this.editRow)
         .pipe(
@@ -569,7 +702,6 @@ export class DirectoriesPageComponent implements OnInit {
         )
         .subscribe(() => this.saving.set(false));
     } else {
-      // CREATE
       this.directoryService
         .create(dir.apiPath, this.editRow)
         .pipe(
@@ -596,14 +728,27 @@ export class DirectoriesPageComponent implements OnInit {
     this.isEditing = false;
   }
 
+  // ===== Опции для булевых полей =====
+  readonly booleanOptions = [
+    { label: 'Да', value: true },
+    { label: 'Нет', value: false },
+  ];
+
   // ===== Severity для Tag =====
   getSeverity(value: unknown): 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' {
     const map: Record<string, 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast'> = {
       active: 'success',
       draft: 'warn',
       archived: 'danger',
+      admin: 'info',
+      manager: 'warn',
+      viewer: 'secondary',
       true: 'info',
       false: 'secondary',
+      Администратор: 'danger',
+      Менеджер: 'warn',
+      Наблюдатель: 'secondary',
+      Инженер: 'info',
     };
     const key = typeof value === 'string' ? value : String(value);
     return map[key] ?? 'info';

@@ -20,3 +20,4 @@ export interface ICounterparty {
   createdAt?: string;
   updatedAt?: string;
 }
+

@@ -20,6 +20,10 @@ export const routes: Routes = [
         path: 'directories',
         loadComponent: () => import('./pages/directories/directories-page.component').then(c => c.DirectoriesPageComponent),
       },
+      {
+        path: 'modules',
+        loadComponent: () => import('./pages/modules/modules-page.component').then(c => c.ModulesPageComponent),
+      },
     ],
   },
   {

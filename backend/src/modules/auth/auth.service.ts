@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import { config } from '../../config';
 import { UserModel } from '../users/user.model';
 import type { JwtPayload, TokensPair } from '../../types/auth';
@@ -48,12 +48,17 @@ export class AuthService {
    * Generate access + refresh token pair
    */
   private generateTokens(payload: JwtPayload): TokensPair {
-    const accessToken = jwt.sign(payload, config.jwtSecret, {
-      expiresIn: config.jwtExpiresIn,
-    });
-    const refreshToken = jwt.sign(payload, config.jwtRefreshSecret, {
-      expiresIn: config.jwtRefreshExpiresIn,
-    });
+    // Передаём как plain object literal (а не реэкспорт payload),
+    // чтобы TS однозначно выбрал object-overload, а не string-overload
+    const data = { userId: payload.userId, username: payload.username, role: payload.role };
+
+    // jsonwebtoken@9: SignOptions['expiresIn'] = number | StringValue (branded literal).
+    // Значение из process.env — широкий string, требуется явный каст.
+    const accessOptions: SignOptions = { expiresIn: config.jwtExpiresIn as SignOptions['expiresIn'] };
+    const refreshOptions: SignOptions = { expiresIn: config.jwtRefreshExpiresIn as SignOptions['expiresIn'] };
+
+    const accessToken = jwt.sign(data, config.jwtSecret, accessOptions);
+    const refreshToken = jwt.sign(data, config.jwtRefreshSecret, refreshOptions);
 
     return { accessToken, refreshToken };
   }

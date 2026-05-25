@@ -1,0 +1,205 @@
+/* ============================================================
+   KPPDF 3.0 — Modules Page (Linear-inspired)
+   Compact, border-based, no decorative shadows.
+   ============================================================ */
+@use '../../../styles/tokens' as *;
+
+:host {
+  display: block;
+  animation: kp-fade-in 0.15s ease-out;
+}
+
+/* ── Module Tabs ── */
+.mod-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: $space-4;
+  flex-wrap: wrap;
+}
+
+:host ::ng-deep .mod-tabs__btn {
+  padding: 0.3rem 0.7rem !important;
+  font-size: $font-sm !important;
+  border-radius: $radius-sm !important;
+  font-weight: 500 !important;
+}
+
+/* ── Toolbar ── */
+.mod-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $space-4;
+  flex-wrap: wrap;
+  gap: $space-3;
+
+  &__left { display: flex; align-items: center; gap: $space-3; }
+  &__right { display: flex; align-items: center; gap: $space-2; }
+
+  &__title {
+    font-size: $font-h3;
+    font-weight: 600;
+    color: $kp-text;
+    letter-spacing: -0.01em;
+  }
+
+  &__subtitle {
+    font-size: $font-caption;
+    font-weight: 400;
+    color: var(--kp-text-soft);
+    margin-left: 8px;
+  }
+
+  &__count {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--kp-text-soft);
+    background: var(--kp-bg-muted);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+}
+
+/* ── Search ── */
+.mod-search {
+  position: relative;
+
+  i {
+    left: 10px !important;
+    color: var(--kp-text-soft) !important;
+    font-size: 12px !important;
+  }
+
+  &__input {
+    width: 200px !important;
+    font-size: $font-body !important;
+    font-family: inherit !important;
+    padding: 0.35rem 0.65rem 0.35rem 2rem !important;
+    border-radius: $radius-sm !important;
+    border: 1px solid var(--kp-border) !important;
+    background: var(--kp-surface) !important;
+    transition: border-color var(--kp-transition-fast) !important;
+
+    &::placeholder { color: var(--kp-text-muted); }
+
+    &:focus {
+      border-color: var(--kp-primary) !important;
+      box-shadow: var(--kp-focus-ring) !important;
+      outline: none;
+    }
+  }
+}
+
+/* ── PrimeNG Table Overrides (compact Linear style) ── */
+:host ::ng-deep {
+  .p-datatable-wrapper {
+    border-radius: $radius-md;
+    overflow: hidden;
+    border: 1px solid var(--kp-border);
+  }
+
+  .p-datatable {
+    font-family: var(--kp-font-family);
+    font-size: $font-body;
+    border-radius: $radius-md;
+    overflow: hidden;
+
+    .p-datatable-thead > tr > th {
+      background: var(--kp-bg-soft);
+      color: var(--kp-text-secondary);
+      font-weight: 600;
+      font-size: $font-caption;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 0.85rem;
+      border-bottom: 1px solid var(--kp-border);
+      &:first-child { padding-left: 1rem; }
+    }
+
+    .p-datatable-tbody > tr {
+      transition: background var(--kp-transition-fast);
+
+      > td {
+        padding: 0.45rem 0.85rem;
+        color: var(--kp-text);
+        border-bottom: 1px solid var(--kp-border-light);
+        vertical-align: middle;
+        font-size: $font-body;
+        &:first-child { padding-left: 1rem; }
+      }
+
+      &:hover { background: var(--kp-surface-hover); }
+    }
+
+    &.p-datatable-striped .p-datatable-tbody > tr:nth-child(even) {
+      background: var(--kp-bg-soft);
+      &:hover { background: var(--kp-surface-hover); }
+    }
+
+    .p-datatable-emptymessage td {
+      padding: 2.5rem 1rem !important;
+      text-align: center;
+      color: var(--kp-text-soft);
+    }
+
+    .p-sortable-column-icon {
+      font-size: 10px;
+      color: var(--kp-text-muted);
+    }
+  }
+
+  .p-tag {
+    font-size: $font-caption;
+    font-weight: 500;
+    padding: 1px 7px;
+    border-radius: 999px;
+    letter-spacing: 0.01em;
+  }
+
+  .p-button.p-button-sm.p-button-icon-only {
+    padding: 0.25rem !important;
+    width: 28px;
+    height: 28px;
+
+    &.p-button-secondary {
+      background: transparent !important;
+      border: 1px solid transparent !important;
+      color: var(--kp-text-secondary) !important;
+      &:hover { background: var(--kp-surface-hover) !important; border-color: var(--kp-border) !important; color: var(--kp-text) !important; }
+    }
+
+    &.p-button-danger {
+      background: transparent !important;
+      border: 1px solid transparent !important;
+      color: var(--kp-text-soft) !important;
+      &:hover { background: var(--kp-danger-soft) !important; color: var(--kp-danger) !important; }
+    }
+  }
+
+  .p-paginator {
+    padding: 0.5rem 0;
+    border: none;
+    background: transparent;
+    font-size: $font-sm;
+
+    .p-paginator-pages .p-paginator-page {
+      min-width: 30px; height: 30px; border-radius: $radius-sm;
+      font-weight: 400; color: var(--kp-text-secondary); transition: all var(--kp-transition-fast); margin: 0 1px;
+      &:hover { background: var(--kp-primary-muted); color: var(--kp-primary); }
+      &.p-highlight { background: var(--kp-primary); color: #fff; font-weight: 600; }
+    }
+
+    .p-paginator-first, .p-paginator-prev, .p-paginator-next, .p-paginator-last {
+      min-width: 30px; height: 30px; border-radius: $radius-sm; color: var(--kp-text-soft); transition: all var(--kp-transition-fast);
+      &:hover { background: var(--kp-primary-muted); color: var(--kp-primary); }
+      &.p-disabled { opacity: 0.3; }
+    }
+
+    .p-paginator-current { font-size: 12px; color: var(--kp-text-soft); }
+    .p-paginator-rpp-options .p-select-label { font-size: 12px !important; }
+  }
+
+  .p-dialog-content {
+    padding: 0 1rem 0.5rem !important;
+  }
+}

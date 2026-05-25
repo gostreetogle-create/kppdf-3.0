@@ -1,3 +1,4 @@
+import path from 'path';
 import express from 'express';
 import cors from 'cors';
 import { errorHandler, notFound } from './middleware/error-handler';
@@ -12,6 +13,24 @@ import { workTypeRouter } from './modules/work-types/work-type.router';
 import { settingRouter } from './modules/settings/setting.router';
 import { authRouter } from './modules/auth/auth.router';
 import { dashboardRouter } from './modules/dashboard/dashboard.router';
+import { quotationRouter } from './modules/quotations/quotation.router';
+import { orderRouter } from './modules/orders/order.router';
+import { bomRouter } from './modules/boms/bom.router';
+import { operationRouter } from './modules/operations/operation.router';
+import { techProcessRouter } from './modules/tech-processes/techProcess.router';
+import { purchaseRequestRouter } from './modules/purchase-requests/purchaseRequest.router';
+import { purchaseOrderRouter } from './modules/purchase-orders/purchaseOrder.router';
+import { warehouseRouter } from './modules/warehouses/warehouse.router';
+import { counterRouter } from './modules/counters/counter.router';
+import { stockMovementRouter } from './modules/stock/stockMovement.router';
+import { reservationRouter } from './modules/reservations/reservation.router';
+import { workOrderRouter } from './modules/work-orders/workOrder.router';
+import { workOrderOperationRouter } from './modules/work-order-operations/workOrderOperation.router';
+import { costCalculationRouter } from './modules/cost/costCalculation.router';
+import { actualCostRouter } from './modules/actual-costs/actualCost.router';
+import { shipmentRouter } from './modules/shipments/shipment.router';
+import { shippingDocRouter } from './modules/shipping-docs/shippingDoc.router';
+import { interactionRouter } from './modules/interactions/interaction.router';
 
 const app = express();
 
@@ -23,9 +42,13 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// CORS — разрешаем frontend (localhost:4200 в dev, /api проксируется)
+// CORS — разрешаем frontend
+const corsOrigins = process.env.NODE_ENV === 'production'
+  ? (process.env.CORS_ORIGIN || 'https://sport-set.ru').split(',')
+  : ['http://localhost:4200', 'http://localhost:4000'];
+
 app.use(cors({
-  origin: ['http://localhost:4200', 'http://localhost:4000'],
+  origin: corsOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -50,6 +73,41 @@ app.use('/api/v1/auth', authRouter);
 
 // Dashboard
 app.use('/api/v1/dashboard', dashboardRouter);
+
+// New modules (Quotations → Shipments)
+app.use('/api/v1/directories/quotations', quotationRouter);
+app.use('/api/v1/directories/orders', orderRouter);
+app.use('/api/v1/directories/boms', bomRouter);
+app.use('/api/v1/directories/operations', operationRouter);
+app.use('/api/v1/directories/tech-processes', techProcessRouter);
+app.use('/api/v1/directories/purchase-requests', purchaseRequestRouter);
+app.use('/api/v1/directories/purchase-orders', purchaseOrderRouter);
+app.use('/api/v1/directories/warehouses', warehouseRouter);
+app.use('/api/v1/counters', counterRouter);
+app.use('/api/v1/stock/movements', stockMovementRouter);
+app.use('/api/v1/stock/reservations', reservationRouter);
+app.use('/api/v1/directories/work-orders', workOrderRouter);
+app.use('/api/v1/directories/work-order-operations', workOrderOperationRouter);
+app.use('/api/v1/cost', costCalculationRouter);
+app.use('/api/v1/directories/actual-costs', actualCostRouter);
+app.use('/api/v1/directories/shipments', shipmentRouter);
+app.use('/api/v1/directories/shipping-docs', shippingDocRouter);
+app.use('/api/v1/directories/interactions', interactionRouter);
+
+// In production, serve the Angular frontend (before notFound!)
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = process.env.FRONTEND_PATH || path.join(__dirname, '..', '..', 'dist', 'kppdf-3.0');
+  app.use(express.static(frontendPath));
+
+  // All non-API routes → Angular index.html (SPA)
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+  console.log(`📁 Serving frontend from: ${frontendPath}`);
+}
 
 // Error handling
 app.use(notFound);
