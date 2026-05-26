@@ -1,13 +1,14 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, provideAppInitializer, inject } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
 import { definePreset } from '@primeuix/themes';
 import { routes } from './app.routes';
 import { MessageService, ConfirmationService } from 'primeng/api';
-import { AuthInterceptor } from './core/auth.interceptor';
+import { authInterceptor } from './core/auth.interceptor';
+import { AuthService } from './core/auth.service';
 
 /*
  * KPPDF 3.0 — Компактный пресет поверх Aura
@@ -108,9 +109,12 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withInterceptorsFromDi()),
-    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideAnimationsAsync(),
+    provideAppInitializer(() => {
+      const authService = inject(AuthService);
+      return authService.initializeAuth();
+    }),
     MessageService,
     ConfirmationService,
     providePrimeNG({

@@ -1,6 +1,5 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgFor, NgIf } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { HttpClient } from '@angular/common/http';
@@ -14,7 +13,6 @@ interface StatItem {
 }
 
 interface DashboardStats {
-  // Original directories
   products: StatItem;
   categories: StatItem;
   counterparties: StatItem;
@@ -23,7 +21,6 @@ interface DashboardStats {
   statuses: StatItem;
   workTypes: StatItem;
   settings: StatItem;
-  // New PLM/ERP modules
   quotations: StatItem;
   orders: StatItem;
   boms: StatItem;
@@ -48,70 +45,77 @@ interface DashboardStats {
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
-  imports: [CardModule, ButtonModule, RouterLink, NgFor, NgIf],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CardModule, ButtonModule, RouterLink],
   template: `
     <div class="page">
       <div class="page__header">
         <h1>Дашборд</h1>
-        <span class="page__subtitle" *ngIf="!loading()">
-          Всего записей: <strong>{{ stats()?.total }}</strong>
-        </span>
+        @if (!loading()) {
+          <span class="page__subtitle">
+            Всего записей: <strong>{{ stats()?.total }}</strong>
+          </span>
+        }
       </div>
 
-      <div class="dashboard" *ngIf="!loading(); else loadingTpl">
-        <!-- Секция: Справочники -->
-        <h3 class="dashboard__section">📚 Справочники</h3>
-        <div class="dashboard__grid">
-          <div
-            class="dashboard__card"
-            *ngFor="let item of dirStats()"
-            [routerLink]="'/directories'"
-          >
-            <p-card>
-              <ng-template pTemplate="content">
-                <div class="dashboard__card-body">
-                  <i [class]="item.icon + ' dashboard__card-icon'"></i>
-                  <div class="dashboard__card-info">
-                    <span class="dashboard__card-value">{{ item.total }}</span>
-                    <span class="dashboard__card-label">{{ item.label }}</span>
-                  </div>
-                </div>
-              </ng-template>
-            </p-card>
+      @if (!loading()) {
+        <div class="dashboard">
+          <!-- Секция: Справочники -->
+          <h3 class="dashboard__section">📚 Справочники</h3>
+          <div class="dashboard__grid">
+            @for (item of dirStats(); track item.label) {
+              <div
+                class="dashboard__card"
+                [routerLink]="'/directories'"
+              >
+                <p-card>
+                  <ng-template pTemplate="content">
+                    <div class="dashboard__card-body">
+                      <i [class]="item.icon + ' dashboard__card-icon'"></i>
+                      <div class="dashboard__card-info">
+                        <span class="dashboard__card-value">{{ item.total }}</span>
+                        <span class="dashboard__card-label">{{ item.label }}</span>
+                      </div>
+                    </div>
+                  </ng-template>
+                </p-card>
+              </div>
+            }
+          </div>
+
+          <!-- Секция: Бизнес-процессы -->
+          <h3 class="dashboard__section">🏭 Бизнес-процессы</h3>
+          <div class="dashboard__grid">
+            @for (item of moduleStats(); track item.label) {
+              <div
+                class="dashboard__card"
+                [routerLink]="'/modules'"
+              >
+                <p-card>
+                  <ng-template pTemplate="content">
+                    <div class="dashboard__card-body">
+                      <i [class]="item.icon + ' dashboard__card-icon'"></i>
+                      <div class="dashboard__card-info">
+                        <span class="dashboard__card-value">{{ item.total }}</span>
+                        <span class="dashboard__card-label">{{ item.label }}</span>
+                      </div>
+                    </div>
+                  </ng-template>
+                </p-card>
+              </div>
+            }
           </div>
         </div>
-
-        <!-- Секция: Бизнес-процессы -->
-        <h3 class="dashboard__section">🏭 Бизнес-процессы</h3>
-        <div class="dashboard__grid">
-          <div
-            class="dashboard__card"
-            *ngFor="let item of moduleStats()"
-            [routerLink]="'/modules'"
-          >
-            <p-card>
-              <ng-template pTemplate="content">
-                <div class="dashboard__card-body">
-                  <i [class]="item.icon + ' dashboard__card-icon'"></i>
-                  <div class="dashboard__card-info">
-                    <span class="dashboard__card-value">{{ item.total }}</span>
-                    <span class="dashboard__card-label">{{ item.label }}</span>
-                  </div>
-                </div>
-              </ng-template>
-            </p-card>
-          </div>
-        </div>
-      </div>
-
-      <ng-template #loadingTpl>
+      } @else {
         <div class="dashboard dashboard--loading">
-          <div *ngFor="let _ of [].constructor(8)" class="dashboard__skeleton">
-            <div class="dashboard__skeleton-icon"></div>
-            <div class="dashboard__skeleton-text"></div>
-          </div>
+          @for (_ of [].constructor(8); track $index) {
+            <div class="dashboard__skeleton">
+              <div class="dashboard__skeleton-icon"></div>
+              <div class="dashboard__skeleton-text"></div>
+            </div>
+          }
         </div>
-      </ng-template>
+      }
     </div>
   `,
   styleUrl: './dashboard-page.component.scss',

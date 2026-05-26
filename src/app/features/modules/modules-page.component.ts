@@ -1,9 +1,10 @@
-import { Component, signal, computed, inject, OnInit } from '@angular/core';
-import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, DatePipe } from '@angular/common';
+import { Component, signal, computed, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, of, tap, catchError } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+import { MODULE_PERM_PREFIX } from '../../core/permissions';
 
 // PrimeNG
 import { TableModule } from 'primeng/table';
@@ -22,30 +23,6 @@ import { DatePickerModule } from 'primeng/datepicker';
 
 // Shared UI
 import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
-
-// ===== Маппинг ключ модуля → префикс разрешения =====
-const MODULE_PERM_PREFIX: Record<string, string> = {
-  tenders: 'office.tenders',
-  'product-passports': 'production.productPassports',
-  quotations: 'office.quotations',
-  orders: 'office.orders',
-  boms: 'production.boms',
-  operations: 'production.operations',
-  'tech-processes': 'production.techProcesses',
-  'purchase-requests': 'warehouse.purchaseRequests',
-  'purchase-orders': 'warehouse.purchaseOrders',
-  warehouses: 'warehouse.warehouses',
-  'stock-movements': 'warehouse.stockMovements',
-  reservations: 'warehouse.reservations',
-  'work-orders': 'production.workOrders',
-  'work-order-operations': 'production.workOrderOperations',
-  'cost-calculations': 'accounting.costCalculations',
-  'actual-costs': 'accounting.actualCosts',
-  shipments: 'warehouse.shipments',
-  'shipping-docs': 'accounting.shippingDocs',
-  counters: 'admin.counters',
-  interactions: 'office.interactions',
-};
 
 // Service
 import { CrudApiService } from '../../shared/services/crud-api.service';
@@ -73,9 +50,9 @@ interface ModuleConfig {
 @Component({
   selector: 'app-modules-page',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, DatePipe,
-    FormsModule, TableModule, ButtonModule, DialogModule,
+    DatePipe, FormsModule, TableModule, ButtonModule, DialogModule,
     InputTextModule, InputNumberModule, SelectModule, TextareaModule,
     TagModule, ToastModule, ConfirmDialogModule, DatePickerModule,
     TooltipModule, EmptyStateComponent, HasPermissionDirective,
@@ -89,18 +66,19 @@ interface ModuleConfig {
 
       <!-- Навигация по модулям (только с правом просмотра) -->
       <div class="mod-tabs">
-        <p-button
-          *ngFor="let mod of visibleModules()"
-          [label]="mod.label"
-          [icon]="mod.icon"
-          [severity]="activeKey() === mod.key ? 'primary' : 'secondary'"
-          [outlined]="activeKey() !== mod.key"
-          (click)="selectModule(mod.key)"
-          [pTooltip]="mod.label"
-          tooltipPosition="bottom"
-          size="small"
-          styleClass="mod-tabs__btn"
-        />
+        @for (mod of visibleModules(); track mod.key) {
+          <p-button
+            [label]="mod.label"
+            [icon]="mod.icon"
+            [severity]="activeKey() === mod.key ? 'primary' : 'secondary'"
+            [outlined]="activeKey() !== mod.key"
+            (click)="selectModule(mod.key)"
+            [pTooltip]="mod.label"
+            tooltipPosition="bottom"
+            size="small"
+            styleClass="mod-tabs__btn"
+          />
+        }
       </div>
 
       <!-- Панель инструментов -->
@@ -113,10 +91,12 @@ interface ModuleConfig {
                 {{ currentMod()?.basePath }}
               </span>
             </span>
-            <span class="mod-toolbar__count" *ngIf="!loading()">
-              {{ totalRecords() }}
-              {{ totalRecords() === 1 ? 'запись' : (totalRecords() >= 2 && totalRecords() <= 4 ? 'записи' : 'записей') }}
-            </span>
+            @if (!loading()) {
+              <span class="mod-toolbar__count">
+                {{ totalRecords() }}
+                {{ totalRecords() === 1 ? 'запись' : (totalRecords() >= 2 && totalRecords() <= 4 ? 'записи' : 'записей') }}
+              </span>
+            }
           </div>
           <div class="mod-toolbar__right">
             <span class="p-input-icon-left mod-search">
@@ -141,143 +121,145 @@ interface ModuleConfig {
         </div>
 
         <!-- Фильтры (только для тендеров) -->
-        <div class="mod-filters" *ngIf="activeKey() === 'tenders'">
-          <p-select
-            [options]="companyOptions()"
-            [(ngModel)]="selectedCompanyFilter"
-            (ngModelChange)="onFilterChange()"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Все компании"
-            [showClear]="true"
-            class="mod-filters__select"
-            size="small"
-          />
-          <p-select
-            [options]="tenderStatusOptions"
-            [(ngModel)]="selectedStatusFilter"
-            (ngModelChange)="onFilterChange()"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Все статусы"
-            [showClear]="true"
-            class="mod-filters__select"
-            size="small"
-          />
-        </div>
+        @if (activeKey() === 'tenders') {
+          <div class="mod-filters">
+            <p-select
+              [options]="companyOptions()"
+              [(ngModel)]="selectedCompanyFilter"
+              (ngModelChange)="onFilterChange()"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Все компании"
+              [showClear]="true"
+              class="mod-filters__select"
+              size="small"
+            />
+            <p-select
+              [options]="tenderStatusOptions"
+              [(ngModel)]="selectedStatusFilter"
+              (ngModelChange)="onFilterChange()"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Все статусы"
+              [showClear]="true"
+              class="mod-filters__select"
+              size="small"
+            />
+          </div>
+        }
 
         <!-- Спиннер загрузки -->
-        <div class="loading-state" *ngIf="loading()">Загрузка...</div>
+        @if (loading()) {
+          <div class="loading-state">Загрузка...</div>
+        }
 
         <!-- Таблица -->
-        <p-table
-          *ngIf="!loading()"
-          [value]="rows()"
-          [stripedRows]="true"
-          [paginator]="true"
-          [rows]="limit()"
-          [totalRecords]="totalRecords()"
-          [rowsPerPageOptions]="[10, 15, 25, 50]"
-          [lazy]="true"
-          [sortField]="sortField()"
-          [sortOrder]="sortOrder()"
-          (onPage)="onPageChange($event)"
-          (onSort)="onSort($event)"
-          size="small"
-          styleClass="p-datatable-striped"
-          [showCurrentPageReport]="true"
-          currentPageReportTemplate="Записи {first}–{last} из {totalRecords}"
-        >
-          <ng-template pTemplate="header">
-            <tr>
-              <th *ngFor="let col of currentMod()?.columns; trackBy: trackByField" [style.width]="col.width">
-                {{ col.header }}
-              </th>
-              <th style="width:90px">Действия</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-row>
-            <tr>
-              <td *ngFor="let col of currentMod()?.columns; trackBy: trackByField">
-                <ng-container [ngSwitch]="col.type">
-                  <p-tag
-                    *ngSwitchCase="'tag'"
-                    [value]="row[col.field]"
-                    [severity]="getSeverity(row[col.field])"
-                  />
-                  <span *ngSwitchCase="'boolean'">
-                    <i
-                      class="pi boolean-indicator"
-                      [class.pi-check-circle]="row[col.field]"
-                      [class.pi-circle]="!row[col.field]"
-                      [class.boolean-indicator--yes]="row[col.field]"
-                      [class.boolean-indicator--no]="!row[col.field]"
-                    ></i>
-                  </span>
-                  <span *ngSwitchCase="'date'">
-                    {{ row[col.field] ? (row[col.field] | date:'dd.MM.yyyy') : '—' }}
-                  </span>
-                  <span *ngSwitchDefault>{{ getCellValue(row, col) }}</span>
-                </ng-container>
-              </td>
-              <td>
-                <div class="table-actions">
-                  <p-button
-                    *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.edit'"
-                    icon="pi pi-pencil"
-                    [rounded]="true"
-                    [text]="true"
-                    severity="secondary"
-                    size="small"
-                    (click)="showEdit(row)"
-                    pTooltip="Редактировать"
-                  />
-                  <p-button
-                    *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.delete'"
-                    icon="pi pi-trash"
-                    [rounded]="true"
-                    [text]="true"
-                    severity="danger"
-                    size="small"
-                    (click)="confirmDelete(row)"
-                    pTooltip="Удалить"
-                  />
-                </div>
-              </td>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td [attr.colspan]="(currentMod()?.columns?.length || 0) + 1">
-                <app-empty-state
-                  [compact]="true"
-                  [description]="'Нет данных. Нажмите «Добавить» чтобы создать запись.'"
-                >
-                  <i empty-icon class="pi pi-inbox"></i>
-                  <div empty-actions>
+        @if (!loading()) {
+          <p-table
+            [value]="rows()"
+            [stripedRows]="true"
+            [paginator]="true"
+            [rows]="limit()"
+            [totalRecords]="totalRecords()"
+            [rowsPerPageOptions]="[10, 15, 25, 50]"
+            [lazy]="true"
+            [sortField]="sortField()"
+            [sortOrder]="sortOrder()"
+            (onPage)="onPageChange($event)"
+            (onSort)="onSort($event)"
+            size="small"
+            styleClass="p-datatable-striped"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Записи {first}–{last} из {totalRecords}"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                @for (col of currentMod()?.columns; track col.field || $index) {
+                  <th [style.width]="col.width">{{ col.header }}</th>
+                }
+                <th style="width:90px">Действия</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-row>
+              <tr>
+                @for (col of currentMod()?.columns; track col.field || $index) {
+                  <td>
+                    @switch (col.type) {
+                      @case ('tag') {
+                        <p-tag [value]="row[col.field]" [severity]="getSeverity(row[col.field])" />
+                      }
+                      @case ('boolean') {
+                        <i
+                          class="pi boolean-indicator"
+                          [class.pi-check-circle]="row[col.field]"
+                          [class.pi-circle]="!row[col.field]"
+                          [class.boolean-indicator--yes]="row[col.field]"
+                          [class.boolean-indicator--no]="!row[col.field]"
+                        ></i>
+                      }
+                      @case ('date') {
+                        <span>{{ row[col.field] ? (row[col.field] | date:'dd.MM.yyyy') : '—' }}</span>
+                      }
+                      @default {
+                        <span>{{ getCellValue(row, col) }}</span>
+                      }
+                    }
+                  </td>
+                }
+                <td>
+                  <div class="table-actions">
                     <p-button
-                      *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.create'"
-                      label="Добавить"
-                      icon="pi pi-plus"
+                      *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.edit'"
+                      icon="pi pi-pencil"
+                      [rounded]="true"
+                      [text]="true"
+                      severity="secondary"
                       size="small"
-                      (click)="showAdd()"
+                      (click)="showEdit(row)"
+                      pTooltip="Редактировать"
+                    />
+                    <p-button
+                      *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.delete'"
+                      icon="pi pi-trash"
+                      [rounded]="true"
+                      [text]="true"
+                      severity="danger"
+                      size="small"
+                      (click)="confirmDelete(row)"
+                      pTooltip="Удалить"
                     />
                   </div>
-                </app-empty-state>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td [attr.colspan]="(currentMod()?.columns?.length || 0) + 1">
+                  <app-empty-state
+                    [compact]="true"
+                    [description]="'Нет данных. Нажмите «Добавить» чтобы создать запись.'"
+                  >
+                    <i empty-icon class="pi pi-inbox"></i>
+                    <div empty-actions>
+                      <p-button
+                        *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.create'"
+                        label="Добавить"
+                        icon="pi pi-plus"
+                        size="small"
+                        (click)="showAdd()"
+                      />
+                    </div>
+                  </app-empty-state>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        }
       </div>
     </div>
 
     <!-- ════════════════════════════════════════════════════════════
-         Диалог создания/редактирования — жёсткая раскладка:
-         - ширина 480px, max 90vw, modal, недраг, нерес
-         - Flex-col gap-4 между полями
-         - Flex-col gap-1 внутри поля (label + control)
-         - w-full на всех контролах
-         - Footer прижат вправо (justify-end gap-2)
+         Диалог создания/редактирования
          ════════════════════════════════════════════════════════════ -->
     <p-dialog
       [(visible)]="dialogVisible"
@@ -290,80 +272,69 @@ interface ModuleConfig {
     >
       <!-- Body: flex-col gap-4 между полями -->
       <div class="flex flex-col gap-4">
-        <ng-container *ngFor="let col of (currentMod()?.columns || []); trackBy: trackByField">
-          <!-- Каждое поле: label + control в flex-col gap-1 -->
+        @for (col of (currentMod()?.columns || []); track col.field || $index) {
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium">
               {{ col.header }}
-              <span *ngIf="col.required" class="text-secondary">*</span>
+              @if (col.required) { <span class="text-secondary">*</span> }
             </label>
 
-            <!-- Text (readonly для автонумерации) -->
-            <input
-              *ngIf="col.type === 'text'"
-              pInputText
-              [(ngModel)]="editRow[col.field]"
-              [attr.required]="col.required ? '' : null"
-              [readonly]="col.readonly || false"
-              class="w-full"
-              size="small"
-            />
-
-            <!-- Number -->
-            <p-inputNumber
-              *ngIf="col.type === 'number'"
-              [(ngModel)]="editRow[col.field]"
-              class="w-full"
-              size="small"
-            />
-
-            <!-- Textarea -->
-            <textarea
-              *ngIf="col.type === 'textarea'"
-              pInputTextarea
-              [(ngModel)]="editRow[col.field]"
-              class="w-full"
-              rows="3"
-            ></textarea>
-
-            <!-- Select (если есть опции) -->
-            <p-select
-              *ngIf="col.options && col.options.length > 0"
-              [options]="col.options || []"
-              [(ngModel)]="editRow[col.field]"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Выберите..."
-              [showClear]="!col.required"
-              class="w-full"
-              size="small"
-            />
-
-            <!-- Boolean -->
-            <p-select
-              *ngIf="col.type === 'boolean'"
-              [options]="booleanOptions"
-              [(ngModel)]="editRow[col.field]"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Выберите..."
-              class="w-full"
-              size="small"
-            />
-
-            <!-- Date -->
-            <p-datepicker
-              *ngIf="col.type === 'date'"
-              [(ngModel)]="editRow[col.field]"
-              class="w-full"
-              size="small"
-              dateFormat="dd.mm.yy"
-            />
+            @if (col.type === 'text') {
+              <input
+                pInputText
+                [(ngModel)]="editRow[col.field]"
+                [attr.required]="col.required ? '' : null"
+                [readonly]="col.readonly || false"
+                class="w-full"
+                size="small"
+              />
+            } @else if (col.type === 'number') {
+              <p-inputNumber
+                [(ngModel)]="editRow[col.field]"
+                class="w-full"
+                size="small"
+              />
+            } @else if (col.type === 'textarea') {
+              <textarea
+                pInputTextarea
+                [(ngModel)]="editRow[col.field]"
+                class="w-full"
+                rows="3"
+              ></textarea>
+            } @else if (col.options && col.options.length > 0) {
+              <p-select
+                [options]="col.options || []"
+                [(ngModel)]="editRow[col.field]"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Выберите..."
+                [showClear]="!col.required"
+                class="w-full"
+                size="small"
+              />
+            } @else if (col.type === 'boolean') {
+              <p-select
+                [options]="booleanOptions"
+                [(ngModel)]="editRow[col.field]"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Выберите..."
+                class="w-full"
+                size="small"
+              />
+            } @else if (col.type === 'date') {
+              <p-datepicker
+                [(ngModel)]="editRow[col.field]"
+                class="w-full"
+                size="small"
+                dateFormat="dd.mm.yy"
+              />
+            }
           </div>
-        </ng-container>
+        }
       </div>
 
-      <!-- Footer: кнопки прижаты вправо -->
+      <!-- Footer -->
       <ng-template pTemplate="footer">
         <div class="flex justify-end gap-2">
           <p-button
@@ -441,7 +412,6 @@ export class ModulesPageComponent implements OnInit {
 
   // ===== Определения модулей =====
   readonly modules: ModuleConfig[] = [
-    // ── Входящие запросы ──
     {
       key: 'tenders',
       label: 'Запросы',
@@ -475,7 +445,6 @@ export class ModulesPageComponent implements OnInit {
         { field: 'installationSite', header: 'Объект', type: 'text' },
       ],
     },
-    // ── CRM ──
     {
       key: 'quotations',
       label: 'КП',
@@ -504,7 +473,6 @@ export class ModulesPageComponent implements OnInit {
         { field: 'total', header: 'Сумма', type: 'number', width: '120px' },
       ],
     },
-    // ── PLM ──
     {
       key: 'boms',
       label: 'BOM',
@@ -544,7 +512,6 @@ export class ModulesPageComponent implements OnInit {
         { field: 'isActive', header: 'Активна', type: 'boolean', width: '100px' },
       ],
     },
-    // ── ERP Снабжение ──
     {
       key: 'purchase-requests',
       label: 'Заявки',
@@ -571,7 +538,6 @@ export class ModulesPageComponent implements OnInit {
         { field: 'total', header: 'Сумма', type: 'number', width: '120px' },
       ],
     },
-    // ── Склад ──
     {
       key: 'warehouses',
       label: 'Склады',
@@ -610,7 +576,6 @@ export class ModulesPageComponent implements OnInit {
         { field: 'isActive', header: 'Активен', type: 'boolean', width: '100px' },
       ],
     },
-    // ── Производство ──
     {
       key: 'work-orders',
       label: 'Наряды',
@@ -638,7 +603,6 @@ export class ModulesPageComponent implements OnInit {
         { field: 'statusId', header: 'Статус', type: 'tag', width: '110px' },
       ],
     },
-    // ── Себестоимость ──
     {
       key: 'cost-calculations',
       label: 'Калькуляции',
@@ -664,7 +628,6 @@ export class ModulesPageComponent implements OnInit {
         { field: 'date', header: 'Дата', type: 'date', width: '120px' },
       ],
     },
-    // ── Отгрузка ──
     {
       key: 'shipments',
       label: 'Отгрузки',
@@ -692,7 +655,6 @@ export class ModulesPageComponent implements OnInit {
         { field: 'totalAmount', header: 'Сумма', type: 'number', width: '120px' },
       ],
     },
-    // ── Администрирование ──
     {
       key: 'counters',
       label: 'Счётчики',
@@ -723,7 +685,6 @@ export class ModulesPageComponent implements OnInit {
   currentMod = () => {
     const mod = this.modules.find((m) => m.key === this.activeKey()) ?? null;
     if (!mod) return null;
-    // Для тендеров подставляем динамические опции (компании)
     if (mod.key === 'tenders') {
       return {
         ...mod,
@@ -740,10 +701,6 @@ export class ModulesPageComponent implements OnInit {
     }
     return mod;
   };
-
-  // ===== TrackBy =====
-  trackByField = (index: number, item: ColumnDef): string =>
-    item.field || String(index);
 
   private readonly auth = inject(AuthService);
 
@@ -909,7 +866,6 @@ export class ModulesPageComponent implements OnInit {
     const mod = this.currentMod();
     if (!mod) return;
 
-    // Валидация required полей
     for (const col of mod.columns) {
       if (col.required && !this.editRow[col.field]) {
         this.notification.add({
@@ -1037,35 +993,28 @@ export class ModulesPageComponent implements OnInit {
       completed: 'success',
       true: 'info',
       false: 'secondary',
-      // warehouse types
       raw_materials: 'info',
       production: 'warn',
       finished_goods: 'success',
-      // interaction types
       call: 'info',
       email: 'warn',
       meeting: 'success',
       note: 'secondary',
       system: 'contrast',
-      // movement types
       receipt: 'success',
       write_off: 'danger',
       transfer_in: 'info',
       transfer_out: 'warn',
-      // cost types
       material: 'info',
       labor: 'warn',
       overhead: 'secondary',
-      // doc types
       torg12: 'info',
       ttn: 'warn',
       invoice: 'success',
-      // tender statuses
       in_progress: 'warn',
       kp_sent: 'info',
       won: 'success',
       lost: 'danger',
-      // active/inactive
       Резерв: 'warn',
       'В работе': 'info',
       Выполнено: 'success',

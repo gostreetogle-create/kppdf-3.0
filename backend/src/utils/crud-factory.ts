@@ -1,6 +1,7 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, type NextFunction } from 'express';
 import { Model } from 'mongoose';
 import { success, paginated, error } from '../utils/api-response';
+import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
 
 /**
@@ -30,8 +31,14 @@ export function createCrudRouter<T>(
 ): Router {
   const router = Router();
 
+  // Если задан permPrefix — декодируем JWT и устанавливаем req.user
+  // ДО проверки конкретного разрешения (requirePermission)
+  if (permPrefix) {
+    router.use(authenticate);
+  }
+
   // noop — заглушка для Express middleware (безопаснее пустого массива)
-  const noop = (_req: unknown, _res: unknown, next: () => void) => next();
+  const noop = (_req: unknown, _res: unknown, next: NextFunction) => next();
   const p = (action: string) => (permPrefix ? requirePermission(`${permPrefix}.${action}`) : noop);
 
   // LIST

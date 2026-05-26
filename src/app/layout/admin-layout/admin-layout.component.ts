@@ -1,6 +1,5 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { NgFor, NgIf } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { AuthService } from '../../core/auth.service';
@@ -16,7 +15,8 @@ interface MenuItem {
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgFor, NgIf, ButtonModule, TooltipModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonModule, TooltipModule],
   styleUrl: './admin-layout.component.scss',
   template: `
     <div class="layout">
@@ -27,34 +27,37 @@ interface MenuItem {
         </div>
 
         <nav class="layout__nav">
-          <a
-            *ngFor="let item of visibleMenuItems()"
-            class="layout__nav-item"
-            [routerLink]="item.route"
-            routerLinkActive="layout__nav-item--active"
-            [routerLinkActiveOptions]="{exact: item.route === '/dashboard'}"
-          >
-            <i [class]="item.icon"></i>
-            <span>{{ item.label }}</span>
-          </a>
+          @for (item of visibleMenuItems(); track item.label) {
+            <a
+              class="layout__nav-item"
+              [routerLink]="item.route"
+              routerLinkActive="layout__nav-item--active"
+              [routerLinkActiveOptions]="{exact: item.route === '/dashboard'}"
+            >
+              <i [class]="item.icon"></i>
+              <span>{{ item.label }}</span>
+            </a>
+          }
         </nav>
 
         <div class="layout__footer">
-          <div class="layout__user" *ngIf="user()">
-            <i class="pi pi-user"></i>
-            <div class="layout__user-info">
-              <span class="layout__user-name">{{ user()?.username }}</span>
-              <span class="layout__user-role">{{ getRoleLabel(user()?.role || '') }}</span>
+          @if (user()) {
+            <div class="layout__user">
+              <i class="pi pi-user"></i>
+              <div class="layout__user-info">
+                <span class="layout__user-name">{{ user()?.username }}</span>
+                <span class="layout__user-role">{{ getRoleLabel(user()?.role || '') }}</span>
+              </div>
+              <p-button
+                icon="pi pi-sign-out"
+                severity="danger"
+                size="small"
+                (click)="logout()"
+                pTooltip="Выйти"
+                styleClass="layout__logout"
+              />
             </div>
-            <p-button
-              icon="pi pi-sign-out"
-              severity="danger"
-              size="small"
-              (click)="logout()"
-              pTooltip="Выйти"
-              styleClass="layout__logout"
-            />
-          </div>
+          }
         </div>
       </aside>
       <main class="layout__main">

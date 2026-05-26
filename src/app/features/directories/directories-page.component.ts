@@ -1,9 +1,9 @@
-import { Component, signal, computed, inject, OnInit } from '@angular/core';
-import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
+import { Component, signal, computed, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, of, tap, catchError } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+import { DIR_PERM_PREFIX } from '../../core/permissions';
 
 // PrimeNG
 import { TableModule } from 'primeng/table';
@@ -26,18 +26,6 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.com
 // Services
 import { DirectoryService } from '../../core/directory.service';
 import { NotificationService } from '../../core/notification.service';
-
-// ===== Маппинг справочник → префикс разрешения =====
-const DIR_PERM_PREFIX: Record<string, string> = {
-  products: 'office.products',
-  categories: 'admin.categories',
-  counterparties: 'office.counterparties',
-  users: 'admin.users',
-  roles: 'admin.roles',
-  statuses: 'admin.statuses',
-  'work-types': 'admin.workTypes',
-  settings: 'admin.settings',
-};
 
 // ===== Column definition =====
 interface ColumnDef {
@@ -63,8 +51,8 @@ interface DirectoryConfig {
 @Component({
   selector: 'app-directories-page',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault,
     FormsModule, TableModule, ButtonModule, DialogModule,
     InputTextModule, InputNumberModule, SelectModule,
     TagModule, CardModule, ToastModule, ConfirmDialogModule,
@@ -80,26 +68,29 @@ interface DirectoryConfig {
 
       <!-- Навигация по справочникам (только с правом просмотра) -->
       <div class="dir-tabs">
-        <p-button
-          *ngFor="let dir of visibleDirs()"
-          [label]="dir.label"
-          [icon]="dir.icon"
-          [severity]="activeKey() === dir.key ? 'primary' : 'secondary'"
-          [outlined]="activeKey() !== dir.key"
-          (click)="selectDir(dir.key)"
-          [pTooltip]="dir.label"
-          tooltipPosition="bottom"
-          size="small"
-          styleClass="dir-tabs__btn"
-        />
+        @for (dir of visibleDirs(); track dir.key) {
+          <p-button
+            [label]="dir.label"
+            [icon]="dir.icon"
+            [severity]="activeKey() === dir.key ? 'primary' : 'secondary'"
+            [outlined]="activeKey() !== dir.key"
+            (click)="selectDir(dir.key)"
+            [pTooltip]="dir.label"
+            tooltipPosition="bottom"
+            size="small"
+            styleClass="dir-tabs__btn"
+          />
+        }
       </div>
 
       <div page-toolbar class="dir-toolbar">
         <div class="dir-toolbar__left">
           <span class="dir-toolbar__title">{{ currentDir()?.label }}</span>
-          <span class="dir-toolbar__count" *ngIf="!loading()">
-            {{ totalRecords() }} {{ totalRecords() === 1 ? 'запись' : (totalRecords() >= 2 && totalRecords() <= 4 ? 'записи' : 'записей') }}
-          </span>
+          @if (!loading()) {
+            <span class="dir-toolbar__count">
+              {{ totalRecords() }} {{ totalRecords() === 1 ? 'запись' : (totalRecords() >= 2 && totalRecords() <= 4 ? 'записи' : 'записей') }}
+            </span>
+          }
         </div>
         <div class="dir-toolbar__right">
           <span class="p-input-icon-left dir-search">
@@ -124,27 +115,32 @@ interface DirectoryConfig {
       </div>
 
       <!-- Быстрый доступ / часто используемые -->
-      <div class="quick-access" *ngIf="hasQuickPresets() && !loading() && rows().length > 0">
-        <span class="quick-access__label">Часто используемые:</span>
-        <p-button
-          *ngFor="let preset of currentDir()?.quickAddPresets"
-          [label]="preset.label"
-          size="small"
-          severity="secondary"
-          [outlined]="true"
-          (click)="addFromPreset(preset.value)"
-          styleClass="quick-access__chip"
-        />
-      </div>
+      @if (hasQuickPresets() && !loading() && rows().length > 0) {
+        <div class="quick-access">
+          <span class="quick-access__label">Часто используемые:</span>
+          @for (preset of currentDir()?.quickAddPresets || []; track $index) {
+            <p-button
+              [label]="preset.label"
+              size="small"
+              severity="secondary"
+              [outlined]="true"
+              (click)="addFromPreset(preset.value)"
+              styleClass="quick-access__chip"
+            />
+          }
+        </div>
+      }
 
       <!-- Спиннер загрузки -->
-      <div class="loading-state" *ngIf="loading()">Загрузка данных...</div>
+      @if (loading()) {
+        <div class="loading-state">Загрузка данных...</div>
+      }
 
       <!-- Таблица -->
-      <p-table
-        *ngIf="!loading()"
-        [value]="rows()"
-        [stripedRows]="true"
+      @if (!loading()) {
+        <p-table
+          [value]="rows()"
+          [stripedRows]="true"
         [paginator]="true"
         [rows]="limit()"
         [totalRecords]="totalRecords()"
@@ -161,33 +157,40 @@ interface DirectoryConfig {
       >
         <ng-template pTemplate="header">
           <tr>
-            <th *ngFor="let col of currentDir()?.columns; trackBy: trackByField" [style.width]="col.width">
-              {{ col.header }}
-            </th>
+            @for (col of currentDir()?.columns || []; track col.field || $index) {
+              <th [style.width]="col.width">{{ col.header }}</th>
+            }
             <th style="width:90px">Действия</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-row>
           <tr>
-            <td *ngFor="let col of currentDir()?.columns; trackBy: trackByField">
-              <ng-container [ngSwitch]="col.type">
-                <p-tag
-                  *ngSwitchCase="'tag'"
-                  [value]="row[col.field]"
-                  [severity]="getSeverity(row[col.field])"
-                />
-                <span *ngSwitchCase="'boolean'">
-                  <i
-                    class="pi boolean-indicator"
-                    [class.pi-check-circle]="row[col.field]"
-                    [class.pi-circle]="!row[col.field]"
-                    [class.boolean-indicator--yes]="row[col.field]"
-                    [class.boolean-indicator--no]="!row[col.field]"
-                  ></i>
-                </span>
-                <span *ngSwitchDefault>{{ row[col.field] }}</span>
-              </ng-container>
-            </td>
+            @for (col of currentDir()?.columns || []; track col.field || $index) {
+              <td>
+                @switch (col.type) {
+                  @case ('tag') {
+                    <p-tag
+                      [value]="row[col.field]"
+                      [severity]="getSeverity(row[col.field])"
+                    />
+                  }
+                  @case ('boolean') {
+                    <span>
+                      <i
+                        class="pi boolean-indicator"
+                        [class.pi-check-circle]="row[col.field]"
+                        [class.pi-circle]="!row[col.field]"
+                        [class.boolean-indicator--yes]="row[col.field]"
+                        [class.boolean-indicator--no]="!row[col.field]"
+                      ></i>
+                    </span>
+                  }
+                  @default {
+                    <span>{{ row[col.field] }}</span>
+                  }
+                }
+              </td>
+            }
             <td>
               <div class="table-actions">
                 <p-button
@@ -230,19 +233,21 @@ interface DirectoryConfig {
                     size="small"
                     (click)="showAdd()"
                   />
-                  <p-button
-                    *ngIf="hasQuickPresets()"
-                    label="Использовать шаблон"
-                    severity="secondary"
-                    size="small"
-                    (click)="addFromPreset(currentDir()?.quickAddPresets?.[0]?.value || {})"
-                  />
+                  @if (hasQuickPresets()) {
+                    <p-button
+                      label="Использовать шаблон"
+                      severity="secondary"
+                      size="small"
+                      (click)="addFromPreset(currentDir()?.quickAddPresets?.[0]?.value || {})"
+                    />
+                  }
                 </div>
               </app-empty-state>
             </td>
           </tr>
         </ng-template>
       </p-table>
+      }
     </app-page-layout>
 
     <!-- ════════════════════════════════════════════════════════════
@@ -264,58 +269,52 @@ interface DirectoryConfig {
     >
       <!-- Body: flex-col gap-4 между полями -->
       <div class="flex flex-col gap-4">
-        <ng-container *ngFor="let col of (currentDir()?.columns || []); trackBy: trackByField">
+        @for (col of currentDir()?.columns || []; track col.field || $index) {
           <!-- Каждое поле: label + control в flex-col gap-1 -->
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium">
               {{ col.header }}
-              <span *ngIf="col.required" class="text-secondary">*</span>
+              @if (col.required) { <span class="text-secondary">*</span> }
             </label>
 
-            <!-- Text -->
-            <input
-              *ngIf="col.type === 'text'"
-              pInputText
-              [(ngModel)]="editRow[col.field]"
-              [attr.required]="col.required ? '' : null"
-              class="w-full"
-              size="small"
-            />
-
-            <!-- Number -->
-            <p-inputNumber
-              *ngIf="col.type === 'number'"
-              [(ngModel)]="editRow[col.field]"
-              class="w-full"
-              size="small"
-            />
-
-            <!-- Select (если есть опции) -->
-            <p-select
-              *ngIf="col.options && col.options.length > 0"
-              [options]="col.options || []"
-              [(ngModel)]="editRow[col.field]"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Выберите..."
-              [showClear]="!col.required"
-              class="w-full"
-              size="small"
-            />
-
-            <!-- Boolean -->
-            <p-select
-              *ngIf="col.type === 'boolean'"
-              [options]="booleanOptions"
-              [(ngModel)]="editRow[col.field]"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Выберите..."
-              class="w-full"
-              size="small"
-            />
+            @if (col.type === 'text') {
+              <input
+                pInputText
+                [(ngModel)]="editRow[col.field]"
+                [attr.required]="col.required ? '' : null"
+                class="w-full"
+                size="small"
+              />
+            } @else if (col.type === 'number') {
+              <p-inputNumber
+                [(ngModel)]="editRow[col.field]"
+                class="w-full"
+                size="small"
+              />
+            } @else if (col.options && col.options.length > 0) {
+              <p-select
+                [options]="col.options || []"
+                [(ngModel)]="editRow[col.field]"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Выберите..."
+                [showClear]="!col.required"
+                class="w-full"
+                size="small"
+              />
+            } @else if (col.type === 'boolean') {
+              <p-select
+                [options]="booleanOptions"
+                [(ngModel)]="editRow[col.field]"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Выберите..."
+                class="w-full"
+                size="small"
+              />
+            }
           </div>
-        </ng-container>
+        }
       </div>
 
       <!-- Footer: кнопки прижаты вправо -->
@@ -557,10 +556,6 @@ export class DirectoriesPageComponent implements OnInit {
   /** Есть ли быстрые пресеты для текущего справочника */
   hasQuickPresets = (): boolean =>
     (this.currentDir()?.quickAddPresets?.length ?? 0) > 0;
-
-  // ===== TrackBy =====
-  trackByField = (index: number, item: ColumnDef): string =>
-    item.field || String(index);
 
   constructor() {
     this.searchSubject

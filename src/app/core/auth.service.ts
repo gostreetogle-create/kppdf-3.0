@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, of, map } from 'rxjs';
+import { Observable, tap, of, map, catchError, firstValueFrom } from 'rxjs';
 import { environment } from '@env/environment';
 
 export interface LoginRequest {
@@ -54,10 +54,7 @@ export class AuthService {
       .post<{ success: boolean; data: TokensPair }>(`${this.baseUrl}/refresh`, { refreshToken })
       .pipe(
         map((res) => res.data),
-        tap({
-          next: (tokens) => this.saveTokens(tokens),
-          error: () => this.logout(),
-        }),
+        tap((tokens) => this.saveTokens(tokens)),
       );
   }
 
@@ -139,6 +136,41 @@ export class AuthService {
       }
     }
     return false;
+  }
+
+  /**
+   * Инициализация сессии при старте приложения.
+   * Вызывается через APP_INITIALIZER до монтирования роутера.
+   */
+  async initializeAuth(): Promise<void> {
+    const token = this.getAccessToken();
+    if (!token) return;
+
+    const payload = this.decodeToken(token);
+    if (!payload) {
+      this.logout();
+      return;
+    }
+
+    const exp = payload['exp'] as number | undefined;
+    // Токен ещё жив — состояние уже восстановлено из localStorage через loadPermissions
+    if (exp && exp * 1000 > Date.now()) {
+      return;
+    }
+
+    // Токен истёк — пытаемся обновить
+    try {
+      await firstValueFrom(
+        this.refresh().pipe(
+          catchError(() => {
+            this.logout();
+            return of(undefined);
+          }),
+        ),
+      );
+    } catch {
+      this.logout();
+    }
   }
 
   /** Проверить, авторизован ли пользователь */

@@ -1,5 +1,5 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
-import { NgFor, NgIf, DatePipe, DecimalPipe } from '@angular/common';
+import { Component, signal, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, of, tap, catchError } from 'rxjs';
@@ -23,8 +23,9 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.com
 @Component({
   selector: 'app-documents-page',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    NgFor, NgIf, DatePipe, DecimalPipe, RouterModule, FormsModule,
+    DatePipe, DecimalPipe, RouterModule, FormsModule,
     TableModule, ButtonModule, DialogModule,
     InputTextModule, TagModule,
     ToastModule, ConfirmDialogModule, TooltipModule, DatePickerModule,
@@ -50,16 +51,17 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.com
 
       <!-- КП / Заказы tabs -->
       <div class="doc-tabs">
-        <p-button
-          *ngFor="let tab of tabs"
-          [label]="tab.label"
-          [icon]="tab.icon"
-          [severity]="activeTab() === tab.key ? 'primary' : 'secondary'"
-          [outlined]="activeTab() !== tab.key"
-          (click)="selectTab(tab.key)"
-          size="small"
-          styleClass="doc-tabs__btn"
-        />
+        @for (tab of tabs; track tab.key) {
+          <p-button
+            [label]="tab.label"
+            [icon]="tab.icon"
+            [severity]="activeTab() === tab.key ? 'primary' : 'secondary'"
+            [outlined]="activeTab() !== tab.key"
+            (click)="selectTab(tab.key)"
+            size="small"
+            styleClass="doc-tabs__btn"
+          />
+        }
       </div>
 
       <!-- Toolbar -->
@@ -68,9 +70,11 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.com
           <span class="documents__toolbar-title">
             {{ currentTab?.label }}
           </span>
-          <span class="documents__toolbar-count" *ngIf="!loading()">
-            {{ totalRecords() }} записей
-          </span>
+          @if (!loading()) {
+            <span class="documents__toolbar-count">
+              {{ totalRecords() }} записей
+            </span>
+          }
         </div>
         <div class="documents__toolbar-right">
           <span class="p-input-icon-left doc-search">
@@ -87,89 +91,92 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.com
       </div>
 
       <!-- Loading -->
-      <div class="loading-state" *ngIf="loading()">Загрузка...</div>
+      @if (loading()) {
+        <div class="loading-state">Загрузка...</div>
+      }
 
       <!-- Table -->
-      <p-table
-        *ngIf="!loading()"
-        [value]="rows()"
-        [stripedRows]="true"
-        [paginator]="true"
-        [rows]="limit()"
-        [totalRecords]="totalRecords()"
-        [rowsPerPageOptions]="[10, 15, 25, 50]"
-        [lazy]="true"
-        (onPage)="onPageChange($event)"
-        (onSort)="onSort($event)"
-        size="small"
-        styleClass="p-datatable-striped"
-        [showCurrentPageReport]="true"
-        currentPageReportTemplate="Записи {first}–{last} из {totalRecords}"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width:140px">Номер</th>
-            <th>Контрагент</th>
-            <th style="width:120px">Дата</th>
-            <th style="width:110px">Статус</th>
-            <th style="width:120px">Сумма</th>
-            <th style="width:90px">Действия</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-row>
-          <tr class="documents__row" (click)="editDocument(row)" style="cursor:pointer">
-            <td>{{ row['number'] }}</td>
-            <td>{{ row['counterpartyId'] }}</td>
-            <td>{{ row['date'] ? (row['date'] | date:'dd.MM.yyyy') : '—' }}</td>
-            <td>
-              <p-tag [value]="row['statusId']" [severity]="getSeverity(row['statusId'])" />
-            </td>
-            <td>{{ row['total'] || 0 | number:'1.2-2' }}</td>
-            <td>
-              <div class="table-actions" (click)="$event.stopPropagation()">
-                <p-button
-                  icon="pi pi-file-edit"
-                  [rounded]="true"
-                  [text]="true"
-                  severity="secondary"
-                  size="small"
-                  (click)="editDocument(row)"
-                  pTooltip="Редактировать"
-                />
-                <p-button
-                  icon="pi pi-trash"
-                  [rounded]="true"
-                  [text]="true"
-                  severity="danger"
-                  size="small"
-                  (click)="confirmDelete(row)"
-                  pTooltip="Удалить"
-                />
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="6">
-              <app-empty-state
-                [compact]="true"
-                [description]="'Нет документов. Нажмите «Создать КП» чтобы создать новый документ.'"
-              >
-                <i empty-icon class="pi pi-file"></i>
-                <div empty-actions>
+      @if (!loading()) {
+        <p-table
+          [value]="rows()"
+          [stripedRows]="true"
+          [paginator]="true"
+          [rows]="limit()"
+          [totalRecords]="totalRecords()"
+          [rowsPerPageOptions]="[10, 15, 25, 50]"
+          [lazy]="true"
+          (onPage)="onPageChange($event)"
+          (onSort)="onSort($event)"
+          size="small"
+          styleClass="p-datatable-striped"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Записи {first}–{last} из {totalRecords}"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width:140px">Номер</th>
+              <th>Контрагент</th>
+              <th style="width:120px">Дата</th>
+              <th style="width:110px">Статус</th>
+              <th style="width:120px">Сумма</th>
+              <th style="width:90px">Действия</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr class="documents__row" (click)="editDocument(row)" style="cursor:pointer">
+              <td>{{ row['number'] }}</td>
+              <td>{{ row['counterpartyId'] }}</td>
+              <td>{{ row['date'] ? (row['date'] | date:'dd.MM.yyyy') : '—' }}</td>
+              <td>
+                <p-tag [value]="row['statusId']" [severity]="getSeverity(row['statusId'])" />
+              </td>
+              <td>{{ row['total'] || 0 | number:'1.2-2' }}</td>
+              <td>
+                <div class="table-actions" (click)="$event.stopPropagation()">
                   <p-button
-                    label="Создать КП"
-                    icon="pi pi-plus"
+                    icon="pi pi-file-edit"
+                    [rounded]="true"
+                    [text]="true"
+                    severity="secondary"
                     size="small"
-                    (click)="createNew()"
+                    (click)="editDocument(row)"
+                    pTooltip="Редактировать"
+                  />
+                  <p-button
+                    icon="pi pi-trash"
+                    [rounded]="true"
+                    [text]="true"
+                    severity="danger"
+                    size="small"
+                    (click)="confirmDelete(row)"
+                    pTooltip="Удалить"
                   />
                 </div>
-              </app-empty-state>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="6">
+                <app-empty-state
+                  [compact]="true"
+                  [description]="'Нет документов. Нажмите «Создать КП» чтобы создать новый документ.'"
+                >
+                  <i empty-icon class="pi pi-file"></i>
+                  <div empty-actions>
+                    <p-button
+                      label="Создать КП"
+                      icon="pi pi-plus"
+                      size="small"
+                      (click)="createNew()"
+                    />
+                  </div>
+                </app-empty-state>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
     </div>
 
     <p-toast position="top-right" />

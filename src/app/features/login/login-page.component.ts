@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -11,6 +11,7 @@ import { AuthService } from '../../core/auth.service';
 @Component({
   selector: 'app-login-page',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [InputTextModule, PasswordModule, ButtonModule, FormsModule, ToastModule],
   template: `
     <div class="auth">
@@ -44,7 +45,7 @@ import { AuthService } from '../../core/auth.service';
             <p class="auth__card-subtitle">Платформа управления производством</p>
           </div>
 
-          <form class="auth__form" (ngSubmit)="doLogin()">
+          <form class="auth__form" (ngSubmit)="doLogin()" novalidate>
             <div class="auth__field">
               <label for="username" class="auth__label">Логин</label>
               <input
