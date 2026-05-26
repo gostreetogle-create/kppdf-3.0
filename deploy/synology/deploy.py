@@ -10,17 +10,19 @@ Examples:
     python deploy/synology/deploy.py --skip-build --seed
 
 Steps:
-    1. Create archive (backend/ + shared/ + docker-compose.prod.yml)
-    2. Connect to Synology via paramiko
-    3. Upload & extract archive
-    4. Docker build + up
-    5. Health check + seed (optional)
-    6. Verify API
+    1. Build Angular frontend (npm run build)
+    2. Create archive (backend/ + shared/ + frontend/ + docker-compose.prod.yml)
+    3. Connect to Synology via paramiko
+    4. Upload & extract archive
+    5. Docker build + up
+    6. Health check + seed (optional)
+    7. Verify API + frontend
 """
 
 import argparse
 import base64
 import os
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -164,12 +166,46 @@ class RemoteHost:
         return self.exec_sudo(docker_cmd, timeout=timeout)
 
 
+# -- Frontend build -----------------------------------------------------
+
+def build_frontend(project_root):
+    """Build Angular frontend (npm run build)."""
+    log("Building Angular frontend...")
+    result = subprocess.run(
+        ["npm", "run", "build"],
+        cwd=str(project_root),
+        capture_output=True, text=True, timeout=180)
+    if result.returncode != 0:
+        # Show last lines of error
+        err_lines = result.stderr.strip().split('\n')
+        for line in err_lines[-5:]:
+            print("   " + line)
+        fail("Angular build failed")
+    ok("Angular build OK")
+    # Verify dist exists
+    dist_browser = project_root / "dist" / "kppdf-3.0" / "browser" / "index.html"
+    if not dist_browser.exists():
+        fail("dist/kppdf-3.0/browser/index.html not found after build")
+    # Copy to frontend/browser for the archive volume mount
+    frontend_dir = project_root / "frontend" / "browser"
+    if frontend_dir.exists():
+        shutil.rmtree(str(frontend_dir))
+    frontend_dir.mkdir(parents=True, exist_ok=True)
+    for item in (project_root / "dist" / "kppdf-3.0" / "browser").iterdir():
+        dest = frontend_dir / item.name
+        if item.is_dir():
+            shutil.copytree(item, dest, dirs_exist_ok=True)
+        else:
+            shutil.copy2(item, dest)
+    ok("Frontend copied to frontend/browser/")
+
+
 # -- Archive creation ---------------------------------------------------
 
 def create_archive(archive_path, project_root):
-    """Create deploy archive with backend/ + shared/ + docker-compose.prod.yml."""
+    """Create deploy archive with backend/ + shared/ + frontend/ + docker-compose.prod.yml."""
     log("Creating archive...")
-    items = ["backend/", "shared/", "docker-compose.prod.yml"]
+    items = ["backend/", "shared/", "frontend/", "docker-compose.prod.yml"]
     exclude = [
         "backend/node_modules", "backend/dist", "backend/.git",
         "backend/src/__tests__", "backend/.env", "backend/.env.local",
@@ -270,28 +306,33 @@ def main():
     print()
 
     # Step 1: Verify source
-    print("Step 1/6: Verify source code...")
+    print("Step 1/7: Verify source code...")
     if not (project_root / "backend" / "src").exists():
         fail("backend/src not found!")
     if not (project_root / "shared" / "types").exists():
         fail("shared/types not found!")
     ok("Source: backend/ + shared/ + docker-compose.prod.yml")
 
-    # Step 2: Create archive
+    # Step 2: Build frontend
     print()
-    print("Step 2/6: Create archive...")
+    print("Step 2/7: Build Angular frontend...")
+    build_frontend(project_root)
+
+    # Step 3: Create archive
+    print()
+    print("Step 3/7: Create archive...")
     create_archive(archive_path, project_root)
 
-    # Step 3: Connect
+    # Step 4: Connect
     print()
-    print("Step 3/6: Connect to Synology...")
+    print("Step 4/7: Connect to Synology...")
     remote = RemoteHost(args.host, args.user, args.password)
     remote.connect()
     remote.exec("mkdir -p " + REMOTE_DIR)
 
-    # Step 4: Upload & extract
+    # Step 5: Upload & extract
     print()
-    print("Step 4/6: Upload & extract...")
+    print("Step 5/7: Upload & extract...")
     remote.upload_file(archive_path, REMOTE_DIR)
     os.remove(archive_path)
     r = remote.exec(
@@ -300,9 +341,9 @@ def main():
         timeout=60)
     ok("Extracted: " + r[:120])
 
-    # Step 5: Docker build & start
+    # Step 6: Docker build & start
     print()
-    print("Step 5/6: Docker build & start...")
+    print("Step 6/7: Docker build & start...")
     if args.skip_build:
         r = remote.docker_compose(REMOTE_DIR, "up -d", timeout=60)
     else:
@@ -323,10 +364,10 @@ def main():
         remote.close()
         return
 
-    # Step 6: Seed (optional)
+    # Step 7: Seed (optional)
     if args.seed:
         print()
-        print("Step 6/6: Seed...")
+        print("Step 7/7: Seed...")
         ensure_mongodb_running(remote)
 
         # Restart backend to reconnect to MongoDB if it was down
@@ -346,7 +387,7 @@ def main():
 
     # Verify health
     print()
-    log("Verifying API...")
+    log("Verifying...")
     h = remote.exec("curl -sf http://localhost:3000/api/v1/health", timeout=10)
     ok("Health: " + (h[:80] if h else "no response"))
 
@@ -388,13 +429,27 @@ def main():
     else:
         warn("Verification: " + (auth_out[:150] if auth_out else "no output"))
 
+    # Verify frontend
+    log("Verifying frontend...")
+    front_status = remote.exec("curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/", timeout=10)
+    front_html = remote.exec("curl -s http://localhost:3000/ | head -3", timeout=10)
+    if "200" in front_status:
+        ok("Frontend HTTP 200 OK")
+        if 'ng-version' in front_html.lower() or 'kppdf' in front_html.lower():
+            ok("Angular SPA detected")
+        else:
+            warn("Frontend responds but not Angular: " + front_html[:80])
+    else:
+        warn("Frontend: HTTP " + front_status[:10])
+
     remote.close()
 
     print()
     print("=== Deploy complete ===")
     print()
-    print("  API:  http://" + args.host + ":3000/api/v1/health")
-    print("  Auth: admin / admin123")
+    print("  API:      https://sport-set.ru/api/v1/health")
+    print("  Frontend: https://sport-set.ru")
+    print("  Auth:     admin / admin123")
     print()
     print("  SSH access:")
     print("    ssh " + args.user + "@" + args.host)
