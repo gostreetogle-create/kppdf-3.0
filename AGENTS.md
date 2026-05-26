@@ -204,7 +204,7 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 ### CRUD: поля-ссылки (`*Id`)
 
 - 🔴 **Запрещено** показывать MongoDB `ObjectId` пользователю в форме и таблице.
-- ✅ Использовать `CounterpartyOptionsService`, `QuotationOptionsService`, `ProductOptionsService`, `OrderOptionsService` из `shared/services/`.
+- ✅ Использовать сервисы `*OptionsService` из `shared/services/` (`Counterparty`, `Quotation`, `Product`, `Order`, `Warehouse`, `Shipment`, `WorkOrder`, `Operation`).
 - ✅ В таблице: `type: 'select'` + `options`; для статусов: `type: 'tag'` + `options` (подписи на русском).
 - ✅ Заголовок диалога: `entityLabel` на `app-kp-crud-page` (родительный падеж).
 

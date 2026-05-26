@@ -7,6 +7,10 @@ import { CrudApiService } from '../../shared/services/crud-api.service';
 import { CounterpartyOptionsService } from '../../shared/services/counterparty-options.service';
 import { ProductOptionsService } from '../../shared/services/product-options.service';
 import { OrderOptionsService } from '../../shared/services/order-options.service';
+import { WarehouseOptionsService } from '../../shared/services/warehouse-options.service';
+import { ShipmentOptionsService } from '../../shared/services/shipment-options.service';
+import { WorkOrderOptionsService } from '../../shared/services/work-order-options.service';
+import { OperationOptionsService } from '../../shared/services/operation-options.service';
 
 import { ConfirmationService, MessageService } from 'primeng/api';
 import {
@@ -25,7 +29,14 @@ import {
 } from '../../shared/ui';
 
 /** Справочник для полей *Id в формах модулей */
-type ColumnRef = 'counterparty' | 'product' | 'order';
+type ColumnRef =
+  | 'counterparty'
+  | 'product'
+  | 'order'
+  | 'warehouse'
+  | 'shipment'
+  | 'workOrder'
+  | 'operation';
 
 // ===== Column definition =====
 interface ColumnDef {
@@ -362,7 +373,7 @@ export class ModulesPageComponent implements OnInit {
         { field: 'date', header: 'Дата', type: 'date', width: '120px' },
         { field: 'type', header: 'Тип', type: 'tag', width: '130px' },
         { field: 'productId', header: 'Товар', type: 'text', ref: 'product' },
-        { field: 'warehouseId', header: 'Склад', type: 'text' },
+        { field: 'warehouseId', header: 'Склад', type: 'text', ref: 'warehouse' },
         { field: 'qty', header: 'Кол-во', type: 'number', width: '100px' },
       ],
     },
@@ -384,8 +395,8 @@ export class ModulesPageComponent implements OnInit {
       basePath: '/directories/work-order-operations',
       idField: '_id',
       columns: [
-        { field: 'workOrderId', header: 'Наряд', type: 'text' },
-        { field: 'operationId', header: 'Операция', type: 'text' },
+        { field: 'workOrderId', header: 'Наряд', type: 'text', ref: 'workOrder' },
+        { field: 'operationId', header: 'Операция', type: 'text', ref: 'operation' },
         { field: 'order', header: '№', type: 'number', width: '50px' },
         { field: 'statusId', header: 'Статус', type: 'tag', width: '110px' },
       ],
@@ -425,7 +436,7 @@ export class ModulesPageComponent implements OnInit {
         { field: 'number', header: 'Номер', type: 'text', width: '140px', readonly: true },
         { field: 'date', header: 'Дата', type: 'date', width: '120px' },
         { field: 'type', header: 'Тип', type: 'tag', width: '110px' },
-        { field: 'shipmentId', header: 'Отгрузка', type: 'text' },
+        { field: 'shipmentId', header: 'Отгрузка', type: 'text', ref: 'shipment' },
         { field: 'totalAmount', header: 'Сумма', type: 'number', width: '120px' },
       ],
     },
@@ -465,11 +476,19 @@ export class ModulesPageComponent implements OnInit {
   private readonly counterpartyOptionsService = inject(CounterpartyOptionsService);
   private readonly productOptionsService = inject(ProductOptionsService);
   private readonly orderOptionsService = inject(OrderOptionsService);
+  private readonly warehouseOptionsService = inject(WarehouseOptionsService);
+  private readonly shipmentOptionsService = inject(ShipmentOptionsService);
+  private readonly workOrderOptionsService = inject(WorkOrderOptionsService);
+  private readonly operationOptionsService = inject(OperationOptionsService);
 
   readonly refOptions = signal<Record<ColumnRef, KpSelectOption[]>>({
     counterparty: [],
     product: [],
     order: [],
+    warehouse: [],
+    shipment: [],
+    workOrder: [],
+    operation: [],
   });
 
   /** Маппинг модуля → префикс разрешения (для шаблона) */
@@ -504,6 +523,10 @@ export class ModulesPageComponent implements OnInit {
       counterparty: this.counterpartyOptionsService.load(),
       product: this.productOptionsService.load(),
       order: this.orderOptionsService.load(),
+      warehouse: this.warehouseOptionsService.load(),
+      shipment: this.shipmentOptionsService.load(),
+      workOrder: this.workOrderOptionsService.load(),
+      operation: this.operationOptionsService.load(),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((refs) => this.refOptions.set(refs));
