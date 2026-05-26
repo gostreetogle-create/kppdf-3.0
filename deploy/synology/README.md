@@ -1,136 +1,216 @@
-# 🚀 Деплой KPPDF 3.0 на Synology NAS
+# Deploy KPPDF 3.0 on Synology NAS
 
-## 📋 Требования
+> Production deployment to Synology NAS via Docker.
 
-- **Synology NAS** с доступом по SSH (DSM 7+)
-- **Docker** — установить через Package Center
-- **Node.js 22** — установить через Package Center (или используем Docker)
+## Requirements
 
-## 🔧 Быстрый старт (через Docker)
+- Synology NAS with SSH access (DSM 7+)
+- Docker installed via Package Center
+- Node.js 22+ on dev machine (for building)
+- Python 3 + `paramiko` on dev machine (for deploy script)
 
-### 1. Подготовить Synology
+## Quick Deploy (Automated Script)
+
+The easiest way: run the deploy script from your dev machine.
+
+### First time: Setup SSH key (one-time)
 
 ```bash
-# Подключиться по SSH
-ssh nastiit@192.168.1.134
-
-# Создать папку для проекта
-sudo mkdir -p /volume1/docker/kppdf-3.0
+# On dev machine (cmd/powershell)
+ssh-keygen -t ed25519 -f %USERPROFILE%\.ssh\id_ed25519 -N ""
+type %USERPROFILE%\.ssh\id_ed25519.pub
 ```
 
-### 2. Скопировать проект на Synology
-
-На вашем dev-компьютере (в корне проекта):
+Copy the output. Then on Synology (via DSM Control Panel > Terminal & SNMP > Enable SSH):
 
 ```bash
-# Собрать Angular frontend
-npx ng build --configuration production
+# Or via SSH with password:
+ssh nastiit@192.168.1.134
+mkdir -p ~/.ssh
+echo "ssh-ed25519 AAA..." >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+exit
 
-# Создать deploy.tar.gz
+# Test (should work without password):
+ssh nastiit@192.168.1.134 "echo OK"
+```
+
+### Deploy
+
+```bash
+# Build backend TypeScript FIRST
+cd backend
+npx tsc
+
+# Deploy with seed
+cd ..
+python deploy/synology/deploy.py --password YOUR_PASSWORD --seed
+
+# Or deploy without seed (if data already exists)
+python deploy/synology/deploy.py --password YOUR_PASSWORD
+
+# Or skip Docker build (if only seed/restart needed)
+python deploy/synology/deploy.py --password YOUR_PASSWORD --skip-build --seed
+```
+
+### What the script does
+
+1. Creates archive with `backend/` + `shared/` + `docker-compose.prod.yml`
+2. Connects to Synology via SSH (paramiko)
+3. Uploads archive (SCP > SFTP > base64 pipe — auto-fallback)
+4. Extracts on Synology into `/volume1/docker/kppdf-3.0/`
+5. Runs `docker compose build --no-cache && up -d`
+6. Waits for health check (mongodb connected)
+7. Runs seed (if `--seed` flag)
+8. Verifies auth + products API
+
+## Manual Deploy (step by step)
+
+### 1. Build TypeScript
+
+```bash
+cd backend
+npx tsc
+cd ..
+```
+
+### 2. Prepare archive
+
+```bash
 tar czf deploy.tar.gz \
-  dist/kppdf-3.0 \
-  backend \
-  docker-compose.prod.yml \
+  backend/ shared/ docker-compose.prod.yml \
   --exclude='backend/node_modules' \
-  --exclude='backend/src/__tests__'
+  --exclude='backend/dist' \
+  --exclude='backend/.git' \
+  --exclude='backend/src/__tests__' \
+  --exclude='backend/.env'
+```
 
-# Копировать на Synology
+Important: Include `shared/` directory — it contains shared TypeScript types
+needed for compilation. Without it, `tsc` inside the Docker build will fail.
+
+### 3. Copy to Synology
+
+```bash
 scp deploy.tar.gz nastiit@192.168.1.134:/volume1/docker/kppdf-3.0/
 ```
 
-### 3. Распаковать и запустить на Synology
-
-```bash
-# На Synology
-cd /volume1/docker/kppdf-3.0
-tar xzf deploy.tar.gz
-
-# Запустить MongoDB + backend
-sudo docker compose -f docker-compose.prod.yml up -d
-
-# Проверить
-curl http://localhost:3000/api/v1/health
-```
-
-### 4. Настроить Cloudflare DNS
-
-В панели Cloudflare → sport-set.ru → DNS:
-
-| Тип | Имя | Значение | Прокси |
-|-----|-----|----------|--------|
-| A | `@` | `192.168.1.134` | DNS only |
-| CNAME | `www` | `sport-set.ru` | DNS only |
-
-> ⚠️ Прокси Cloudflare (оранжевое облако) может не работать с динамическим IP Synology.
-> Если у вас статический IP — включите прокси для HTTPS и кеширования.
-
-### 5. Настроить Reverse Proxy в DSM
-
-Если вы **не** используете Docker для backend, настройте Reverse Proxy:
-
-**DSM → Control Panel → Application Portal → Reverse Proxy:**
-
-| Поле | Значение |
-|------|----------|
-| Source Protocol | HTTPS |
-| Source Hostname | sport-set.ru |
-| Source Port | 443 |
-| Destination Protocol | HTTP |
-| Destination Hostname | localhost |
-| Destination Port | 3000 |
-
-### 6. Seed данных (первый запуск)
-
-После запуска Docker-стека — наполнить БД тестовыми данными:
-
-```bash
-# Подключиться к контейнеру backend
-docker exec -it kppdf-backend sh
-
-# Запустить seed
-node dist/seed.js
-```
-
-## 📁 Структура на Synology
-
-```
-/volume1/docker/kppdf-3.0/
-├── docker-compose.prod.yml   # Docker Compose (MongoDB + Backend)
-├── backend/                   # Backend (Node.js + Express)
-│   ├── dist/                  # Скомпилированный backend
-│   ├── node_modules/
-│   └── .env.production        # Переменные окружения
-└── frontend/                  # Angular SPA (раздаётся через backend)
-    └── (собранные файлы)
-```
-
-## 🔄 Обновление
-
-```bash
-# 1. На dev-машине — собрать фронтенд
-npx ng build --configuration production
-
-# 2. Скопировать фронтенд на Synology
-rsync -avz --delete dist/kppdf-3.0/ nastiit@192.168.1.134:/volume1/docker/kppdf-3.0/frontend/
-
-# 3. Перезапустить backend
-ssh nastiit@192.168.1.134 "docker restart kppdf-backend"
-```
-
-## 🛑 Остановка
+### 4. Build & start on Synology
 
 ```bash
 ssh nastiit@192.168.1.134
 cd /volume1/docker/kppdf-3.0
-sudo docker compose -f docker-compose.prod.yml down
+sudo tar xzf deploy.tar.gz
+sudo rm deploy.tar.gz
+
+# Build and start
+sudo /usr/local/bin/docker compose -f docker-compose.prod.yml down
+sudo /usr/local/bin/docker compose -f docker-compose.prod.yml build --no-cache backend
+sudo /usr/local/bin/docker compose -f docker-compose.prod.yml up -d
 ```
 
-## 📊 Логи
+Note: Use full path `/usr/local/bin/docker` — Docker is not in root's PATH on Synology.
+
+### 5. Check health
 
 ```bash
-# Логи backend
-docker logs -f kppdf-backend
-
-# Логи MongoDB
-docker logs -f kppdf-mongodb
+curl http://localhost:3000/api/v1/health
+# Expected: {"success":true,"data":{"status":"ok","mongodb":"connected"}}
 ```
+
+### 6. Seed data (first deploy or after DB reset)
+
+```bash
+sudo /usr/local/bin/docker exec kppdf-backend node dist/backend/src/seed.js
+```
+
+Note: The WORKDIR is `/app` inside the container, so relative path is `dist/backend/src/seed.js`
+(which resolves to `/app/dist/backend/src/seed.js`).
+
+### 7. Verify
+
+```bash
+# Login
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+
+# Get products (use token from login response)
+curl http://localhost:3000/api/v1/products \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+## File Structure on Synology
+
+```
+/volume1/docker/kppdf-3.0/
+  docker-compose.prod.yml
+  backend/
+    src/           # TypeScript source (for Docker build)
+    package.json
+    tsconfig.json
+  shared/
+    types/         # Shared TypeScript interfaces (needed for build!)
+```
+
+## Common Issues & Solutions
+
+### "docker: command not found"
+
+Docker is at `/usr/local/bin/docker` but may not be in PATH for root.
+Always use full path: `/usr/local/bin/docker` or `export PATH=$PATH:/usr/local/bin`.
+
+### "getaddrinfo ENOTFOUND kppdf-mongodb"
+
+MongoDB container is not running. Check with `docker ps` and start it:
+```bash
+/usr/local/bin/docker start kppdf-mongodb
+# Or if it doesn't exist:
+sudo /usr/local/bin/docker compose -f docker-compose.prod.yml up -d mongodb
+```
+
+### Seed fails with MongoDB connection error
+
+The seed runs inside the kppdf-backend container. Ensure:
+1. MongoDB container is running (`docker start kppdf-mongodb`)
+2. Backend container is running and health check passes
+3. Use the correct path: `node dist/backend/src/seed.js` (relative to WORKDIR `/app`)
+
+### "Cannot find module 'mongodb-memory-server'"
+
+Production Docker image uses `npm ci --only=production` and does NOT have
+`mongodb-memory-server`. The seed connects to the real MongoDB at
+`mongodb://kppdf-mongodb:27017/kppdf30` (set via MONGO_URI env var).
+
+### TypeScript build on Synology fails
+
+Make sure the archive includes `shared/` directory. Without it, the Docker
+build's TypeScript compilation will fail because shared types (`*.interface.ts`)
+are missing.
+
+## Docker Commands (Quick Reference)
+
+```bash
+# Container management
+/usr/local/bin/docker ps -a
+/usr/local/bin/docker logs kppdf-backend
+/usr/local/bin/docker restart kppdf-backend
+
+# Docker Compose (use full path)
+sudo /usr/local/bin/docker compose -f docker-compose.prod.yml ps
+sudo /usr/local/bin/docker compose -f docker-compose.prod.yml up -d
+sudo /usr/local/bin/docker compose -f docker-compose.prod.yml down
+sudo /usr/local/bin/docker compose -f docker-compose.prod.yml logs -f --tail=50
+
+# Inside container
+sudo /usr/local/bin/docker exec -it kppdf-backend sh
+/usr/local/bin/docker exec kppdf-backend node dist/backend/src/seed.js
+```
+
+## Access
+
+| Service | URL |
+|---------|-----|
+| API Health | http://192.168.1.134:3000/api/v1/health |
+| Login | POST http://192.168.1.134:3000/api/v1/auth/login |
+| Default auth | admin / admin123 |
