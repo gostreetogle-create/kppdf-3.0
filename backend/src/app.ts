@@ -35,6 +35,8 @@ import { documentTemplateRouter } from './modules/document-templates/documentTem
 import { tenderRouter } from './modules/tenders/tender.router';
 import { productPassportRouter } from './modules/product-passports/productPassport.router';
 import { complianceRuleRouter, complianceCheckRouter } from './modules/compliance-validator/complianceRule.router';
+import { attributeDefinitionRouter } from './modules/attribute-definitions/attributeDefinition.router';
+import { entityAttributeValueRouter } from './modules/entity-attribute-values/entityAttributeValue.router';
 
 const app = express();
 
@@ -110,6 +112,10 @@ app.use('/api/v1/compliance', complianceCheckRouter);
 
 // Document Templates
 app.use('/api/v1/document-templates', documentTemplateRouter);
+
+// EAV — Entity-Attribute-Value
+app.use('/api/v1/attributes/definitions', attributeDefinitionRouter);
+app.use('/api/v1/attributes/values', entityAttributeValueRouter);
 
 // In production, serve the Angular frontend (before notFound!)
 if (process.env.NODE_ENV === 'production') {

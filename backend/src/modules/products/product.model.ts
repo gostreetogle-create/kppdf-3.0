@@ -20,6 +20,7 @@ const productSchema = new Schema<ProductDocument>(
     materials: { type: String },
     installation: { type: String },
     purpose: { type: String },
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

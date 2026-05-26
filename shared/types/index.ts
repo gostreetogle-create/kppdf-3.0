@@ -29,3 +29,5 @@ export type { IDocumentTemplate, IDocumentBlock, DocumentBlockType, DocType } fr
 export type { ITender } from './tender.interface';
 export type { IProductPassport } from './productPassport.interface';
 export type { IComplianceRule, IComplianceCheck, IComplianceBatchResult, IComplianceSummary, ComplianceOperator, ComplianceSeverity } from './compliance.interface';
+export type { IAttributeDefinition, AttributeType } from './attributeDefinition.interface';
+export type { IEntityAttributeValue } from './entityAttributeValue.interface';

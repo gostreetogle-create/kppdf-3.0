@@ -8,6 +8,7 @@ export interface IProduct {
   unit: string;
   categoryId?: string;
   status: 'active' | 'draft' | 'archived';
+  isActive?: boolean;
   description?: string;
   // Технические поля (из паспортов изделий)
   height?: number;

@@ -28,6 +28,8 @@ import { CounterModel } from './modules/counters/counter.model';
 import { InteractionModel } from './modules/interactions/interaction.model';
 import { TenderModel } from './modules/tenders/tender.model';
 import { ProductPassportModel } from './modules/product-passports/productPassport.model';
+import { AttributeDefinitionModel } from './modules/attribute-definitions/attributeDefinition.model';
+import { EntityAttributeValueModel } from './modules/entity-attribute-values/entityAttributeValue.model';
 
 async function seed(): Promise<void> {
   console.log('🌱 KPPDF 3.0 — Seed: наполнение БД тестовыми и часто используемыми данными\n');
@@ -59,29 +61,29 @@ async function seed(): Promise<void> {
   // ================================================================
   await ProductModel.deleteMany({});
   const products = await ProductModel.insertMany([
-    { name: 'Лист стальной 3мм 1250x2500', sku: 'LST-001', kind: 'ITEM', unit: 'м²', categoryId: categories[0]._id.toString(), status: 'active', description: 'Сталь 3мм, размер 1250x2500мм' },
-    { name: 'Лист стальной 5мм 1250x2500', sku: 'LST-002', kind: 'ITEM', unit: 'м²', categoryId: categories[0]._id.toString(), status: 'active' },
-    { name: 'Лист нерж. 2мм 1000x2000', sku: 'LST-003', kind: 'ITEM', unit: 'м²', categoryId: categories[8]._id.toString(), status: 'active' },
-    { name: 'Труба профильная 40x20x2', sku: 'TRB-001', kind: 'ITEM', unit: 'м.п.', categoryId: categories[9]._id.toString(), status: 'active' },
-    { name: 'Труба профильная 60x30x2', sku: 'TRB-002', kind: 'ITEM', unit: 'м.п.', categoryId: categories[9]._id.toString(), status: 'active' },
-    { name: 'Уголок 50x50x5', sku: 'UGL-001', kind: 'ITEM', unit: 'м.п.', categoryId: categories[0]._id.toString(), status: 'active' },
-    { name: 'Болт М8x30 оцинк.', sku: 'BRT-001', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active' },
-    { name: 'Болт М10x40 оцинк.', sku: 'BRT-002', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active' },
-    { name: 'Гайка М8 оцинк.', sku: 'BRT-003', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active' },
-    { name: 'Гайка М10 оцинк.', sku: 'BRT-004', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active' },
-    { name: 'Шайба М8 оцинк.', sku: 'BRT-005', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active' },
-    { name: 'Шайба М10 оцинк.', sku: 'BRT-006', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active' },
-    { name: 'Контроллер Arduino Mega', sku: 'ELC-001', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', description: 'ATmega2560' },
-    { name: 'Датчик температуры DS18B20', sku: 'ELC-002', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active' },
-    { name: 'Датчик влажности DHT22', sku: 'ELC-003', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'draft' },
-    { name: 'Кабель USB Type-C 2м', sku: 'ELC-004', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active' },
-    { name: 'Плата расширения 8-канальная', sku: 'ELC-005', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active' },
-    { name: 'Электроды МР-3 3мм', sku: 'RSX-001', kind: 'ITEM', unit: 'кг', categoryId: categories[3]._id.toString(), status: 'active' },
-    { name: 'Краска аэрозольная чёрная 520мл', sku: 'RSX-002', kind: 'ITEM', unit: 'шт', categoryId: categories[3]._id.toString(), status: 'active' },
-    { name: 'Шлифкруг 125мм P80', sku: 'RSX-003', kind: 'ITEM', unit: 'шт', categoryId: categories[3]._id.toString(), status: 'active' },
-    { name: 'Сварка аргонодуговая (работа)', sku: 'SRV-001', kind: 'WORK', unit: 'ч', categoryId: categories[5]._id.toString(), status: 'active' },
-    { name: 'Фрезерная обработка ЧПУ (работа)', sku: 'SRV-002', kind: 'WORK', unit: 'ч', categoryId: categories[5]._id.toString(), status: 'active' },
-    { name: '3D-печать прототипа PLA', sku: 'SRV-003', kind: 'SERVICE', unit: 'шт', categoryId: categories[5]._id.toString(), status: 'active' },
+    { name: 'Лист стальной 3мм 1250x2500', sku: 'LST-001', kind: 'ITEM', unit: 'м²', categoryId: categories[0]._id.toString(), status: 'active', description: 'Сталь 3мм, размер 1250x2500мм', isActive: true },
+    { name: 'Лист стальной 5мм 1250x2500', sku: 'LST-002', kind: 'ITEM', unit: 'м²', categoryId: categories[0]._id.toString(), status: 'active', isActive: true },
+    { name: 'Лист нерж. 2мм 1000x2000', sku: 'LST-003', kind: 'ITEM', unit: 'м²', categoryId: categories[8]._id.toString(), status: 'active', isActive: true },
+    { name: 'Труба профильная 40x20x2', sku: 'TRB-001', kind: 'ITEM', unit: 'м.п.', categoryId: categories[9]._id.toString(), status: 'active', isActive: true },
+    { name: 'Труба профильная 60x30x2', sku: 'TRB-002', kind: 'ITEM', unit: 'м.п.', categoryId: categories[9]._id.toString(), status: 'active', isActive: true },
+    { name: 'Уголок 50x50x5', sku: 'UGL-001', kind: 'ITEM', unit: 'м.п.', categoryId: categories[0]._id.toString(), status: 'active', isActive: true },
+    { name: 'Болт М8x30 оцинк.', sku: 'BRT-001', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true },
+    { name: 'Болт М10x40 оцинк.', sku: 'BRT-002', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true },
+    { name: 'Гайка М8 оцинк.', sku: 'BRT-003', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true },
+    { name: 'Гайка М10 оцинк.', sku: 'BRT-004', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true },
+    { name: 'Шайба М8 оцинк.', sku: 'BRT-005', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true },
+    { name: 'Шайба М10 оцинк.', sku: 'BRT-006', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true },
+    { name: 'Контроллер Arduino Mega', sku: 'ELC-001', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', description: 'ATmega2560', isActive: true },
+    { name: 'Датчик температуры DS18B20', sku: 'ELC-002', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', isActive: true },
+    { name: 'Датчик влажности DHT22', sku: 'ELC-003', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'draft', isActive: true },
+    { name: 'Кабель USB Type-C 2м', sku: 'ELC-004', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', isActive: true },
+    { name: 'Плата расширения 8-канальная', sku: 'ELC-005', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', isActive: true },
+    { name: 'Электроды МР-3 3мм', sku: 'RSX-001', kind: 'ITEM', unit: 'кг', categoryId: categories[3]._id.toString(), status: 'active', isActive: true },
+    { name: 'Краска аэрозольная чёрная 520мл', sku: 'RSX-002', kind: 'ITEM', unit: 'шт', categoryId: categories[3]._id.toString(), status: 'active', isActive: true },
+    { name: 'Шлифкруг 125мм P80', sku: 'RSX-003', kind: 'ITEM', unit: 'шт', categoryId: categories[3]._id.toString(), status: 'active', isActive: true },
+    { name: 'Сварка аргонодуговая (работа)', sku: 'SRV-001', kind: 'WORK', unit: 'ч', categoryId: categories[5]._id.toString(), status: 'active', isActive: true },
+    { name: 'Фрезерная обработка ЧПУ (работа)', sku: 'SRV-002', kind: 'WORK', unit: 'ч', categoryId: categories[5]._id.toString(), status: 'active', isActive: true },
+    { name: '3D-печать прототипа PLA', sku: 'SRV-003', kind: 'SERVICE', unit: 'шт', categoryId: categories[5]._id.toString(), status: 'active', isActive: true },
   ]);
   console.log(`  ✅ Товары (часто используемые): ${products.length}`);
 
@@ -526,6 +528,7 @@ async function seed(): Promise<void> {
   // ================================================================
   await TenderModel.deleteMany({});
   let tendersCount = 0;
+  let firstTenderId = '';
   const companyIds = [
     counterparties.find(c => c.name.includes('СпортИН'))?._id.toString() || '',
     counterparties.find(c => c.name.includes('СпортСтрой'))?._id.toString() || '',
@@ -558,8 +561,9 @@ async function seed(): Promise<void> {
     }
     // Сортируем в порядке возрастания номера
     tenders.sort((a, b) => a.number.localeCompare(b.number));
-    await TenderModel.insertMany(tenders);
-    tendersCount = tenders.length;
+    const insertedTenders = await TenderModel.insertMany(tenders);
+    tendersCount = insertedTenders.length;
+    firstTenderId = insertedTenders[0]._id.toString();
     console.log(`  ✅ Тендеры (входящие запросы): ${tenders.length}`);
   } else {
     console.log(`  ⚠️ Тендеры: пропущены (нужны компании с role='company')`);
@@ -637,6 +641,53 @@ async function seed(): Promise<void> {
   console.log('Тендеры             :', tendersCount);
   console.log('Паспорта изделий    :', passports.length);
   console.log('');
+  // ================================================================
+  // 29. ОПРЕДЕЛЕНИЯ АТРИБУТОВ (EAV)
+  // ================================================================
+  await AttributeDefinitionModel.deleteMany({});
+  const attrDefs = await AttributeDefinitionModel.insertMany([
+    // Product attributes
+    { entityType: 'product', name: 'material', label: 'Материал', type: 'string', sortOrder: 10, isActive: true },
+    { entityType: 'product', name: 'color', label: 'Цвет', type: 'string', sortOrder: 20, isActive: true },
+    { entityType: 'product', name: 'coating', label: 'Покрытие', type: 'select', options: ['Порошковая', 'Жидкая', 'Оцинковка', 'Без покрытия'], sortOrder: 30, isActive: true },
+    { entityType: 'product', name: 'maxTemp', label: 'Макс. температура', type: 'number', unit: '°C', sortOrder: 40, isActive: true },
+    { entityType: 'product', name: 'ipRating', label: 'Степень защиты IP', type: 'string', sortOrder: 50, isActive: true },
+    { entityType: 'product', name: 'certification', label: 'Сертификация', type: 'multiselect', options: ['ГОСТ', 'ISO', 'CE', 'EAC'], sortOrder: 60, isActive: true },
+    { entityType: 'product', name: 'warranty', label: 'Гарантия', type: 'number', unit: 'мес', sortOrder: 70, isActive: true },
+    { entityType: 'product', name: 'country', label: 'Страна производства', type: 'string', sortOrder: 80, isActive: true },
+    // Tender attributes
+    { entityType: 'tender', name: 'deliveryDeadline', label: 'Срок поставки', type: 'date', sortOrder: 10, isActive: true },
+    { entityType: 'tender', name: 'nmck', label: 'НМЦК', type: 'number', unit: '₽', sortOrder: 20, isActive: true },
+    { entityType: 'tender', name: 'prepayment', label: 'Аванс, %', type: 'number', unit: '%', sortOrder: 30, isActive: true },
+    { entityType: 'tender', name: 'deliveryTerms', label: 'Условия поставки', type: 'select', options: ['Самовывоз', 'Доставка', 'DDP', 'CPT'], sortOrder: 40, isActive: true },
+    // Order attributes
+    { entityType: 'order', name: 'priority', label: 'Приоритет', type: 'select', options: ['Низкий', 'Средний', 'Высокий', 'Критичный'], sortOrder: 10, isActive: true },
+    { entityType: 'order', name: 'paymentTerms', label: 'Условия оплаты', type: 'string', sortOrder: 20, isActive: true },
+  ]);
+  console.log(`  ✅ Определения атрибутов (EAV): ${attrDefs.length}`);
+
+  // ================================================================
+  // 30. ЗНАЧЕНИЯ АТРИБУТОВ (EAV) — тестовые для первого продукта
+  // ================================================================
+  await EntityAttributeValueModel.deleteMany({});
+  const productAttrDefs = attrDefs.filter((a) => a.entityType === 'product');
+  if (products.length > 0 && productAttrDefs.length > 0) {
+    const eavValues = await EntityAttributeValueModel.insertMany([
+      { entityType: 'product', entityId: products[0]._id.toString(), attributeId: productAttrDefs[0]._id.toString(), value: 'Сталь 3мм' },
+      { entityType: 'product', entityId: products[0]._id.toString(), attributeId: productAttrDefs[2]._id.toString(), value: 'Без покрытия' },
+      { entityType: 'product', entityId: products[0]._id.toString(), attributeId: productAttrDefs[3]._id.toString(), value: 400 },
+      { entityType: 'product', entityId: products[0]._id.toString(), attributeId: productAttrDefs[5]._id.toString(), value: ['ГОСТ'] },
+      { entityType: 'product', entityId: products[0]._id.toString(), attributeId: productAttrDefs[6]._id.toString(), value: 12 },
+      { entityType: 'product', entityId: products[0]._id.toString(), attributeId: productAttrDefs[7]._id.toString(), value: 'Россия' },
+      // Tender attributes for first tender
+      { entityType: 'tender', entityId: firstTenderId || '', attributeId: attrDefs.find((a) => a.entityType === 'tender' && a.name === 'deliveryDeadline')?._id.toString() || '', value: '2026-07-01' },
+      { entityType: 'tender', entityId: firstTenderId || '', attributeId: attrDefs.find((a) => a.entityType === 'tender' && a.name === 'nmck')?._id.toString() || '', value: 450000 },
+    ].filter((v) => v.entityId));
+    console.log(`  ✅ Значения атрибутов (EAV): ${eavValues.length}`);
+  } else {
+    console.log(`  ⚠️ Значения атрибутов: пропущены (нет продуктов)`);
+  }
+
   console.log('📌 Все данные можно редактировать через интерфейс справочников.');
 
   await mongoose.disconnect();
