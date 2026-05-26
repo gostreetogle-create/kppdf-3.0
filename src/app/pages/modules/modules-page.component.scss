@@ -14,7 +14,11 @@
   display: flex;
   gap: 4px;
   margin-bottom: $space-4;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
 }
 
 :host ::ng-deep .mod-tabs__btn {

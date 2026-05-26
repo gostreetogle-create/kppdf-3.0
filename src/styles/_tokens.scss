@@ -26,7 +26,7 @@
   --kp-info-soft: #eeeffc;
 
   /* ── Surfaces (strict gray scale, no blue tint) ── */
-  --kp-bg: #f5f5f5;
+  --kp-bg: #f0f0f2;
   --kp-bg-soft: #fafafa;
   --kp-bg-muted: #f0f0f0;
   --kp-surface: #ffffff;
@@ -45,19 +45,23 @@
   --kp-border-light: #f0f0f0;
   --kp-border-strong: #d4d4d4;
 
-  /* ── Shadows (minimal — only for modals/dropdowns) ── */
+  /* ── Shadows (premium — layered, Linear/Stripe-inspired) ── */
   --kp-shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
-  --kp-shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --kp-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-  --kp-shadow-lg: 0 8px 24px rgba(0,0,0,0.10);
-  --kp-shadow-xl: 0 16px 48px rgba(0,0,0,0.12);
+  --kp-shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+  --kp-shadow-md: 0 8px 24px rgba(0,0,0,0.10);
+  --kp-shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
+  --kp-shadow-xl: 0 24px 64px rgba(0,0,0,0.14);
+  --kp-shadow-premium: 0 24px 80px rgba(15, 23, 42, 0.12), 0 4px 16px rgba(15, 23, 42, 0.06);
+  --kp-shadow-premium-sm: 0 12px 48px rgba(15, 23, 42, 0.10), 0 2px 8px rgba(15, 23, 42, 0.04);
 
-  /* ── Border Radius (Linear scale: 4/6/8/12/16) ── */
+  /* ── Border Radius (Linear scale: 4/6/8/12/16/20/24) ── */
   --kp-radius-xs: 4px;
   --kp-radius-sm: 6px;
   --kp-radius-md: 8px;
   --kp-radius-lg: 12px;
   --kp-radius-xl: 16px;
+  --kp-radius-2xl: 20px;
+  --kp-radius-3xl: 24px;
   --kp-radius-full: 9999px;
 
   /* ── Spacing (4px grid) ── */
@@ -132,6 +136,12 @@
 
   /* ── Focus ring ── */
   --kp-focus-ring: 0 0 0 2px rgba(94,106,210,0.4);
+  --kp-focus-ring-premium: 0 0 0 4px rgba(94,106,210,0.14);
+
+  /* ── Login page specific ── */
+  --kp-bg-login: #f4f7fb;
+  --kp-surface-login: rgba(255,255,255,0.94);
+  --kp-border-login: rgba(15, 23, 42, 0.08);
 
   /* ════════════════════════════════════════════════════════════
      PRIMENG COMPONENT TOKENS (compact Linear aesthetic)

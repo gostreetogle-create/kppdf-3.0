@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { AuthService } from '../../core/auth.service';
@@ -12,47 +11,78 @@ import { AuthService } from '../../core/auth.service';
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [InputTextModule, PasswordModule, ButtonModule, CardModule, FormsModule, ToastModule],
+  imports: [InputTextModule, PasswordModule, ButtonModule, FormsModule, ToastModule],
   template: `
-    <div class="login">
-      <p-card header="KPPDF 3.0" subheader="Платформа управления производством">
-        <div class="login__form">
-          <div class="login__field">
-            <label for="username">Логин</label>
-            <input
-              pInputText
-              id="username"
-              [(ngModel)]="username"
-              placeholder="admin"
-              (keyup.enter)="doLogin()"
-              [disabled]="loading"
-              style="width:100%"
-            />
+    <div class="auth">
+      <!-- ═══════ Brand Zone ═══════ -->
+      <div class="auth__brand">
+        <div class="auth__brand-bg"></div>
+        <div class="auth__brand-content">
+          <div class="auth__brand-logo">K</div>
+          <h1 class="auth__brand-title">KPPDF 3.0</h1>
+          <p class="auth__brand-subtitle">Платформа управления производством</p>
+          <p class="auth__brand-desc">
+            Контроль процессов, смен, заданий<br class="auth__br-desktop">
+            и производственных показателей<br class="auth__br-desktop">
+            в едином контуре.
+          </p>
+          <div class="auth__brand-chips">
+            <span class="auth__chip">Техпроцессы</span>
+            <span class="auth__chip">BOM-деревья</span>
+            <span class="auth__chip">Себестоимость</span>
+            <span class="auth__chip">Наряды</span>
           </div>
-          <div class="login__field">
-            <label for="password">Пароль</label>
-            <p-password
-              id="password"
-              [(ngModel)]="password"
-              [feedback]="false"
-              [disabled]="loading"
-              (keyup.enter)="doLogin()"
-              style="width:100%"
-            />
+        </div>
+      </div>
+
+      <!-- ═══════ Auth Card Zone ═══════ -->
+      <div class="auth__card-wrap">
+        <div class="auth__card">
+          <div class="auth__card-header">
+            <div class="auth__card-logo">K</div>
+            <h2 class="auth__card-title">KPPDF 3.0</h2>
+            <p class="auth__card-subtitle">Платформа управления производством</p>
           </div>
-          <p-button
-            label="Войти"
-            icon="pi pi-sign-in"
-            styleClass="w-full"
-            size="small"
-            (click)="doLogin()"
-            [loading]="loading"
-          />
+
+          <form class="auth__form" (ngSubmit)="doLogin()">
+            <div class="auth__field">
+              <label for="username" class="auth__label">Логин</label>
+              <input
+                pInputText
+                id="username"
+                name="username"
+                [(ngModel)]="username"
+                placeholder="admin"
+                (keyup.enter)="doLogin()"
+                [disabled]="loading"
+                autocomplete="username"
+              />
+            </div>
+            <div class="auth__field">
+              <label class="auth__label">Пароль</label>
+              <p-password
+                name="password"
+                [(ngModel)]="password"
+                [feedback]="false"
+                [disabled]="loading"
+                (keyup.enter)="doLogin()"
+                autocomplete="current-password"
+              />
+            </div>
+            <p-button
+              type="submit"
+              label="Войти в систему"
+              [loading]="loading"
+              styleClass="auth__submit-btn"
+            />
+          </form>
+
+          <div class="auth__hint">
+            <span class="auth__hint-icon">&#x27F3;</span>
+            <span>Демо-доступ: <strong>admin</strong> / <strong>admin123</strong></span>
+          </div>
         </div>
-        <div class="login__hint">
-          <p>Демо: <strong>admin</strong> / <strong>admin123</strong></p>
-        </div>
-      </p-card>
+      </div>
     </div>
     <p-toast position="top-center" />
   `,
