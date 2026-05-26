@@ -207,6 +207,37 @@ sudo /usr/local/bin/docker exec -it kppdf-backend sh
 /usr/local/bin/docker exec kppdf-backend node dist/backend/src/seed.js
 ```
 
+## CI/CD — GitHub Actions (Automated Deploy)
+
+Workflow in `.github/workflows/deploy.yml`:
+
+### Trigger
+- **Auto:** Push to `main` branch
+- **Manual:** Go to GitHub → Actions → Deploy to Synology → Run workflow (with optional `--seed`)
+
+### Required Secrets
+
+Add these to GitHub → Settings → Secrets and variables → Actions → New repository secret:
+
+| Secret | Value |
+|--------|-------|
+| `SYNOLOGY_PASSWORD` | Your SSH password for Synology (`nastiit` user) |
+
+### How it works
+
+1. Checks out the code
+2. Installs Node.js 22 + `npm ci` in `backend/`
+3. Builds TypeScript (`npx tsc`)
+4. Installs Python + `paramiko`
+5. Runs `deploy.py` with the secrets (build, upload, seed, verify)
+6. Reports completion — all verification happens inside deploy.py on Synology
+
+### If SSH key auth is set up (recommended)
+
+The workflow can use SSH key instead of password. The `deploy.py` script
+automatically detects available SSH keys and uses them if `--password`
+is omitted.
+
 ## Access
 
 | Service | URL |

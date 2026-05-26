@@ -1,0 +1,62 @@
+name: Deploy to Synology
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: 'Run seed after deploy'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  SYNOLOGY_HOST: 192.168.1.134
+  SYNOLOGY_USER: nastiit
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Build backend TypeScript
+        run: npx tsc
+        working-directory: backend
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: pip install paramiko
+
+      - name: Deploy to Synology
+        run: |
+          python deploy/synology/deploy.py \
+            --host "${{ env.SYNOLOGY_HOST }}" \
+            --user "${{ env.SYNOLOGY_USER }}" \
+            --password "${{ secrets.SYNOLOGY_PASSWORD }}" \
+            ${{ github.event.inputs.seed == 'true' && '--seed' || '' }}
+        shell: bash
+
+      - name: Deploy complete
+        run: echo "Deployment finished. Verification runs inside deploy.py on Synology."
