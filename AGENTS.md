@@ -1,306 +1,160 @@
-# Система агентов KPPDF 3.0
+# KPPDF 3.0 — Архитектурные инварианты
 
-> **Детальное описание ролей, правил взаимодействия и when-to-call для каждого агента.**
-> Используй `@AgentName` для вызова конкретного агента.
-
----
-
-## Primary Agent
-
-### `@orchestrator` — Оркестратор (primary)
-
-**Специализация:** Распределение задач, контроль качества, цикл Coder → QA → Auditor.
-
-**Когда вызывать:** Всегда. Orchestrator — точка входа для любой задачи.
-
-**Что делает:**
-1. Принимает задачу от пользователя
-2. Анализирует сложность — простую делает сам, сложную делегирует
-3. Для UI-задач запускает детерминированный QA-цикл: Coder → Build → @ui-qa → @ui-auditor
-4. Проверяет полноту и актуальность после выполнения
-5. Обновляет документацию (README, AGENTS.md, планы) если изменилась структура
-
-**Правила:**
-- Не вызывает сам себя
-- Не создаёт цепочки agent → agent (только direct call)
-- После UI-работы ОБЯЗАТЕЛЬНО запускает QA-цикл
-- Максимум 3 итерации Coder → QA
+> **Цель:** Защитить целостность проекта через жёсткие правила, а не через "роли агентов".
+> Нарушение любого инварианта — архитектурный долг, который нужно немедленно исправить.
 
 ---
 
-## Subagent'ы (12 + 2 QA)
+## 🏗️ Слои зависимостей
 
-### 🏗️ Архитектура и качество
-
-#### `@guardian` — Архитектурный страж
-
-**Специализация:** Проверка слоёв импортов, циклических зависимостей, структуры папок.
-
-**Когда вызывать:** После любой реорганизации файлов, добавления новых модулей, рефакторинга.
-
-**Что проверяет:**
-- Слои импортов: `core/` → `shared/` → `entities/` → `features/` → `pages/`
-- `shared/` НЕ импортирует `entities/`, `features/`, `pages/`, `core/`
-- Нет циклических зависимостей
-- Структура папок соответствует архитектуре
-
-**Команды:** `grep -r "from '\.\." src/app/shared/` — поиск запрещённых импортов.
-
-#### `@reviewer` — Code Reviewer
-
-**Специализация:** Проверка кода на соответствие стандартам качества.
-
-**Когда вызывать:** После любых изменений кода, перед merge request.
-
-**Что проверяет:**
-- `any` — запрещён, только `unknown` с type guard
-- constructor DI — запрещён, только `inject()`
-- NgModules — запрещены, только Standalone
-- Inline-стили — запрещены, только SCSS
-- OnPush — обязателен для всех компонентов
-- Нет циклических импортов
-- Нет raw `<button>`, `<input>`, `<table>` — только PrimeNG
-
-**Формат ответа:**
 ```
-## Найдено нарушений: N
-1. [КРИТИЧНО/ВАЖНО/НИЗКО] файл:строка — описание
-   → Как исправить
+core → shared → features → layout
+          ↕              ↕
+      externals      externals
 ```
 
----
+### Правила импортов
 
-### 🎨 UI и дизайн
+| Слой | Паттерн | Разрешено импортировать |
+|------|---------|------------------------|
+| `core` | `src/app/core/**` | ✅ externals (rxjs, @angular) |
+| `shared` | `src/app/shared/**` | ✅ `core` + externals |
+| `feature` | `src/app/features/**` | ✅ `core`, `shared` + externals |
+| `layout` | `src/app/layout/**` | ✅ всё |
 
-#### `@ui-specialist` — UI Coder
+### Запреты
 
-**Специализация:** Создание и исправление UI-компонентов строго по Golden Samples и UI Manifest.
+- 🔴 **`core` → `shared`, `feature`, `layout`** — core ничего не знает о вышележащих слоях
+- 🔴 **`shared` → `feature`, `layout`** — shared не знает о фичах
+- 🔴 **`features/X` → `features/Y`** — фичи изолированы. Если нужна общая логика → выносить в `shared/`
+- 🔴 **`features` → `layout`** — фичи не знают о шаблонах layout
 
-**Когда вызывать:** Для вёрстки новых страниц, компонентов, исправления UI-багов.
-
-**Технологии:** Angular 21+, PrimeNG 21, SCSS+BEM, Signals, OnPush.
-
-**Жёсткие правила:**
-- Таблицы: `[stripedRows]="true"`, `[paginator]="true"`, `size="small"`, `emptymessage`
-- Статусы/роли: ТОЛЬКО `<p-tag>` (не plain text)
-- Action колонка: `pi pi-pencil` (secondary) + `pi pi-trash` (danger)
-- Диалоги: `[modal]="true"`, header, footer с кнопками
-- Все контролы: `size="small"`, `style="width:100%"`
-- Пароли: `<p-password [feedback]="false">`
-- НИКАКИХ raw `<button>`, `<input>`, `<select>`, `<table>`, `<dialog>`
-- Плюрализация: ОБЯЗАТЕЛЬНА для счётчиков
-
-**Golden Samples:** Обязан использовать `.opencode/golden-samples.ts` как шаблон.
-
-#### `@design-system` — Дизайн-система
-
-**Специализация:** Дизайн-токены, CSS-переменные, SCSS-миксины, типографика.
-
-**Когда вызывать:** Для изменений в дизайн-системе, новых токенов, аудита стилей.
-
-**Что делает:**
-- CSS-переменные (цвета, отступы, шрифты, тени)
-- SCSS-миксины для layout
-- Единая типографика
-- Аудит стилей на хардкод цветов/чисел
-
-**Правила:**
-- Все цвета/отступы/шрифты — через CSS-переменные
-- Никаких магических чисел в стилях
-- Переменные в `src/styles/_tokens.scss`
-- BEM только для layout
-
-#### `@ui-qa` — Red Team QA
-
-**Специализация:** Агрессивный аудит UI-кода на несоответствие UI Manifest и Golden Samples.
-
-**Когда вызывать:** После @ui-specialist, как часть QA-цикла оркестратора.
-
-**Что проверяет (обязательно):**
-1. Таблицы (`p-table`): striped, paginator, emptymessage, status через p-tag
-2. Диалоги (`p-dialog`): modal, header, footer, 100% width controls
-3. Инпуты: pInputText, p-password, p-select, size="small"
-4. Кнопки: size="small", iconOnly severity, нет raw `<button>`
-5. Стили: trackBy в `*ngFor`, нет инлайн-форм, p-tag для статусов
-
-**Формат вывода:** ГИБРИДНЫЙ — JSON блок + текстовые [БАГ] / [ОК].
-
-**Анти-галлюцинация:** НЕ выдумывать баги. Если код соответствует Manifest — честно `status: "PASS"`.
-
-#### `@ui-auditor` — Финальный UI-аудитор
-
-**Специализация:** Финальная проверка по чеклисту после @ui-qa.
-
-**Когда вызывать:** После прохождения @ui-qa, перед сдачей задачи.
-
-**Что проверяет (НЕ дублирует @ui-qa):**
-- `styles.scss` — нет `!important`, цвета через CSS-переменные
-- `index.html` — favicon не 404
-- `app.config.ts` — токены не конфликтуют
-- Все импорты PrimeNG на месте
-- `ng build` без ошибок
-- `ng lint` без ошибок
-- Бюджеты CSS не превышены
-- Специфичные для страниц проверки (из чеклиста)
+> **ESLint rule:** Все запреты защищены `eslint-plugin-boundaries` (`boundaries/dependencies`).
+> Попытка нарушить → ошибка сборки.
 
 ---
 
-### ⚙️ Backend
+## 📦 Public API (Barrel-файлы)
 
-#### `@backend-specialist` — Backend разработчик
+Каждая фича экспортирует ТОЛЬКО через `index.ts`:
 
-**Специализация:** Express.js сервер, MongoDB, middleware, роуты, seed.
-
-**Когда вызывать:** Для создания/изменения API, моделей, middleware, бизнес-логики.
-
-**Технологии:** Express.js + TypeScript, MongoDB + Mongoose, JWT + bcrypt.
-
-**Структура модуля:**
-```
-backend/src/modules/{entity}/
-  model.ts       — Mongoose schema
-  router.ts      — CRUD роутер
+```typescript
+// features/products/index.ts — единственное, что видно снаружи
+export { ProductsComponent } from './products.component';
+export type { Product } from './models/product.model';
+// всё остальное — ПРИВАТНО
 ```
 
-**Правила:**
-- Все ответы через `ApiResponse<T>` wrapper
-- Обработка ошибок через middleware (error-handler.ts)
-- Пагинация для списков (page, limit, total)
-- CRUD Factory для стандартных операций
+### Правила
 
-#### `@api-specialist` — API-контракты
-
-**Специализация:** REST API дизайн, DTO, shared/types, версионирование, документация.
-
-**Когда вызывать:** Для проектирования новых API, создания интерфейсов в `shared/types/`.
-
-**Что делает:**
-- Проектирование REST API (`/api/v1/...`)
-- DTO и интерфейсы в `shared/types/`
-- Единый формат ответа `ApiResponse<T>`
-- Пагинация, поиск, сортировка
-
-#### `@auth-specialist` — Авторизация и безопасность
-
-**Специализация:** JWT, bcrypt, RBAC, guards, permissions.
-
-**Когда вызывать:** Для изменений в аутентификации, ролях, правах доступа.
-
-**Правила:**
-- Пароли только в bcrypt-хэше
-- JWT secret в .env
-- Access token: 15 минут, Refresh token: 7 дней
-- Роли: admin, manager, viewer
-- Все эндпоинты кроме `/auth` защищены
+- ✅ **Импорт из фичи — ТОЛЬКО через barrel:** `import('./features/products')`
+- 🔴 **Прямой импорт во внутренности фичи ЗАПРЕЩЁН:** `import('./features/products/products.internal.service')`
+- 🔴 **Импорт из barrel за пределами `app.routes.ts` — только через lazy routes
 
 ---
 
-### 🧠 Предметная область
+## 🎨 UI-кит и PrimeNG
 
-#### `@meta-architect` — PLM архитектор
+### Иерархия
 
-**Специализация:** EAV-атрибуты, BOM-деревья, категории, жизненный цикл изделия.
+```
+shared/ui/           ← единственное место, где разрешён прямой импорт PrimeNG
+  ├── kp-button      ← обёртка над PrimeNG
+  ├── kp-input       ← обёртка над PrimeNG
+  ├── kp-table       ← обёртка над PrimeNG
+  ├── empty-state    ← компонент без PrimeNG
+  ├── page-layout    ← компонент без PrimeNG
+  └── index.ts       ← публичный API UI-кита
+```
 
-**Когда вызывать:** Для работы со спецификациями, атрибутами, BOM, жизненным циклом.
+### Правила
 
-**Домен:**
-- EAV-атрибуты (Entity-Attribute-Value)
-- BOM-деревья (Bill of Materials)
-- Product Categories и наследование атрибутов
-- Жизненный цикл: as_ordered → as_designed → as_built → as_maintained
+- ✅ **Новые компоненты** — только через `kp-*` обёртки из `shared/ui/`
+- 🔴 **Прямой импорт `primeng/*` в `features/*` ЗАПРЕЩЁН** — только через `shared/ui/`
+- 🔴 **Прямой импорт `primeng/*` в `core/*` ЗАПРЕЩЁН** — утилиты не зависят от UI
+- 🔴 **Inline-стили ЗАПРЕЩЕНЫ** — только SCSS
+- 🔴 **Raw HTML-элементы** (`<button>`, `<input>`, `<table>`, `<dialog>`) — только через PrimeNG или kp-обёртки
 
-**Запрещено:**
-- CASCADE DELETE при удалении BOM-узла (только reparenting)
-- Менять IAttributeDef без синхронизации с compliance-validator
-
-#### `@production-planner` — Планировщик производства
-
-**Специализация:** Расчёт себестоимости, планирование, BOM → закупки.
-
-**Когда вызывать:** Для расчётов себестоимости, сроков, создания производственных задач.
-
-**Домен:**
-- Расчёт себестоимости (cost roll-up)
-- Расчёт сроков (lead time)
-- Триггеры создания WorkTask и MaterialRequest
-
-#### `@compliance-validator` — Валидатор соответствия
-
-**Специализация:** Проверка изделий на соответствие ТЗ и ГОСТ.
-
-**Когда вызывать:** Для проверок compliance, валидации атрибутов, блокирующих проверок.
-
-**Домен:**
-- Compliance Engine (8 операторов: =, ≠, >, <, ≥, ≤, ±, range)
-- Двухфазная сверка стадий жизненного цикла
-
-**Запрещено:**
-- Блокировать advance при soft warning (только при hard block)
-- Выполнять проверку если одно из значений null
+> **Note:** Существующий код в `features/*` может содержать прямые импорты PrimeNG.
+> Это **технический долг**, который мигрируется по мере рефакторинга в `kp-crud-page`.
 
 ---
 
-### 🧪 Тестирование
+## 🔐 Permissions (RBAC)
 
-#### `@tester` — Тестировщик
+### Единый источник
 
-**Специализация:** Написание и запуск тестов (Jasmine/Karma для Angular, Jest для backend).
+```typescript
+// core/permissions.ts — единственное место, где определяются префиксы
+export const MODULE_PERM_PREFIX: Record<string, string> = { ... };
+export const DIR_PERM_PREFIX: Record<string, string> = { ... };
+```
 
-**Когда вызывать:** Для покрытия нового кода тестами, исправления упавших тестов.
+### Правила
 
-**Технологии:**
-- Jasmine/Karma для Angular компонентов и сервисов
-- Jest для backend (Node.js)
-
-**Что покрывать:**
-- Сервисы: loadAll, create, update, delete
-- Компоненты: рендеринг, состояния, эмитты
-- Пайпы: трансформации
-- Edge cases: пустые списки, ошибки, загрузка
-
-**Формат:** Один spec-файл на сущность, describe → it (BDD-стиль).
+- ✅ **Проверка прав — только через `*appHasPermission` или `auth.hasPermission()`**
+- ✅ **Префиксы — только из `core/permissions`**
+- 🔴 **Хардкод строк разрешений в шаблонах ЗАПРЕЩЁН** (кроме композиции с префиксом)
+- 🔴 **Каждый эндпоинт на бэке — через `crud-factory` с `permPrefix`**
 
 ---
 
-### 🚀 DevOps
+## 🔄 CRUD и данные
 
-#### `@deploy-specialist` — DevOps инженер
+### Единый поток
 
-**Специализация:** Деплой, nginx, systemd, CI/CD, Docker, HTTPS.
+```
+Компонент → CrudStore / CrudApiService → API → Сервер
+```
 
-**Когда вызывать:** Для настройки деплоя, инфраструктуры, CI/CD pipeline.
+### Правила
 
-**Структура:**
-- `deploy/deploy.sh` — скрипт деплоя
-- `deploy/nginx.conf` — Nginx конфиг
-- `docker-compose.yml` / `docker-compose.prod.yml`
-
-**Правила:**
-- Frontend: build → deploy в /var/www/kppdf
-- Backend: PM2 / systemd процесс
-- Nginx reverse proxy на localhost:3000
-- HTTPS через Let's Encrypt
+- ✅ **Все CRUD-страницы используют `kp-table` + `CrudStore` / `CrudApiService`**
+- ✅ **Все API-ответы — через `ApiResponse<T>` wrapper**
+- ✅ **Пагинация для всех списков** (page, limit, total)
+- 🔴 **Прямой `http.get` в компонентах ЗАПРЕЩЁН** — только через сервисы
+- 🔴 **Ручной CRUD без `crud-factory` на бэке ЗАПРЕЩЁН**
 
 ---
 
-## Матрица ответственности
+## 📐 Технологический стек
 
-| Задача | Какой агент | В каком порядке |
-|--------|-------------|-----------------|
-| Новая страница | @ui-specialist → @ui-qa → @ui-auditor | Последовательно |
-| Новый API модуль | @api-specialist → @backend-specialist → @tester | Последовательно |
-| Рефакторинг | @guardian → @reviewer → @tester | Последовательно |
-| Баг в UI | @ui-specialist → @ui-qa | Цикл до PASS |
-| Дизайн-токены | @design-system → @ui-specialist | Последовательно |
-| Расчёт себестоимости | @production-planner → @backend-specialist → @api-specialist | Последовательно |
-| Compliance | @compliance-validator → @backend-specialist → @tester | Последовательно |
-| Деплой | @deploy-specialist → @reviewer | Последовательно |
+| Слой | Технологии |
+|------|------------|
+| Frontend | Angular 21+, Standalone, Signals, OnPush |
+| UI | PrimeNG 21 (через `shared/ui/kp-*`) |
+| Стили | SCSS+BEM, CSS-переменные в `_tokens.scss` |
+| Backend | Express.js + TypeScript |
+| DB | MongoDB + Mongoose |
+| Auth | JWT + bcrypt, RBAC |
+| Code quality | ESLint + boundaries, TypeScript strict |
 
-## Правила коммуникации
+---
 
-1. **Не дублировать ответственность** — если задачу может сделать один агент, не звать второго
-2. **Передавать полный контекст** — задача + файлы + стандарты + запреты
-3. **QA-цикл обязателен** — после @ui-specialist всегда @ui-qa
-4. **Не пропускать шаги** — Coder → Build → QA → Auditor (детерминированный порядок)
-5. **Проверять типы** — после изменений запускать type-check / build
-6. **Обновлять документацию** — если меняется структура, API или архитектура
+## 🚦 Процесс работы
+
+### Перед каждой задачей
+
+1. **Прочитать `AGENTS.md`** — убедиться, что все инварианты актуальны
+2. **Собрать контекст** — file-picker, code-searcher, read_files
+3. **Проверить наличие существующих решений** — не дублировать `CrudStore`, `kp-*`, `core/permissions`
+
+### После каждого изменения
+
+1. **`ng build`** — сборка должна проходить без ошибок
+2. **`ng lint`** — проверить ESLint (границы, запрещённые импорты, стиль)
+3. **Проверить импорты** — не нарушены ли архитектурные слои
+4. **Code review** — запустить `code-reviewer-deepseek-flash` для проверки стандартов качества
+5. **Документация** — обновить README/AGENTS.md если изменилась структура
+
+---
+
+## ⛔ Что НЕЛЬЗЯ делать
+
+- 🔴 Использовать `any` — только `unknown` с type guard
+- 🔴 Использовать constructor DI — только `inject()`
+- 🔴 Использовать NgModules — только Standalone
+- 🔴 Использовать `subscribe()` без DestroyRef/OnDestroy
+- 🔴 Хранить секреты или JWT в коде — только `.env`
+- 🔴 Менять shared/types без синхронизации FE и BE
+- 🔴 Игнорировать ESLint-ошибки — `// eslint-disable-next-line` только с обоснованием

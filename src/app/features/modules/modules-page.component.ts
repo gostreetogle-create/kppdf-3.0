@@ -47,6 +47,46 @@ interface ModuleConfig {
   columns: ColumnDef[];
 }
 
+// ===== Отделы =====
+interface DepartmentGroup {
+  id: string;
+  label: string;
+  icon: string;
+  modules: ModuleConfig[];
+}
+
+const DEPARTMENTS: { id: string; label: string; icon: string }[] = [
+  { id: 'office', label: 'Офис', icon: 'pi pi-building' },
+  { id: 'production', label: 'Производство', icon: 'pi pi-cog' },
+  { id: 'warehouse', label: 'Склад', icon: 'pi pi-warehouse' },
+  { id: 'accounting', label: 'Бухгалтерия', icon: 'pi pi-calculator' },
+  { id: 'admin', label: 'Администрирование', icon: 'pi pi-shield' },
+];
+
+/** Маппинг модуль → отдел */
+const MODULE_DEPT: Record<string, string> = {
+  tenders: 'office',
+  quotations: 'office',
+  orders: 'office',
+  interactions: 'office',
+  'product-passports': 'production',
+  boms: 'production',
+  operations: 'production',
+  'tech-processes': 'production',
+  'work-orders': 'production',
+  'work-order-operations': 'production',
+  'purchase-requests': 'warehouse',
+  'purchase-orders': 'warehouse',
+  warehouses: 'warehouse',
+  'stock-movements': 'warehouse',
+  reservations: 'warehouse',
+  shipments: 'warehouse',
+  'cost-calculations': 'accounting',
+  'actual-costs': 'accounting',
+  'shipping-docs': 'accounting',
+  counters: 'admin',
+};
+
 @Component({
   selector: 'app-modules-page',
   standalone: true,
@@ -64,22 +104,30 @@ interface ModuleConfig {
         <h1>Бизнес-процессы</h1>
       </div>
 
-      <!-- Навигация по модулям (только с правом просмотра) -->
-      <div class="mod-tabs">
-        @for (mod of visibleModules(); track mod.key) {
-          <p-button
-            [label]="mod.label"
-            [icon]="mod.icon"
-            [severity]="activeKey() === mod.key ? 'primary' : 'secondary'"
-            [outlined]="activeKey() !== mod.key"
-            (click)="selectModule(mod.key)"
-            [pTooltip]="mod.label"
-            tooltipPosition="bottom"
-            size="small"
-            styleClass="mod-tabs__btn"
-          />
-        }
-      </div>
+      <!-- Навигация по модулям (только с правом просмотра) — группировка по отделам -->
+      @for (group of visibleGroups(); track group.id) {
+        <div class="mod-dept">
+          <div class="mod-dept__header">
+            <i [class]="group.icon + ' mod-dept__icon'"></i>
+            <span class="mod-dept__label">{{ group.label }}</span>
+          </div>
+          <div class="mod-dept__tabs">
+            @for (mod of group.modules; track mod.key) {
+              <p-button
+                [label]="mod.label"
+                [icon]="mod.icon"
+                [severity]="activeKey() === mod.key ? 'primary' : 'secondary'"
+                [outlined]="activeKey() !== mod.key"
+                (click)="selectModule(mod.key)"
+                [pTooltip]="mod.label"
+                tooltipPosition="bottom"
+                size="small"
+                styleClass="mod-dept__btn"
+              />
+            }
+          </div>
+        </div>
+      }
 
       <!-- Панель инструментов -->
       <div class="page__content">
@@ -711,6 +759,19 @@ export class ModulesPageComponent implements OnInit {
   readonly visibleModules = computed(() =>
     this.modules.filter((m) => this.auth.hasPermission(`${MODULE_PERM_PREFIX[m.key] || 'office.'}.view`)),
   );
+
+  /** Сгруппированные по отделам видимые модули (порядок = DEPARTMENTS) */
+  readonly visibleGroups = computed<DepartmentGroup[]>(() => {
+    const visible = this.visibleModules();
+    return DEPARTMENTS
+      .map((dept) => ({
+        id: dept.id,
+        label: dept.label,
+        icon: dept.icon,
+        modules: visible.filter((m) => MODULE_DEPT[m.key] === dept.id),
+      }))
+      .filter((g) => g.modules.length > 0);
+  });
 
   constructor() {
     this.searchSubject

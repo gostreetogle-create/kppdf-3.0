@@ -42,6 +42,30 @@ interface DashboardStats {
   total: number;
 }
 
+interface DepartmentStatGroup {
+  id: string;
+  label: string;
+  icon: string;
+  items: StatItem[];
+}
+
+const DEPT_GROUPS: { id: string; label: string; icon: string }[] = [
+  { id: 'office', label: 'Офис', icon: 'pi pi-building' },
+  { id: 'production', label: 'Производство', icon: 'pi pi-cog' },
+  { id: 'warehouse', label: 'Склад', icon: 'pi pi-warehouse' },
+  { id: 'accounting', label: 'Бухгалтерия', icon: 'pi pi-calculator' },
+  { id: 'admin', label: 'Администрирование', icon: 'pi pi-shield' },
+];
+
+/** Какие ключи статистики к какому отделу относятся */
+const DEPT_STAT_KEYS: Record<string, (keyof DashboardStats)[]> = {
+  office: ['products', 'counterparties', 'quotations', 'orders', 'interactions'],
+  production: ['boms', 'operations', 'techProcesses', 'workOrders', 'workOrderOperations'],
+  warehouse: ['purchaseRequests', 'purchaseOrders', 'warehouses', 'stockMovements', 'reservations', 'shipments'],
+  accounting: ['costCalculations', 'actualCosts', 'shippingDocs'],
+  admin: ['categories', 'users', 'roles', 'statuses', 'workTypes', 'settings', 'counters'],
+};
+
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
@@ -60,55 +84,38 @@ interface DashboardStats {
 
       @if (!loading()) {
         <div class="dashboard">
-          <!-- Секция: Справочники -->
-          <h3 class="dashboard__section">📚 Справочники</h3>
-          <div class="dashboard__grid">
-            @for (item of dirStats(); track item.label) {
-              <div
-                class="dashboard__card"
-                [routerLink]="'/directories'"
-              >
-                <p-card>
-                  <ng-template pTemplate="content">
-                    <div class="dashboard__card-body">
-                      <i [class]="item.icon + ' dashboard__card-icon'"></i>
-                      <div class="dashboard__card-info">
-                        <span class="dashboard__card-value">{{ item.total }}</span>
-                        <span class="dashboard__card-label">{{ item.label }}</span>
-                      </div>
-                    </div>
-                  </ng-template>
-                </p-card>
+          @for (group of deptStats(); track group.id) {
+            @if (group.items.length > 0) {
+              <h3 class="dashboard__section">
+                <i [class]="group.icon + ' dashboard__section-icon'"></i>
+                {{ group.label }}
+              </h3>
+              <div class="dashboard__grid">
+                @for (item of group.items; track item.label) {
+                  <div
+                    class="dashboard__card"
+                    [routerLink]="group.id === 'admin' ? '/directories' : '/modules'"
+                  >
+                    <p-card>
+                      <ng-template pTemplate="content">
+                        <div class="dashboard__card-body">
+                          <i [class]="item.icon + ' dashboard__card-icon'"></i>
+                          <div class="dashboard__card-info">
+                            <span class="dashboard__card-value">{{ item.total }}</span>
+                            <span class="dashboard__card-label">{{ item.label }}</span>
+                          </div>
+                        </div>
+                      </ng-template>
+                    </p-card>
+                  </div>
+                }
               </div>
             }
-          </div>
-
-          <!-- Секция: Бизнес-процессы -->
-          <h3 class="dashboard__section">🏭 Бизнес-процессы</h3>
-          <div class="dashboard__grid">
-            @for (item of moduleStats(); track item.label) {
-              <div
-                class="dashboard__card"
-                [routerLink]="'/modules'"
-              >
-                <p-card>
-                  <ng-template pTemplate="content">
-                    <div class="dashboard__card-body">
-                      <i [class]="item.icon + ' dashboard__card-icon'"></i>
-                      <div class="dashboard__card-info">
-                        <span class="dashboard__card-value">{{ item.total }}</span>
-                        <span class="dashboard__card-label">{{ item.label }}</span>
-                      </div>
-                    </div>
-                  </ng-template>
-                </p-card>
-              </div>
-            }
-          </div>
+          }
         </div>
       } @else {
         <div class="dashboard dashboard--loading">
-          @for (_ of [].constructor(8); track $index) {
+          @for (_ of [].constructor(12); track $index) {
             <div class="dashboard__skeleton">
               <div class="dashboard__skeleton-icon"></div>
               <div class="dashboard__skeleton-text"></div>
@@ -124,8 +131,8 @@ export class DashboardPageComponent implements OnInit {
   private readonly http = inject(HttpClient);
   readonly loading = signal(true);
   readonly stats = signal<DashboardStats | null>(null);
-  readonly dirStats = signal<StatItem[]>([]);
-  readonly moduleStats = signal<StatItem[]>([]);
+  /** Сгруппированные по отделам статистики */
+  readonly deptStats = signal<DepartmentStatGroup[]>([]);
 
   ngOnInit(): void {
     this.http
@@ -133,36 +140,15 @@ export class DashboardPageComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.stats.set(res.data);
-          this.dirStats.set([
-            res.data.products,
-            res.data.categories,
-            res.data.counterparties,
-            res.data.users,
-            res.data.roles,
-            res.data.statuses,
-            res.data.workTypes,
-            res.data.settings,
-          ]);
-          this.moduleStats.set([
-            res.data.quotations,
-            res.data.orders,
-            res.data.boms,
-            res.data.operations,
-            res.data.techProcesses,
-            res.data.purchaseRequests,
-            res.data.purchaseOrders,
-            res.data.warehouses,
-            res.data.stockMovements,
-            res.data.reservations,
-            res.data.workOrders,
-            res.data.workOrderOperations,
-            res.data.costCalculations,
-            res.data.actualCosts,
-            res.data.shipments,
-            res.data.shippingDocs,
-            res.data.counters,
-            res.data.interactions,
-          ]);
+          const groups: DepartmentStatGroup[] = DEPT_GROUPS.map((dept) => ({
+            id: dept.id,
+            label: dept.label,
+            icon: dept.icon,
+            items: (DEPT_STAT_KEYS[dept.id] || [])
+              .map((key) => res.data[key])
+              .filter((item): item is StatItem => !!item),
+          }));
+          this.deptStats.set(groups);
           this.loading.set(false);
         },
         error: () => {

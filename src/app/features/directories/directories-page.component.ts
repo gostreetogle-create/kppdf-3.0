@@ -48,6 +48,31 @@ interface DirectoryConfig {
   quickAddPresets?: { label: string; value: Record<string, unknown> }[];
 }
 
+/** ===== Отделы для справочников ===== */
+interface DirDepartmentGroup {
+  id: string;
+  label: string;
+  icon: string;
+  dirs: DirectoryConfig[];
+}
+
+const DIR_DEPARTMENTS: { id: string; label: string; icon: string }[] = [
+  { id: 'office', label: 'Офис', icon: 'pi pi-building' },
+  { id: 'admin', label: 'Администрирование', icon: 'pi pi-shield' },
+];
+
+/** Маппинг справочник → отдел */
+const DIR_DEPT_MAP: Record<string, string> = {
+  products: 'office',
+  counterparties: 'office',
+  categories: 'admin',
+  users: 'admin',
+  roles: 'admin',
+  statuses: 'admin',
+  'work-types': 'admin',
+  settings: 'admin',
+};
+
 @Component({
   selector: 'app-directories-page',
   standalone: true,
@@ -66,22 +91,30 @@ interface DirectoryConfig {
         <p class="page__subtitle">Часто используемые данные — редактируйте, добавляйте, управляйте</p>
       </div>
 
-      <!-- Навигация по справочникам (только с правом просмотра) -->
-      <div class="dir-tabs">
-        @for (dir of visibleDirs(); track dir.key) {
-          <p-button
-            [label]="dir.label"
-            [icon]="dir.icon"
-            [severity]="activeKey() === dir.key ? 'primary' : 'secondary'"
-            [outlined]="activeKey() !== dir.key"
-            (click)="selectDir(dir.key)"
-            [pTooltip]="dir.label"
-            tooltipPosition="bottom"
-            size="small"
-            styleClass="dir-tabs__btn"
-          />
-        }
-      </div>
+      <!-- Навигация по справочникам (только с правом просмотра) — группировка по отделам -->
+      @for (group of visibleDirGroups(); track group.id) {
+        <div class="dir-dept">
+          <div class="dir-dept__header">
+            <i [class]="group.icon + ' dir-dept__icon'"></i>
+            <span class="dir-dept__label">{{ group.label }}</span>
+          </div>
+          <div class="dir-dept__tabs">
+            @for (dir of group.dirs; track dir.key) {
+              <p-button
+                [label]="dir.label"
+                [icon]="dir.icon"
+                [severity]="activeKey() === dir.key ? 'primary' : 'secondary'"
+                [outlined]="activeKey() !== dir.key"
+                (click)="selectDir(dir.key)"
+                [pTooltip]="dir.label"
+                tooltipPosition="bottom"
+                size="small"
+                styleClass="dir-dept__btn"
+              />
+            }
+          </div>
+        </div>
+      }
 
       <div page-toolbar class="dir-toolbar">
         <div class="dir-toolbar__left">
@@ -358,6 +391,19 @@ export class DirectoriesPageComponent implements OnInit {
   readonly visibleDirs = computed(() =>
     this.directories.filter((d) => this.auth.hasPermission(`${DIR_PERM_PREFIX[d.key] || 'admin.'}.view`)),
   );
+
+  /** Сгруппированные по отделам видимые справочники */
+  readonly visibleDirGroups = computed<DirDepartmentGroup[]>(() => {
+    const visible = this.visibleDirs();
+    return DIR_DEPARTMENTS
+      .map((dept) => ({
+        id: dept.id,
+        label: dept.label,
+        icon: dept.icon,
+        dirs: visible.filter((d) => DIR_DEPT_MAP[d.key] === dept.id),
+      }))
+      .filter((g) => g.dirs.length > 0);
+  });
 
   // Состояние
   readonly activeKey = signal<string>('products');

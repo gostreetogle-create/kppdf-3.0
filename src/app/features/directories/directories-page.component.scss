@@ -9,15 +9,41 @@
   animation: kp-fade-in 0.15s ease-out;
 }
 
-/* ── Directory Tabs ── */
-.dir-tabs {
-  display: flex;
-  gap: 4px;
+/* ── Department sections for Directories ── */
+.dir-dept {
   margin-bottom: $space-4;
-  flex-wrap: wrap;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 0 2px;
+  }
+
+  &__icon {
+    font-size: 14px;
+    color: var(--kp-text-soft);
+    width: 20px;
+    text-align: center;
+  }
+
+  &__label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--kp-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  &__tabs {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
 }
 
-:host ::ng-deep .dir-tabs__btn {
+:host ::ng-deep .dir-dept__btn {
   padding: 0.3rem 0.7rem !important;
   font-size: $font-sm !important;
   border-radius: $radius-sm !important;
