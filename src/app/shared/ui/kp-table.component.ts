@@ -1,4 +1,4 @@
-import { Component, input, output, model, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, model, computed, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -39,163 +39,168 @@ export interface KpPageEvent {
     EmptyStateComponent, KpButtonComponent,
   ],
   template: `
-    @if (showSearch() || showActions()) {
-      <div class="kp-table__toolbar">
-        <div class="kp-table__toolbar-left">
-          @if (title(); as t) {
-            <span class="kp-table__title">{{ t }}</span>
-          }
-          @if (!loading()) {
-            <span class="kp-table__count">
-              {{ total() }}
-              {{ total() === 1 ? 'запись' : (total() >= 2 && total() <= 4 ? 'записи' : 'записей') }}
-            </span>
-          }
+    <div class="kp-table-panel">
+      @if (showToolbar()) {
+        <div class="kp-table__toolbar">
+          <div class="kp-table__toolbar-left">
+            @if (showToolbarTitle() && title()) {
+              <span class="kp-table__title">{{ title() }}</span>
+            }
+            @if (!loading()) {
+              <span class="kp-table__count">
+                {{ total() }}
+                {{ total() === 1 ? 'запись' : (total() >= 2 && total() <= 4 ? 'записи' : 'записей') }}
+              </span>
+            }
+          </div>
+          <div class="kp-table__toolbar-right">
+            @if (showSearch()) {
+              <span class="p-input-icon-left kp-table__search">
+                <i class="pi pi-search" aria-hidden="true"></i>
+                <label class="visually-hidden" [attr.for]="searchInputId">Поиск</label>
+                <input
+                  [id]="searchInputId"
+                  pInputText
+                  type="search"
+                  placeholder="Поиск..."
+                  [attr.aria-label]="'Поиск'"
+                  [ngModel]="searchQuery()"
+                  (ngModelChange)="onSearch($event)"
+                  size="small"
+                />
+              </span>
+            }
+            <ng-content select="[table-actions]" />
+          </div>
         </div>
-        <div class="kp-table__toolbar-right">
-          @if (showSearch()) {
-            <span class="p-input-icon-left kp-table__search">
-              <i class="pi pi-search" aria-hidden="true"></i>
-              <label class="visually-hidden" [attr.for]="searchInputId">Поиск</label>
-              <input
-                [id]="searchInputId"
-                pInputText
-                type="search"
-                placeholder="Поиск..."
-                [attr.aria-label]="'Поиск'"
-                [ngModel]="searchQuery()"
-                (ngModelChange)="onSearch($event)"
-                size="small"
-              />
-            </span>
-          }
-          <ng-content select="[table-actions]" />
-        </div>
-      </div>
-    }
+      }
 
-    @if (loading()) {
-      <div class="kp-table__loading" role="status">Загрузка данных...</div>
-    }
+      @if (loading()) {
+        <div class="kp-table__loading" role="status">Загрузка данных...</div>
+      }
 
-    @if (!loading()) {
-      <p-table
-        [value]="data()"
-        [stripedRows]="true"
-        [paginator]="paginator()"
-        [rows]="limit()"
-        [totalRecords]="total()"
-        [rowsPerPageOptions]="rowsPerPageOptions()"
-        [lazy]="true"
-        [sortField]="sortField()"
-        [sortOrder]="sortOrder()"
-        (onPage)="pageEvent.emit($event)"
-        (onSort)="onSortHandler($event)"
-        size="small"
-        styleClass="p-datatable-striped"
-        [showCurrentPageReport]="true"
-        currentPageReportTemplate="Записи {first}–{last} из {totalRecords}"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            @for (col of columns(); track col.field || $index) {
-              <th
-                [style.width]="col.width"
-                [pSortableColumn]="col.sortable !== false ? col.field : undefined"
-              >
-                {{ col.header }}
-                @if (col.sortable !== false) {
-                  <p-sortIcon [field]="col.field" />
-                }
-              </th>
-            }
-            @if (showRowActions()) {
-              <th class="kp-table__actions-col">Действия</th>
-            }
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-row>
-          <tr>
-            @for (col of columns(); track col.field || $index) {
-              <td>
-                @switch (col.type) {
-                  @case ('tag') {
-                    <p-tag [value]="row[col.field]" [severity]="($any(severityFn())(row[col.field]))" />
+      @if (!loading()) {
+        <p-table
+          [value]="data()"
+          [stripedRows]="true"
+          [paginator]="paginator()"
+          [rows]="limit()"
+          [totalRecords]="total()"
+          [rowsPerPageOptions]="rowsPerPageOptions()"
+          [lazy]="true"
+          [sortField]="sortField()"
+          [sortOrder]="sortOrder()"
+          (onPage)="pageEvent.emit($event)"
+          (onSort)="onSortHandler($event)"
+          size="small"
+          styleClass="p-datatable-striped kp-table__datatable"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Записи {first}–{last} из {totalRecords}"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              @for (col of columns(); track col.field || $index) {
+                <th
+                  [style.width]="col.width"
+                  [pSortableColumn]="col.sortable !== false ? col.field : undefined"
+                >
+                  {{ col.header }}
+                  @if (col.sortable !== false) {
+                    <p-sortIcon [field]="col.field" />
                   }
-                  @case ('boolean') {
-                    <span class="kp-table__bool">
-                      <i
-                        class="pi boolean-indicator"
-                        [class.pi-check-circle]="row[col.field]"
-                        [class.pi-circle]="!row[col.field]"
-                        [class.boolean-indicator--yes]="row[col.field]"
-                        [class.boolean-indicator--no]="!row[col.field]"
-                        aria-hidden="true"
-                      ></i>
-                      <span class="visually-hidden">{{ row[col.field] ? 'Да' : 'Нет' }}</span>
-                    </span>
+                </th>
+              }
+              @if (showRowActions()) {
+                <th class="kp-table__actions-col">Действия</th>
+              }
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              @for (col of columns(); track col.field || $index) {
+                <td>
+                  @switch (col.type) {
+                    @case ('tag') {
+                      <p-tag
+                        [value]="getSelectLabel(col, row[col.field])"
+                        [severity]="($any(severityFn())(row[col.field]))"
+                      />
+                    }
+                    @case ('boolean') {
+                      <span class="kp-table__bool">
+                        <i
+                          class="pi boolean-indicator"
+                          [class.pi-check-circle]="row[col.field]"
+                          [class.pi-circle]="!row[col.field]"
+                          [class.boolean-indicator--yes]="row[col.field]"
+                          [class.boolean-indicator--no]="!row[col.field]"
+                          aria-hidden="true"
+                        ></i>
+                        <span class="visually-hidden">{{ row[col.field] ? 'Да' : 'Нет' }}</span>
+                      </span>
+                    }
+                    @case ('date') {
+                      <span>{{ row[col.field] ? (row[col.field] | date:'dd.MM.yyyy') : '—' }}</span>
+                    }
+                    @case ('select') {
+                      <span>{{ getSelectLabel(col, row[col.field]) }}</span>
+                    }
+                    @case ('number') {
+                      <span class="kp-table__number">{{ row[col.field] ?? '—' }}</span>
+                    }
+                    @default {
+                      <span>{{ row[col.field] ?? '—' }}</span>
+                    }
                   }
-                  @case ('date') {
-                    <span>{{ row[col.field] ? (row[col.field] | date:'dd.MM.yyyy') : '—' }}</span>
-                  }
-                  @case ('select') {
-                    <span>{{ getSelectLabel(col, row[col.field]) }}</span>
-                  }
-                  @case ('number') {
-                    <span>{{ row[col.field] ?? '—' }}</span>
-                  }
-                  @default {
-                    <span>{{ row[col.field] ?? '—' }}</span>
-                  }
-                }
+                </td>
+              }
+              @if (showRowActions()) {
+                <td>
+                  <div class="table-actions">
+                    @if (canUpdate()) {
+                      <app-kp-button
+                        icon="pi pi-pencil"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="secondary"
+                        size="small"
+                        tooltip="Редактировать"
+                        ariaLabel="Редактировать"
+                        (buttonClick)="edit.emit(row)"
+                      />
+                    }
+                    @if (canDelete()) {
+                      <app-kp-button
+                        icon="pi pi-trash"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="danger"
+                        size="small"
+                        tooltip="Удалить"
+                        ariaLabel="Удалить"
+                        (buttonClick)="deleteRow.emit(row)"
+                      />
+                    }
+                  </div>
+                </td>
+              }
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td [attr.colspan]="columns().length + (showRowActions() ? 1 : 0)">
+                <app-empty-state
+                  [compact]="true"
+                  [description]="emptyMessage()"
+                >
+                  <i empty-icon class="pi pi-inbox"></i>
+                </app-empty-state>
               </td>
-            }
-            @if (showRowActions()) {
-              <td>
-                <div class="table-actions">
-                  @if (canUpdate()) {
-                    <app-kp-button
-                      icon="pi pi-pencil"
-                      [rounded]="true"
-                      [text]="true"
-                      severity="secondary"
-                      size="small"
-                      tooltip="Редактировать"
-                      ariaLabel="Редактировать"
-                      (buttonClick)="edit.emit(row)"
-                    />
-                  }
-                  @if (canDelete()) {
-                    <app-kp-button
-                      icon="pi pi-trash"
-                      [rounded]="true"
-                      [text]="true"
-                      severity="danger"
-                      size="small"
-                      tooltip="Удалить"
-                      ariaLabel="Удалить"
-                      (buttonClick)="deleteRow.emit(row)"
-                    />
-                  }
-                </div>
-              </td>
-            }
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td [attr.colspan]="columns().length + (showRowActions() ? 1 : 0)">
-              <app-empty-state
-                [compact]="true"
-                [description]="emptyMessage()"
-              >
-                <i empty-icon class="pi pi-inbox"></i>
-              </app-empty-state>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    }
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+    </div>
   `,
   styleUrl: './kp-table.component.scss',
 })
@@ -218,8 +223,8 @@ export class KpTableComponent {
   readonly searchQuery = model<string>('');
 
   readonly title = input<string>('');
-  readonly showActions = input(true);
   readonly showToolbarTitle = input(true);
+  readonly showActions = input(true);
 
   readonly showRowActions = input(true);
   readonly canUpdate = input(true);
@@ -233,6 +238,11 @@ export class KpTableComponent {
   readonly searchChange = output<string>();
   readonly edit = output<Record<string, unknown>>();
   readonly deleteRow = output<Record<string, unknown>>();
+
+  /** Тулбар всегда виден: поиск, действия и/или счётчик записей */
+  readonly showToolbar = computed(
+    () => this.showSearch() || this.showActions() || this.showToolbarTitle(),
+  );
 
   onSortHandler(event: { field?: string; order?: number }): void {
     this.sortChange.emit({

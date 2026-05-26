@@ -1,4 +1,12 @@
-import { Component, inject, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  DestroyRef,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { KpCrudPageComponent } from '../../shared/crud/kp-crud-page.component';
 import {
@@ -10,15 +18,26 @@ import {
   type KpSelectOption,
   type KpColumn,
 } from '../../shared/ui';
+import { OrderOptionsService } from '../../shared/services/order-options.service';
+import { ProductOptionsService } from '../../shared/services/product-options.service';
+import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createWorkOrdersStore } from './work-orders.store';
 import { PERMISSIONS } from '../../core/permissions';
 
+const WORK_ORDER_STATUS_OPTIONS: KpSelectOption[] = [
+  { label: 'Ожидает', value: 'pending' },
+  { label: 'В работе', value: 'in_progress' },
+  { label: 'Выполнен', value: 'completed' },
+  { label: 'Отменён', value: 'cancelled' },
+];
+
 function workOrderSeverity(value: unknown): string {
   const map: Record<string, string> = {
-    new: 'info',
+    pending: 'secondary',
     in_progress: 'warn',
     completed: 'success',
     cancelled: 'danger',
+    new: 'info',
     on_hold: 'secondary',
   };
   return map[String(value)] || 'info';
@@ -39,9 +58,10 @@ function workOrderSeverity(value: unknown): string {
   template: `
     <app-kp-crud-page
       title="Производственные наряды"
+      entityLabel="производственного наряда"
       description="Наряды на производство"
       [store]="store"
-      [columns]="columns"
+      [columns]="columns()"
       [permissions]="PERMISSIONS['work-orders']"
       [severityFn]="workOrderSeverity"
       createLabel="Создать наряд"
@@ -49,13 +69,29 @@ function workOrderSeverity(value: unknown): string {
       <ng-template #form let-row>
         <div class="form-layout">
           <app-kp-input label="Номер" name="number" [value]="row['number'] || ''" (valueChange)="row['number'] = $event" />
-          <app-kp-input label="Заказ" name="orderId" [value]="row['orderId'] || ''" (valueChange)="row['orderId'] = $event" [required]="true" />
-          <app-kp-input label="Товар" name="productId" [value]="row['productId'] || ''" (valueChange)="row['productId'] = $event" [required]="true" />
+          <app-kp-select
+            label="Заказ"
+            name="orderId"
+            placeholder="Выберите заказ"
+            [value]="row['orderId'] || ''"
+            (valueChange)="row['orderId'] = $event"
+            [options]="orderOptions()"
+            [required]="true"
+          />
+          <app-kp-select
+            label="Товар"
+            name="productId"
+            placeholder="Выберите товар"
+            [value]="row['productId'] || ''"
+            (valueChange)="row['productId'] = $event"
+            [options]="productOptions()"
+            [required]="true"
+          />
           <app-kp-input-number label="Количество" name="qty" [value]="row['qty'] ?? null" (valueChange)="row['qty'] = $event" />
           <app-kp-select
             label="Статус"
             name="statusId"
-            [value]="row['statusId'] || 'new'"
+            [value]="row['statusId'] || 'pending'"
             (valueChange)="row['statusId'] = $event"
             [options]="statusOptions"
           />
@@ -68,26 +104,51 @@ function workOrderSeverity(value: unknown): string {
     </app-kp-crud-page>
   `,
 })
-export class WorkOrdersPageComponent {
+export class WorkOrdersPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
   readonly workOrderSeverity = workOrderSeverity;
+  readonly statusOptions = WORK_ORDER_STATUS_OPTIONS;
 
-  readonly statusOptions: KpSelectOption[] = [
-    { label: 'Новый', value: 'new' },
-    { label: 'В работе', value: 'in_progress' },
-    { label: 'Выполнен', value: 'completed' },
-    { label: 'Отменён', value: 'cancelled' },
-    { label: 'Приостановлен', value: 'on_hold' },
-  ];
+  readonly orderOptions = signal<KpSelectOption[]>([]);
+  readonly productOptions = signal<KpSelectOption[]>([]);
 
-  readonly columns: KpColumn[] = [
+  readonly columns = signal<KpColumn[]>([
     { field: 'number', header: 'Номер', type: 'text', sortable: true, width: '140px' },
-    { field: 'orderId', header: 'Заказ', type: 'text', sortable: true },
-    { field: 'productId', header: 'Товар', type: 'text', sortable: true },
+    { field: 'orderId', header: 'Заказ', type: 'select', sortable: true, options: [] },
+    { field: 'productId', header: 'Товар', type: 'select', sortable: true, options: [] },
     { field: 'qty', header: 'Кол-во', type: 'number', sortable: true, width: '90px' },
-    { field: 'statusId', header: 'Статус', type: 'tag', sortable: true, width: '130px' },
+    {
+      field: 'statusId',
+      header: 'Статус',
+      type: 'tag',
+      sortable: true,
+      width: '130px',
+      options: WORK_ORDER_STATUS_OPTIONS,
+    },
     { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
-  ];
+  ]);
 
   readonly store = createWorkOrdersStore(inject(DestroyRef));
+
+  private readonly orderOptionsService = inject(OrderOptionsService);
+  private readonly productOptionsService = inject(ProductOptionsService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  ngOnInit(): void {
+    this.orderOptionsService
+      .load()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((options) => {
+        this.orderOptions.set(options);
+        patchCrudColumnOptions(this.columns, 'orderId', options);
+      });
+
+    this.productOptionsService
+      .load()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((options) => {
+        this.productOptions.set(options);
+        patchCrudColumnOptions(this.columns, 'productId', options);
+      });
+  }
 }

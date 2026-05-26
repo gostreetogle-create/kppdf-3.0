@@ -9,6 +9,7 @@ import { TooltipModule } from 'primeng/tooltip';
   imports: [ButtonModule, TooltipModule],
   template: `
     <p-button
+      [type]="type()"
       [label]="label()"
       [icon]="icon()"
       [severity]="severity()"
@@ -28,6 +29,7 @@ import { TooltipModule } from 'primeng/tooltip';
   `,
 })
 export class KpButtonComponent {
+  readonly type = input<'button' | 'submit' | 'reset'>('button');
   readonly label = input<string>('');
   readonly icon = input<string>('');
   readonly severity = input<'success' | 'info' | 'warn' | 'danger' | 'help' | 'primary' | 'secondary' | 'contrast'>('primary');

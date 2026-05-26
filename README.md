@@ -168,13 +168,19 @@ GET /api/v1/dashboard/stats → счётчики по всем таблицам
 
 ## Команда разработки (opencode)
 
-Система из 13 агентов (1 primary + 12 subagent). Orchestrator автоматически распределяет задачи.
+Система из **15 агентов** (1 primary + 14 subagent). Подробная карта и типичные разрывы — в `AGENTS.md` (раздел «Система агентов»).
+
+> Агенты **не правят код сами** при обычной разработке: их нужно явно вызывать в OpenCode (`opencode.json`) или следовать чеклистам. В Cursor по умолчанию подключены архитектурные правила + `@ux-architect` (навигация, не формы).
 
 | Агент | Специализация |
 |-------|--------------|
+| `@orchestrator` | Маршрутизация задач между subagent'ами |
 | `@guardian` | Архитектура, слои импортов |
 | `@reviewer` | Code review, any/inline-стили |
-| `@ui-specialist` | PrimeNG-компоненты |
+| `@ui-specialist` | Вёрстка, `kp-*`, диалоги, формы |
+| `@ui-qa` | Аудит UI по Manifest / golden-samples |
+| `@ui-auditor` | Финальный чеклист, build/lint |
+| `@ux-architect` | Меню, IA, RBAC в навигации (не визуал) |
 | `@tester` | Unit-тесты (Jasmine/Karma/Jest) |
 | `@backend-specialist` | Express, MongoDB |
 | `@api-specialist` | API-контракты, DTO |

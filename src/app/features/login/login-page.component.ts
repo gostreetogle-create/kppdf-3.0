@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -57,9 +57,11 @@ import { KpInputComponent, KpPasswordComponent, KpButtonComponent, KpToastCompon
               [disabled]="loading"
             />
             <app-kp-button
+              type="submit"
               label="Войти в систему"
               [loading]="loading"
               styleClass="auth__submit-btn w-full"
+              (buttonClick)="doLogin()"
             />
           </form>
 
@@ -78,29 +80,35 @@ export class LoginPageComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   username = 'admin';
   password = 'admin123';
   loading = false;
 
   doLogin(): void {
+    if (this.loading) return;
+
     if (!this.username || !this.password) {
       this.messageService.add({ severity: 'warn', summary: 'Заполните поля', life: 3000 });
       return;
     }
 
     this.loading = true;
+    this.cdr.markForCheck();
     this.auth.login({ username: this.username, password: this.password }).subscribe({
       next: () => {
-        this.router.navigate(['/dashboard']);
+        void this.router.navigate(['/dashboard']);
       },
-      error: (err) => {
+      error: (err: { error?: { error?: string } }) => {
         this.loading = false;
+        this.cdr.markForCheck();
         const msg = err.error?.error || 'Ошибка входа';
         this.messageService.add({ severity: 'error', summary: msg, life: 4000 });
       },
       complete: () => {
         this.loading = false;
+        this.cdr.markForCheck();
       },
     });
   }

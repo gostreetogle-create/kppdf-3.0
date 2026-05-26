@@ -1,21 +1,33 @@
+/* Единая карточка таблицы на всех страницах */
+.kp-table-panel {
+  background: var(--kp-surface);
+  border-radius: var(--kp-radius-lg);
+  padding: var(--kp-space-5);
+  border: 1px solid var(--kp-border);
+  box-shadow: var(--kp-shadow-sm);
+}
+
 .kp-table__toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--kp-space-3, 0.75rem);
-  margin-bottom: var(--kp-space-4, 1rem);
+  gap: var(--kp-space-3);
+  margin-bottom: var(--kp-space-4);
+  flex-wrap: wrap;
 }
 
 .kp-table__toolbar-left {
   display: flex;
   align-items: center;
-  gap: var(--kp-space-2, 0.5rem);
+  gap: var(--kp-space-2);
+  flex-wrap: wrap;
 }
 
 .kp-table__toolbar-right {
   display: flex;
   align-items: center;
-  gap: var(--kp-space-2, 0.5rem);
+  gap: var(--kp-space-2);
+  margin-left: auto;
 }
 
 .kp-table__title {
@@ -63,7 +75,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--kp-space-10, 2.5rem);
+  padding: var(--kp-space-10);
   color: var(--kp-text-muted);
 }
 
@@ -75,4 +87,16 @@
   display: inline-flex;
   align-items: center;
   gap: var(--kp-space-1);
+}
+
+.kp-table__number {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Таблица внутри панели — без второй рамки */
+:host ::ng-deep .kp-table__datatable.p-datatable {
+  border: none;
+  box-shadow: none;
+  border-radius: var(--kp-radius-md);
+  overflow: hidden;
 }

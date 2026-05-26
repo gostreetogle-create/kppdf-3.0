@@ -1,8 +1,12 @@
-import { Component, signal, computed, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { Subject, debounceTime, of, tap, catchError } from 'rxjs';
+import { Component, signal, computed, inject, OnInit, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, debounceTime, of, tap, catchError, forkJoin } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { MODULE_PERM_PREFIX } from '../../core/permissions';
 import { CrudApiService } from '../../shared/services/crud-api.service';
+import { CounterpartyOptionsService } from '../../shared/services/counterparty-options.service';
+import { ProductOptionsService } from '../../shared/services/product-options.service';
+import { OrderOptionsService } from '../../shared/services/order-options.service';
 
 import { ConfirmationService, MessageService } from 'primeng/api';
 import {
@@ -20,11 +24,15 @@ import {
   type KpSelectOption,
 } from '../../shared/ui';
 
+/** Справочник для полей *Id в формах модулей */
+type ColumnRef = 'counterparty' | 'product' | 'order';
+
 // ===== Column definition =====
 interface ColumnDef {
   field: string;
   header: string;
   type: 'text' | 'number' | 'select' | 'boolean' | 'tag' | 'date' | 'textarea';
+  ref?: ColumnRef;
   options?: { label: string; value: string }[];
   required?: boolean;
   readonly?: boolean;
@@ -120,56 +128,36 @@ const MODULE_DEPT: Record<string, string> = {
         </div>
       }
 
-      <!-- Панель инструментов -->
-      <div class="page__content">
-        <div class="mod-toolbar">
-          <div class="mod-toolbar__left">
-            <span class="mod-toolbar__title">
-              {{ currentMod()?.label }}
-              <span class="mod-toolbar__subtitle">
-                {{ currentMod()?.basePath }}
-              </span>
-            </span>
-            @if (!loading()) {
-              <span class="mod-toolbar__count">
-                {{ totalRecords() }}
-                {{ totalRecords() === 1 ? 'запись' : (totalRecords() >= 2 && totalRecords() <= 4 ? 'записи' : 'записей') }}
-              </span>
-            }
-          </div>
-        </div>
-
-        <app-kp-table
-          [columns]="tableColumns()"
-          [data]="rows()"
-          [total]="totalRecords()"
-          [loading]="loading()"
-          [searchQuery]="searchQuery()"
-          [limit]="limit()"
-          [sortField]="sortField()"
-          [sortOrder]="sortOrder()"
-          [title]="currentMod()?.label || ''"
-          [canUpdate]="canEditModule()"
-          [canDelete]="canDeleteModule()"
-          [severityFn]="severityFn"
-          (searchChange)="onSearch($event)"
-          (pageEvent)="onPageChange($event)"
-          (sortChange)="onSort($event)"
-          (edit)="showEdit($event)"
-          (deleteRow)="confirmDelete($event)"
-        >
-          @if (canCreateModule()) {
-            <ng-template table-actions>
-              <app-kp-button
-                label="Добавить"
-                icon="pi pi-plus"
-                size="small"
-                (buttonClick)="showAdd()"
-              />
-            </ng-template>
-          }
-        </app-kp-table>
-      </div>
+      <app-kp-table
+        [columns]="tableColumns()"
+        [data]="rows()"
+        [total]="totalRecords()"
+        [loading]="loading()"
+        [searchQuery]="searchQuery()"
+        [limit]="limit()"
+        [sortField]="sortField()"
+        [sortOrder]="sortOrder()"
+        [title]="currentMod()?.label || ''"
+        [canUpdate]="canEditModule()"
+        [canDelete]="canDeleteModule()"
+        [severityFn]="severityFn"
+        (searchChange)="onSearch($event)"
+        (pageEvent)="onPageChange($event)"
+        (sortChange)="onSort($event)"
+        (edit)="showEdit($event)"
+        (deleteRow)="confirmDelete($event)"
+      >
+        @if (canCreateModule()) {
+          <ng-template table-actions>
+            <app-kp-button
+              label="Добавить"
+              icon="pi pi-plus"
+              size="small"
+              (buttonClick)="showAdd()"
+            />
+          </ng-template>
+        }
+      </app-kp-table>
     </div>
 
     <!-- ════════════════════════════════════════════════════════════
@@ -183,7 +171,17 @@ const MODULE_DEPT: Record<string, string> = {
     >
       <div class="form-layout">
         @for (col of (currentMod()?.columns || []); track col.field || $index) {
-          @if (col.type === 'text') {
+          @if (col.ref) {
+            <app-kp-select
+              [label]="col.header"
+              [name]="col.field"
+              [value]="toStr(editRow[col.field])"
+              (valueChange)="editRow[col.field] = $event"
+              [options]="refOptions()[col.ref] || []"
+              [placeholder]="'Выберите ' + col.header.toLowerCase()"
+              [required]="col.required || false"
+            />
+          } @else if (col.type === 'text') {
             <app-kp-input
               [label]="col.header"
               [name]="col.field"
@@ -237,7 +235,7 @@ const MODULE_DEPT: Record<string, string> = {
           }
         }
       </div>
-      <div kpDialogFooter class="flex justify-end gap-2">
+      <div kpDialogFooter class="kp-crud-dialog__footer">
         <app-kp-button
           label="Отмена"
           severity="secondary"
@@ -271,7 +269,7 @@ export class ModulesPageComponent implements OnInit {
   readonly saving = signal(false);
   readonly totalRecords = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(10);
+  readonly limit = signal(15);
   readonly searchQuery = signal('');
   readonly sortField = signal('createdAt');
   readonly sortOrder = signal<-1 | 1>(-1);
@@ -297,7 +295,7 @@ export class ModulesPageComponent implements OnInit {
       basePath: '/directories/boms',
       idField: '_id',
       columns: [
-        { field: 'productId', header: 'Товар', type: 'text' },
+        { field: 'productId', header: 'Товар', type: 'text', ref: 'product' },
         { field: 'version', header: 'Версия', type: 'number', width: '90px' },
         { field: 'isActive', header: 'Активна', type: 'boolean', width: '100px' },
       ],
@@ -324,7 +322,7 @@ export class ModulesPageComponent implements OnInit {
       basePath: '/directories/tech-processes',
       idField: '_id',
       columns: [
-        { field: 'productId', header: 'Товар', type: 'text' },
+        { field: 'productId', header: 'Товар', type: 'text', ref: 'product' },
         { field: 'totalDuration', header: 'Длит. (ч)', type: 'number', width: '110px' },
         { field: 'isActive', header: 'Активна', type: 'boolean', width: '100px' },
       ],
@@ -363,7 +361,7 @@ export class ModulesPageComponent implements OnInit {
       columns: [
         { field: 'date', header: 'Дата', type: 'date', width: '120px' },
         { field: 'type', header: 'Тип', type: 'tag', width: '130px' },
-        { field: 'productId', header: 'Товар', type: 'text' },
+        { field: 'productId', header: 'Товар', type: 'text', ref: 'product' },
         { field: 'warehouseId', header: 'Склад', type: 'text' },
         { field: 'qty', header: 'Кол-во', type: 'number', width: '100px' },
       ],
@@ -375,7 +373,7 @@ export class ModulesPageComponent implements OnInit {
       basePath: '/stock/reservations',
       idField: '_id',
       columns: [
-        { field: 'orderId', header: 'Заказ', type: 'text' },
+        { field: 'orderId', header: 'Заказ', type: 'text', ref: 'order' },
         { field: 'isActive', header: 'Активен', type: 'boolean', width: '100px' },
       ],
     },
@@ -399,7 +397,7 @@ export class ModulesPageComponent implements OnInit {
       basePath: '/cost',
       idField: '_id',
       columns: [
-        { field: 'productId', header: 'Товар', type: 'text' },
+        { field: 'productId', header: 'Товар', type: 'text', ref: 'product' },
         { field: 'bomVersion', header: 'BOM', type: 'number', width: '70px' },
         { field: 'isActive', header: 'Активна', type: 'boolean', width: '100px' },
       ],
@@ -411,7 +409,7 @@ export class ModulesPageComponent implements OnInit {
       basePath: '/directories/actual-costs',
       idField: '_id',
       columns: [
-        { field: 'orderId', header: 'Заказ', type: 'text' },
+        { field: 'orderId', header: 'Заказ', type: 'text', ref: 'order' },
         { field: 'type', header: 'Тип', type: 'tag', width: '120px' },
         { field: 'amount', header: 'Сумма', type: 'number', width: '120px' },
         { field: 'date', header: 'Дата', type: 'date', width: '120px' },
@@ -451,7 +449,7 @@ export class ModulesPageComponent implements OnInit {
       basePath: '/directories/interactions',
       idField: '_id',
       columns: [
-        { field: 'counterpartyId', header: 'Контрагент', type: 'text' },
+        { field: 'counterpartyId', header: 'Контрагент', type: 'text', ref: 'counterparty' },
         { field: 'type', header: 'Тип', type: 'tag', width: '110px' },
         { field: 'description', header: 'Описание', type: 'text' },
       ],
@@ -463,6 +461,16 @@ export class ModulesPageComponent implements OnInit {
   };
 
   private readonly auth = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly counterpartyOptionsService = inject(CounterpartyOptionsService);
+  private readonly productOptionsService = inject(ProductOptionsService);
+  private readonly orderOptionsService = inject(OrderOptionsService);
+
+  readonly refOptions = signal<Record<ColumnRef, KpSelectOption[]>>({
+    counterparty: [],
+    product: [],
+    order: [],
+  });
 
   /** Маппинг модуля → префикс разрешения (для шаблона) */
   readonly modulePermPrefix = MODULE_PERM_PREFIX;
@@ -492,6 +500,14 @@ export class ModulesPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    forkJoin({
+      counterparty: this.counterpartyOptionsService.load(),
+      product: this.productOptionsService.load(),
+      order: this.orderOptionsService.load(),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((refs) => this.refOptions.set(refs));
+
     this.loadData();
   }
 
@@ -558,7 +574,16 @@ export class ModulesPageComponent implements OnInit {
   readonly tableColumns = computed((): KpColumn[] => {
     const mod = this.currentMod();
     if (!mod) return [];
-    return mod.columns.map((c) => ({ ...c, sortable: true }));
+    const refs = this.refOptions();
+    return mod.columns.map((colDef) => {
+      const { ref, ...rest } = colDef;
+      const col: KpColumn = { ...rest, sortable: true };
+      if (ref && refs[ref]?.length) {
+        col.type = 'select';
+        col.options = refs[ref];
+      }
+      return col;
+    });
   });
 
   readonly severityFn = (value: unknown): string => this.getSeverity(value);

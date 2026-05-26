@@ -19,6 +19,7 @@ permission:
     compliance-validator: allow
     ui-auditor: allow
     ui-qa: allow
+    ux-architect: allow
     "*": deny
 ---
 
@@ -53,6 +54,7 @@ permission:
 | `@compliance-validator` | Проверки соответствия, валидация |
 | `@ui-qa` | Red Team — агрессивный аудит UI против Manifest + Golden Samples |
 | `@ui-auditor` | Финальный UI-аудит по чеклисту перед сдачей |
+| `@ux-architect` | Меню, IA, группы разделов, ролевые сценарии (не вёрстка) |
 
 ## Золотые правила (нарушать нельзя)
 

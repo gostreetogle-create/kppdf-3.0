@@ -46,7 +46,7 @@ import type { CrudPermissions, CrudAction } from './crud-page.types';
         <div page-header class="page__header">
           <h1>{{ title() }}</h1>
           @if (description()) {
-            <p class="page__subtitle">{{ description() }}</p>
+            <p class="page__subtitle page__subtitle--end">{{ description() }}</p>
           }
         </div>
         <div page-toolbar>
@@ -90,19 +90,18 @@ import type { CrudPermissions, CrudAction } from './crud-page.types';
     <app-kp-dialog
       [(visible)]="dialogVisible"
       [header]="dialogTitle()"
+      [width]="dialogWidth()"
       (hide)="closeDialog()"
     >
-      <div class="form-layout">
-        @if (formTemplate) {
-          <ng-container
-            [ngTemplateOutlet]="formTemplate"
-            [ngTemplateOutletContext]="{ $implicit: editRow(), row: editRow() }"
-          />
-        } @else {
-          <p class="text-secondary text-sm">Форма не задана. Используйте &lt;ng-template #form&gt;.</p>
-        }
-      </div>
-      <div kpDialogFooter class="flex justify-end gap-2">
+      @if (formTemplate) {
+        <ng-container
+          [ngTemplateOutlet]="formTemplate"
+          [ngTemplateOutletContext]="{ $implicit: editRow(), row: editRow() }"
+        />
+      } @else {
+        <p class="kp-crud-dialog__empty">Форма не задана. Используйте &lt;ng-template #form&gt;.</p>
+      }
+      <div kpDialogFooter class="kp-crud-dialog__footer">
         <app-kp-button
           label="Отмена"
           severity="secondary"
@@ -131,6 +130,9 @@ export class KpCrudPageComponent implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
 
   readonly title = input.required<string>();
+  /** Подпись сущности в родительном падеже для заголовка диалога, напр. «коммерческого предложения». */
+  readonly entityLabel = input<string>('');
+  readonly dialogWidth = input('520px');
   readonly description = input<string>('');
   readonly store = input.required<CrudStore<object>>();
   readonly columns = input.required<KpColumn[]>();
@@ -172,7 +174,7 @@ export class KpCrudPageComponent implements OnInit {
     this.editing.set(false);
     this.editingId.set(null);
     this.editRow.set({});
-    this.dialogTitle.set(`Создание ${this.title()}`);
+    this.dialogTitle.set(this.buildDialogTitle('create'));
     this.dialogVisible.set(true);
   }
 
@@ -183,7 +185,7 @@ export class KpCrudPageComponent implements OnInit {
     const { _id: _idOmit, ...cleanRow } = row;
     void _idOmit;
     this.editRow.set(cleanRow);
-    this.dialogTitle.set(`Редактирование ${this.title()}`);
+    this.dialogTitle.set(this.buildDialogTitle('edit'));
     this.dialogVisible.set(true);
   }
 
@@ -212,6 +214,15 @@ export class KpCrudPageComponent implements OnInit {
     if (id) {
       this.store().delete(id);
     }
+  }
+
+  private buildDialogTitle(mode: 'create' | 'edit'): string {
+    const entity = this.entityLabel().trim();
+    if (entity) {
+      return mode === 'create' ? `Создание ${entity}` : `Редактирование ${entity}`;
+    }
+    const title = this.title();
+    return mode === 'create' ? `Создание: ${title}` : `Редактирование: ${title}`;
   }
 
   async save(): Promise<void> {

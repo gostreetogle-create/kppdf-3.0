@@ -161,6 +161,55 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 
 ---
 
+## 🤖 Система агентов (OpenCode + Cursor)
+
+> **Важно:** Агенты **не запускаются сами** при каждом коммите. Они — инструкции для AI в OpenCode (`opencode.json`) и ориентиры в Cursor (`AGENTS.md`). Качество UI зависит от явного вызова нужного агента и от соблюдения чеклистов в `.opencode/`.
+
+### Где что лежит
+
+| Среда | Конфиг | Роль |
+|-------|--------|------|
+| **OpenCode** | `opencode.json` + `.opencode/agents/*.md` | Primary `@orchestrator`, делегирование subagent'ам |
+| **Cursor** | `AGENTS.md` (этот файл) | Архитектурные инварианты + `@ux-architect` |
+| Контекст | `.opencode/AI_CONTEXT.md`, `.opencode/rules/` | Правила UI, слои, golden-samples |
+
+### Карта агентов (OpenCode)
+
+| Агент | Зона ответственности | Не делает |
+|-------|---------------------|-----------|
+| `@orchestrator` | Маршрутизация задач, синтез ответа | Не подменяет узких специалистов на сложном UI |
+| `@ui-specialist` | Вёрстка, `kp-*`, PrimeNG, диалоги, формы | Навигацию, бизнес-логику |
+| `@ui-qa` | Red Team: Manifest + golden-samples | Деплой, бэкенд |
+| `@ui-auditor` | Финальный чеклист, `ng build`/`ng lint` | Повторный аудит таблиц (зона ui-qa) |
+| `@design-system` | Токены, `_tokens.scss`, переменные | CRUD-поля, API |
+| `@ux-architect` | Меню, IA, группы разделов, RBAC в навигации | Визуальный дизайн, вёрстку форм |
+| `@guardian` | Слои импортов, boundaries | UI-детали |
+| `@reviewer` | Code review, `any`, стиль | Фичи целиком |
+| `@backend-specialist` | Express, MongoDB, seed | Angular-формы |
+| `@api-specialist` | Контракты API, `shared/types` | CSS |
+| `@auth-specialist` | JWT, RBAC | Таблицы |
+| `@tester` | Unit-тесты | Продакшен-фиксы без тест-плана |
+| `@meta-architect` | BOM, EAV, сложная предметка | Простые CRUD |
+| `@production-planner` | Планирование, себестоимость | UI-кит |
+| `@compliance-validator` | Compliance-проверки | Навигация |
+| `@deploy-specialist` | nginx, CI/CD | Формы |
+
+### Типичные разрывы (почему «агенты не работают»)
+
+1. **Ожидание авто-UI** — после CRUD на `kp-crud-page` нужно вручную: `entityLabel`, select для `*Id`, статусы из seed, подписи в таблице (`type: 'select'` / `tag` + `options`).
+2. **Путаница UX vs UI** — `@ux-architect` не правит модалки; формы → `@ui-specialist` + `ui-manifest.md`.
+3. **Cursor vs OpenCode** — в Cursor по умолчанию виден только блок `@ux-architect` ниже; полный оркестр — в OpenCode.
+4. **QA-цикл** — по `orchestrator.md` после UI обязательны `@ui-qa` → `@ui-auditor`; без них баги вроде «ID вместо имени» проходят.
+
+### CRUD: поля-ссылки (`*Id`)
+
+- 🔴 **Запрещено** показывать MongoDB `ObjectId` пользователю в форме и таблице.
+- ✅ Использовать `CounterpartyOptionsService`, `QuotationOptionsService`, `ProductOptionsService`, `OrderOptionsService` из `shared/services/`.
+- ✅ В таблице: `type: 'select'` + `options`; для статусов: `type: 'tag'` + `options` (подписи на русском).
+- ✅ Заголовок диалога: `entityLabel` на `app-kp-crud-page` (родительный падеж).
+
+---
+
 ## 🧠 Агент: @ux-architect — UX/IA Business Navigation Architect
 
 > **Специализация:** Информационная архитектура, навигационные паттерны, группировка разделов по бизнес-логике производства, ролевые сценарии.

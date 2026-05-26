@@ -207,6 +207,12 @@ button { font-family: inherit; cursor: pointer; }
 .page__subtitle {
   font-size: 13px;
   color: var(--kp-text-secondary);
+
+  &--end {
+    margin-left: auto;
+    text-align: right;
+    max-width: 50%;
+  }
 }
 
 /* ── Page toolbar ── */
@@ -374,10 +380,34 @@ button { font-family: inherit; cursor: pointer; }
 
 .p-dialog .p-dialog-header {
   border-bottom: 1px solid var(--kp-border);
+  padding: 1rem 1.5rem !important;
+}
+
+.p-dialog .p-dialog-content {
+  padding: 1.25rem 1.5rem !important;
 }
 
 .p-dialog .p-dialog-footer {
   border-top: 1px solid var(--kp-border);
+  padding: 0.875rem 1.5rem !important;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--kp-space-2, 0.5rem);
+}
+
+.kp-crud-dialog__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--kp-space-2, 0.5rem);
+  width: 100%;
+}
+
+.kp-crud-dialog__empty {
+  margin: 0;
+  font-size: var(--kp-font-size-sm, 0.875rem);
+  color: var(--kp-text-secondary);
 }
 
 /* ── Confirm dialog ── */

@@ -1,4 +1,12 @@
-import { Component, inject, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  DestroyRef,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { KpCrudPageComponent } from '../../shared/crud/kp-crud-page.component';
 import {
@@ -9,13 +17,25 @@ import {
   type KpSelectOption,
   type KpColumn,
 } from '../../shared/ui';
+import { CounterpartyOptionsService } from '../../shared/services/counterparty-options.service';
+import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createQuotationsStore } from './quotations.store';
 import { PERMISSIONS } from '../../core/permissions';
+
+const QUOTATION_STATUS_OPTIONS: KpSelectOption[] = [
+  { label: 'Черновик', value: 'draft' },
+  { label: 'Отправлено', value: 'sent' },
+  { label: 'Принято', value: 'accepted' },
+  { label: 'Подтверждено', value: 'confirmed' },
+  { label: 'Отклонено', value: 'rejected' },
+  { label: 'Просрочено', value: 'expired' },
+];
 
 function quotationSeverity(value: unknown): string {
   const map: Record<string, string> = {
     draft: 'warn',
     sent: 'info',
+    accepted: 'success',
     confirmed: 'success',
     rejected: 'danger',
     expired: 'secondary',
@@ -37,9 +57,10 @@ function quotationSeverity(value: unknown): string {
   template: `
     <app-kp-crud-page
       title="Коммерческие предложения"
+      entityLabel="коммерческого предложения"
       description="Исходящие КП контрагентам"
       [store]="store"
-      [columns]="columns"
+      [columns]="columns()"
       [permissions]="PERMISSIONS.quotations"
       [severityFn]="quotationSeverity"
       createLabel="Создать КП"
@@ -47,11 +68,13 @@ function quotationSeverity(value: unknown): string {
       <ng-template #form let-row>
         <div class="form-layout">
           <app-kp-input label="Номер" name="number" [value]="row['number'] || ''" (valueChange)="row['number'] = $event" />
-          <app-kp-input
+          <app-kp-select
             label="Контрагент"
             name="counterpartyId"
+            placeholder="Выберите контрагента"
             [value]="row['counterpartyId'] || ''"
             (valueChange)="row['counterpartyId'] = $event"
+            [options]="counterpartyOptions()"
             [required]="true"
           />
           <app-kp-datepicker label="Дата" name="date" [value]="row['date'] || ''" (valueChange)="row['date'] = $event" />
@@ -74,26 +97,47 @@ function quotationSeverity(value: unknown): string {
     </app-kp-crud-page>
   `,
 })
-export class QuotationsPageComponent {
+export class QuotationsPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
   readonly quotationSeverity = quotationSeverity;
+  readonly statusOptions = QUOTATION_STATUS_OPTIONS;
 
-  readonly statusOptions: KpSelectOption[] = [
-    { label: 'Черновик', value: 'draft' },
-    { label: 'Отправлено', value: 'sent' },
-    { label: 'Подтверждено', value: 'confirmed' },
-    { label: 'Отклонено', value: 'rejected' },
-    { label: 'Просрочено', value: 'expired' },
-  ];
+  readonly counterpartyOptions = signal<KpSelectOption[]>([]);
 
-  readonly columns: KpColumn[] = [
+  readonly columns = signal<KpColumn[]>([
     { field: 'number', header: 'Номер', type: 'text', sortable: true, width: '140px' },
-    { field: 'counterpartyId', header: 'Контрагент', type: 'text', sortable: true },
+    {
+      field: 'counterpartyId',
+      header: 'Контрагент',
+      type: 'select',
+      sortable: true,
+      options: [],
+    },
     { field: 'date', header: 'Дата', type: 'date', sortable: true, width: '120px' },
-    { field: 'statusId', header: 'Статус', type: 'tag', sortable: true, width: '130px' },
+    {
+      field: 'statusId',
+      header: 'Статус',
+      type: 'tag',
+      sortable: true,
+      width: '130px',
+      options: QUOTATION_STATUS_OPTIONS,
+    },
     { field: 'total', header: 'Сумма', type: 'number', sortable: true, width: '120px' },
     { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
-  ];
+  ]);
 
   readonly store = createQuotationsStore(inject(DestroyRef));
+
+  private readonly counterpartyOptionsService = inject(CounterpartyOptionsService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  ngOnInit(): void {
+    this.counterpartyOptionsService
+      .load()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((options) => {
+        this.counterpartyOptions.set(options);
+        patchCrudColumnOptions(this.columns, 'counterpartyId', options);
+      });
+  }
 }
