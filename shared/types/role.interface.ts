@@ -81,6 +81,13 @@ export const ALL_PERMISSIONS = [
   { code: 'production.productPassports.edit', label: 'Редактирование паспортов', group: 'production' },
   { code: 'production.productPassports.delete', label: 'Удаление паспортов', group: 'production' },
 
+  { code: 'production.compliance.view', label: 'Просмотр правил проверки', group: 'production' },
+  { code: 'production.compliance.create', label: 'Создание правил проверки', group: 'production' },
+  { code: 'production.compliance.edit', label: 'Редактирование правил проверки', group: 'production' },
+  { code: 'production.compliance.delete', label: 'Удаление правил проверки', group: 'production' },
+
+  { code: 'production.compliance.check', label: 'Запуск проверок соответствия', group: 'production' },
+
   // ======== ACCOUNTING (Финансы) ========
   { code: 'accounting.costCalculations.view', label: 'Просмотр калькуляций', group: 'accounting' },
   { code: 'accounting.costCalculations.create', label: 'Создание калькуляций', group: 'accounting' },

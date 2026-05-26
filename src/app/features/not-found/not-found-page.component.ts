@@ -1,12 +1,12 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
+import { KpButtonComponent } from '../../shared/ui';
 
 @Component({
   selector: 'app-not-found-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ButtonModule],
+  imports: [RouterLink, KpButtonComponent],
   template: `
     <div class="not-found">
       <h1 class="not-found__code">404</h1>
@@ -14,7 +14,9 @@ import { ButtonModule } from 'primeng/button';
       <p class="not-found__desc">
         Запрашиваемая страница не существует или была перемещена.
       </p>
-      <p-button label="На главную" icon="pi pi-home" size="small" routerLink="/" />
+      <a routerLink="/">
+        <app-kp-button label="На главную" icon="pi pi-home" size="small" />
+      </a>
     </div>
   `,
   styleUrl: './not-found-page.component.scss',

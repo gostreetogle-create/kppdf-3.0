@@ -1,60 +1,75 @@
 /* ============================================================
-   KPPDF 3.0 — Design Tokens (Linear-inspired)
-   Strict, minimal, data-dense. Single accent. Border hierarchy.
-   Base unit: 4px. Font: Inter → system-ui fallback.
+   KPPDF 3.0 — Design Tokens (Modern · Slate + Blue)
    ============================================================ */
 
 @mixin kp-light-tokens {
-  /* ── Brand Accent (Linear Lavender #5e6ad2) ── */
-  --kp-primary: #5e6ad2;
-  --kp-primary-hover: #4f5bc7;
-  --kp-primary-active: #434db8;
-  --kp-primary-soft: #eeeffc;
-  --kp-primary-muted: #f6f6fd;
+  /* ── Brand Accent (Blue #2563EB · modern, trustworthy) ── */
+  --kp-primary: #2563eb;
+  --kp-primary-hover: #1d4ed8;
+  --kp-primary-active: #1e40af;
+  --kp-primary-soft: #dbeafe;
+  --kp-primary-muted: #eff6ff;
 
-  --kp-danger: #e5484d;
+  --kp-danger: #ef4444;
   --kp-danger-hover: #dc2626;
   --kp-danger-soft: #fef2f2;
 
-  --kp-success: #30a46c;
+  --kp-success: #10b981;
   --kp-success-soft: #ecfdf5;
 
   --kp-warning: #f59e0b;
   --kp-warning-soft: #fef3c7;
 
-  --kp-info: #5e6ad2;
-  --kp-info-soft: #eeeffc;
+  --kp-info: #3b82f6;
+  --kp-info-soft: #eff6ff;
 
-  /* ── Surfaces (strict gray scale, no blue tint) ── */
-  --kp-bg: #f0f0f2;
-  --kp-bg-soft: #fafafa;
-  --kp-bg-muted: #f0f0f0;
+  /* ── Status colours (pill badges) ── */
+  --kp-status-completed: #10b981;
+  --kp-status-completed-bg: #d1fae5;
+  --kp-status-completed-text: #065f46;
+  --kp-status-sent: #f59e0b;
+  --kp-status-sent-bg: #fef3c7;
+  --kp-status-sent-text: #92400e;
+  --kp-status-confirmed: #3b82f6;
+  --kp-status-confirmed-bg: #dbeafe;
+  --kp-status-confirmed-text: #1e40af;
+  --kp-status-pending: #6b7280;
+  --kp-status-pending-bg: #f3f4f6;
+  --kp-status-pending-text: #374151;
+  --kp-status-error: #ef4444;
+  --kp-status-error-bg: #fee2e2;
+  --kp-status-error-text: #991b1b;
+
+  /* ── Surfaces (warm-light, slate-tinted) ── */
+  --kp-bg: #f8fafc;
+  --kp-bg-soft: #f1f5f9;
+  --kp-bg-muted: #e2e8f0;
   --kp-surface: #ffffff;
   --kp-surface-soft: #fafafa;
-  --kp-surface-hover: #f5f5f5;
+  --kp-surface-hover: #f8fafc;
 
-  /* ── Text (high contrast, no muddy grays) ── */
-  --kp-text: #1a1a1a;
-  --kp-text-secondary: #6b6b6b;
-  --kp-text-soft: #8f8f8f;
-  --kp-text-muted: #b0b0b0;
+  /* ── Text (high contrast) ── */
+  --kp-text: #0f172a;
+  --kp-text-secondary: #475569;
+  --kp-text-soft: #64748b;
+  --kp-text-muted: #94a3b8;
   --kp-text-on-primary: #ffffff;
 
-  /* ── Borders (hairline hierarchy) ── */
-  --kp-border: #e5e5e5;
-  --kp-border-light: #f0f0f0;
-  --kp-border-strong: #d4d4d4;
+  /* ── Borders ── */
+  --kp-border: #e2e8f0;
+  --kp-border-light: #f1f5f9;
+  --kp-border-strong: #cbd5e1;
 
-  /* ── Shadows (premium — layered, Linear/Stripe-inspired) ── */
+  /* ── Shadows (layered, premium) ── */
   --kp-shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
-  --kp-shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
-  --kp-shadow-md: 0 8px 24px rgba(0,0,0,0.10);
-  --kp-shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
-  --kp-shadow-xl: 0 24px 64px rgba(0,0,0,0.14);
+  --kp-shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --kp-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --kp-shadow-lg: 0 8px 24px rgba(0,0,0,0.10);
+  --kp-shadow-xl: 0 12px 32px rgba(0,0,0,0.12);
   --kp-shadow-premium: 0 24px 80px rgba(15, 23, 42, 0.12), 0 4px 16px rgba(15, 23, 42, 0.06);
   --kp-shadow-premium-sm: 0 12px 48px rgba(15, 23, 42, 0.10), 0 2px 8px rgba(15, 23, 42, 0.04);
 
-  /* ── Border Radius (Linear scale: 4/6/8/12/16/20/24) ── */
+  /* ── Border Radius ── */
   --kp-radius-xs: 4px;
   --kp-radius-sm: 6px;
   --kp-radius-md: 8px;
@@ -76,7 +91,7 @@
   --kp-space-12: 80px;
   --kp-space-16: 96px;
 
-  /* ── Typography (Inter → system-ui, Linear scale 12/13/14/16) ── */
+  /* ── Typography ── */
   --kp-font-family: 'Inter', -apple-system, BlinkMacSystemFont,
     'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
@@ -97,7 +112,7 @@
   --kp-font-weight-semibold: 600;
   --kp-font-weight-bold: 700;
 
-  /* ── Control Heights (compact) ── */
+  /* ── Control Heights ── */
   --kp-control-height-sm: 28px;
   --kp-control-height: 32px;
   --kp-control-height-lg: 40px;
@@ -120,89 +135,90 @@
   --kp-z-tooltip: 600;
 
   /* ── Layout ── */
-  --kp-layout-sidebar-width: 220px;
+  --kp-layout-sidebar-width: 240px;
   --kp-layout-page-max: 1400px;
-  --kp-layout-page-padding-x: 24px;
-  --kp-layout-page-padding-y: 24px;
+  --kp-layout-page-padding-x: 28px;
+  --kp-layout-page-padding-y: 28px;
   --kp-layout-content-gap: 16px;
 
-  /* ── Sidebar (dark, Linear-inspired) ── */
-  --kp-sidebar-bg: #0f1117;
-  --kp-sidebar-text: #8a8f98;
-  --kp-sidebar-hover: #1a1d27;
-  --kp-sidebar-active: #5e6ad2;
+  /* ── Sidebar (dark slate #1E293B · modern) ── */
+  --kp-sidebar-bg: #1e293b;
+  --kp-sidebar-text: #94a3b8;
+  --kp-sidebar-hover: #334155;
+  --kp-sidebar-active: #2563eb;
   --kp-sidebar-active-text: #ffffff;
-  --kp-sidebar-border: #1e2030;
+  --kp-sidebar-border: #334155;
+  --kp-sidebar-user-bg: #0f172a;
 
   /* ── Focus ring ── */
-  --kp-focus-ring: 0 0 0 2px rgba(94,106,210,0.4);
-  --kp-focus-ring-premium: 0 0 0 4px rgba(94,106,210,0.14);
+  --kp-focus-ring: 0 0 0 2px rgba(37,99,235,0.4);
+  --kp-focus-ring-premium: 0 0 0 4px rgba(37,99,235,0.14);
 
   /* ── Login page specific ── */
-  --kp-bg-login: #f4f7fb;
+  --kp-bg-login: #f8fafc;
   --kp-surface-login: rgba(255,255,255,0.94);
   --kp-border-login: rgba(15, 23, 42, 0.08);
 
   /* ════════════════════════════════════════════════════════════
-     PRIMENG COMPONENT TOKENS (compact Linear aesthetic)
+     PRIMENG COMPONENT TOKENS
      ════════════════════════════════════════════════════════════ */
 
   /* Dialog */
-  --p-dialog-border-radius: 12px;
-  --p-dialog-header-padding: 0.75rem 1rem 0.5rem;
-  --p-dialog-content-padding: 0 1rem 0.5rem;
-  --p-dialog-footer-padding: 0.5rem 1rem 0.75rem;
-  --p-dialog-header-font-size: 14px;
+  --p-dialog-border-radius: 16px;
+  --p-dialog-header-padding: 1.25rem 1.5rem 0.75rem;
+  --p-dialog-content-padding: 0 1.5rem 1rem;
+  --p-dialog-footer-padding: 0.75rem 1.5rem 1.25rem;
+  --p-dialog-header-font-size: 16px;
   --p-dialog-header-font-weight: 600;
 
   /* InputText */
-  --p-inputtext-padding-y: 0.35rem;
-  --p-inputtext-padding-x: 0.65rem;
-  --p-inputtext-font-size: 13px;
-  --p-inputtext-border-radius: 6px;
-  --p-inputtext-sm-font-size: 12px;
-  --p-inputtext-sm-padding-y: 0.25rem;
-  --p-inputtext-sm-padding-x: 0.55rem;
+  --p-inputtext-padding-y: 0.5rem;
+  --p-inputtext-padding-x: 0.85rem;
+  --p-inputtext-font-size: 14px;
+  --p-inputtext-border-radius: 8px;
+  --p-inputtext-sm-font-size: 13px;
+  --p-inputtext-sm-padding-y: 0.35rem;
+  --p-inputtext-sm-padding-x: 0.7rem;
 
   /* InputNumber */
-  --p-inputnumber-padding-y: 0.35rem;
-  --p-inputnumber-padding-x: 0.65rem;
-  --p-inputnumber-border-radius: 6px;
+  --p-inputnumber-padding-y: 0.5rem;
+  --p-inputnumber-padding-x: 0.85rem;
+  --p-inputnumber-border-radius: 8px;
 
   /* Select / Dropdown */
-  --p-select-padding-y: 0.3rem;
-  --p-select-padding-x: 0.65rem;
-  --p-select-border-radius: 6px;
-  --p-select-font-size: 13px;
-  --p-select-sm-font-size: 12px;
-  --p-select-sm-padding-y: 0.2rem;
+  --p-select-padding-y: 0.4rem;
+  --p-select-padding-x: 0.85rem;
+  --p-select-border-radius: 8px;
+  --p-select-font-size: 14px;
+  --p-select-sm-font-size: 13px;
+  --p-select-sm-padding-y: 0.3rem;
 
   /* Button */
-  --p-button-sm-padding-y: 0.3rem;
-  --p-button-sm-padding-x: 0.7rem;
-  --p-button-sm-font-size: 12.5px;
-  --p-button-border-radius: 6px;
-  --p-button-icon-only-width: 28px;
-  --p-button-icon-only-height: 28px;
-  --p-button-icon-only-sm-width: 26px;
-  --p-button-icon-only-sm-height: 26px;
+  --p-button-sm-padding-y: 0.35rem;
+  --p-button-sm-padding-x: 0.85rem;
+  --p-button-sm-font-size: 13px;
+  --p-button-border-radius: 8px;
+  --p-button-icon-only-width: 30px;
+  --p-button-icon-only-height: 30px;
+  --p-button-icon-only-sm-width: 28px;
+  --p-button-icon-only-sm-height: 28px;
 
   /* DatePicker */
-  --p-datepicker-border-radius: 8px;
+  --p-datepicker-border-radius: 10px;
 
   /* Table */
-  --p-datatable-header-cell-padding: 0.55rem 0.85rem;
-  --p-datatable-body-cell-padding: 0.45rem 0.85rem;
+  --p-datatable-header-cell-padding: 0.7rem 1rem;
+  --p-datatable-body-cell-padding: 0.6rem 1rem;
   --p-datatable-header-cell-font-size: 11.5px;
   --p-datatable-body-cell-font-size: 13px;
 }
 
 @mixin kp-dark-tokens {
-  --kp-primary: #828fff;
-  --kp-primary-hover: #5e6ad2;
-  --kp-primary-active: #4f5bc7;
-  --kp-primary-soft: #1c1f3a;
-  --kp-primary-muted: #15172a;
+  --kp-primary: #60a5fa;
+  --kp-primary-hover: #3b82f6;
+  --kp-primary-active: #2563eb;
+  --kp-primary-soft: #1e3a5f;
+  --kp-primary-muted: #172554;
 
   --kp-danger: #f87171;
   --kp-danger-hover: #ef4444;
@@ -214,33 +230,34 @@
   --kp-warning: #fbbf24;
   --kp-warning-soft: #3b2f0a;
 
-  --kp-bg: #0f1117;
-  --kp-bg-soft: #161821;
-  --kp-bg-muted: #1e2030;
-  --kp-surface: #1a1d27;
-  --kp-surface-soft: #1e2030;
-  --kp-surface-hover: #252838;
+  --kp-bg: #0f172a;
+  --kp-bg-soft: #1e293b;
+  --kp-bg-muted: #334155;
+  --kp-surface: #1e293b;
+  --kp-surface-soft: #334155;
+  --kp-surface-hover: #334155;
 
-  --kp-text: #e4e4e8;
-  --kp-text-secondary: #8a8f98;
-  --kp-text-soft: #62666d;
-  --kp-text-muted: #484b55;
+  --kp-text: #f1f5f9;
+  --kp-text-secondary: #94a3b8;
+  --kp-text-soft: #64748b;
+  --kp-text-muted: #475569;
 
-  --kp-border: #252838;
-  --kp-border-light: #1e2030;
-  --kp-border-strong: #34384a;
+  --kp-border: #334155;
+  --kp-border-light: #1e293b;
+  --kp-border-strong: #475569;
 
   --kp-shadow-xs: 0 1px 2px rgba(0,0,0,0.25);
   --kp-shadow-sm: 0 1px 3px rgba(0,0,0,0.30);
   --kp-shadow-md: 0 4px 12px rgba(0,0,0,0.35);
   --kp-shadow-lg: 0 8px 24px rgba(0,0,0,0.40);
 
-  --kp-sidebar-bg: #0b0d13;
-  --kp-sidebar-text: #62666d;
-  --kp-sidebar-hover: #161821;
-  --kp-sidebar-active: #5e6ad2;
+  --kp-sidebar-bg: #0f172a;
+  --kp-sidebar-text: #64748b;
+  --kp-sidebar-hover: #1e293b;
+  --kp-sidebar-active: #3b82f6;
   --kp-sidebar-active-text: #ffffff;
-  --kp-sidebar-border: #1a1d27;
+  --kp-sidebar-border: #1e293b;
+  --kp-sidebar-user-bg: #0b1120;
 }
 
 /* ── Sass aliases for component SCSS ── */

@@ -1,42 +1,107 @@
 #!/bin/sh
-# Pre-commit hook: запускает ESLint на изменённых файлах
-# Установка: .githooks/pre-commit
+# Pre-commit hook: запускает ESLint для защиты архитектурных границ
+# Блокирует коммит при ERROR, пропускает WARNING (технический долг).
+#
+# Установка:
+#   git config core.hooksPath .githooks
+#
+# Для пропуска проверки (только в крайнем случае):
+#   git commit --no-verify
 
-echo "🔍 Running pre-commit checks..."
+echo ""
+echo "═══════════════════════════════════════════════════"
+echo "  🔍 Pre-commit: ESLint (архитектурные границы)"
+echo "═══════════════════════════════════════════════════"
+echo ""
 
-# Получаем список изменённых .ts и .html файлов
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|html)$')
-
-if [ -z "$STAGED_FILES" ]; then
-  echo "✅ No staged .ts/.html files to check"
-  exit 0
+# Проверяем, что npx доступен
+if ! command -v npx >/dev/null 2>&1; then
+  echo "❌ npx не найден. Установите Node.js."
+  exit 1
 fi
 
-# Проверяем ESLint для Angular (корневой проект)
-if command -v npx &> /dev/null; then
-  echo "📝 Checking staged files..."
+PROJECT_ROOT=$(pwd)
+HAS_ERRORS=0
 
-  # Проверка только файлов из src/ (Angular)
-  ANGULAR_FILES=$(echo "$STAGED_FILES" | grep '^src/' || true)
-  if [ -n "$ANGULAR_FILES" ]; then
-    echo "$ANGULAR_FILES" | xargs npx eslint --fix 2>/dev/null || {
-      echo "❌ ESLint errors found. Please fix them before committing."
-      echo "   Run: npx eslint --fix <file>"
-      exit 1
-    }
-  fi
+# ─────────────────────────────────────────────────────
+#  Frontend (Angular) — через ng lint
+# ─────────────────────────────────────────────────────
+echo "📦 Frontend: npx ng lint ..."
 
-  # Проверка файлов из backend/
-  BACKEND_FILES=$(echo "$STAGED_FILES" | grep '^backend/' || true)
-  if [ -n "$BACKEND_FILES" ]; then
-    cd backend
-    echo "$BACKEND_FILES" | sed 's|^backend/||' | xargs npx eslint --fix 2>/dev/null || {
-      echo "❌ ESLint errors found in backend. Please fix them before committing."
-      cd ..
-      exit 1
-    }
-    cd ..
+LINT_OUTPUT=$(npx ng lint 2>&1)
+LINT_EXIT=$?
+
+if [ "$LINT_EXIT" -ne 0 ]; then
+  # Извлекаем строки с error (без warning)
+  ERROR_LINES=$(echo "$LINT_OUTPUT" | grep -i "error" | grep -iv "warning" || true)
+
+  if [ -n "$ERROR_LINES" ]; then
+    echo ""
+    echo "$LINT_OUTPUT"
+    echo ""
+    echo "═══════════════════════════════════════════════════"
+    echo "  ❌ COMMIT BLOCKED: найдены ошибки ESLint"
+    echo "═══════════════════════════════════════════════════"
+    echo ""
+    echo "  Исправьте ошибки:"
+    echo "    npx ng lint"
+    echo "    npx eslint --fix <file>"
+    echo ""
+    echo "  Для пропуска (не рекомендуется):"
+    echo "    git commit --no-verify"
+    echo ""
+    HAS_ERRORS=1
+  else
+    # Только warnings — показываем, но не блокируем
+    WARN_COUNT=$(echo "$LINT_OUTPUT" | grep -oE '[0-9]+ (warning|warnings)' | grep -oE '[0-9]+' || echo "0")
+    echo "⚠️  Предупреждения ESLint: $WARN_COUNT"
+    echo ""
   fi
+else
+  WARN_COUNT=$(echo "$LINT_OUTPUT" | grep -oE '[0-9]+ (warning|warnings)' | grep -oE '[0-9]+' || true)
+  if [ -n "$WARN_COUNT" ] && [ "$WARN_COUNT" -gt 0 ] 2>/dev/null; then
+    echo "⚠️  Frontend: $WARN_COUNT предупреждений (не блокируют коммит)"
+  else
+    echo "✅ Frontend: чист"
+  fi
+  echo ""
 fi
 
-echo "✅ Pre-commit checks passed"
+# ─────────────────────────────────────────────────────
+#  Backend (Node.js) — через eslint (если есть staged)
+# ─────────────────────────────────────────────────────
+STAGED_BACKEND=$(git diff --cached --name-only --diff-filter=ACM | grep '^backend/' | grep -E '\.(ts|js)$' || true)
+
+if [ -n "$STAGED_BACKEND" ]; then
+  echo "📦 Backend: npx eslint ..."
+  cd "$PROJECT_ROOT/backend"
+
+  BACKEND_OUTPUT=$(echo "$STAGED_BACKEND" | sed 's|^backend/||' | xargs npx eslint 2>&1)
+  BACKEND_EXIT=$?
+
+  if [ "$BACKEND_EXIT" -ne 0 ]; then
+    BACKEND_ERRORS=$(echo "$BACKEND_OUTPUT" | grep -i "error" | grep -iv "warning" || true)
+    if [ -n "$BACKEND_ERRORS" ]; then
+      echo "$BACKEND_OUTPUT"
+      echo "❌ Backend: найдены ошибки ESLint"
+      HAS_ERRORS=1
+    else
+      echo "⚠️  Backend: есть предупреждения"
+    fi
+  else
+    echo "✅ Backend: чист"
+  fi
+
+  cd "$PROJECT_ROOT"
+  echo ""
+fi
+
+# ─────────────────────────────────────────────────────
+#  Итог
+# ─────────────────────────────────────────────────────
+if [ "$HAS_ERRORS" -eq 1 ]; then
+  exit 1
+fi
+
+echo "✅ Pre-commit: все проверки пройдены"
+exit 0

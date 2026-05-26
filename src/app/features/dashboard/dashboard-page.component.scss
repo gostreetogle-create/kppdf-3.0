@@ -1,4 +1,4 @@
-/* ===== Dashboard — Linear: border-based cards, no decorative effects ===== */
+/* ===== Dashboard — Modern stat cards (shadow, hover lift) ===== */
 
 :host {
   display: block;
@@ -11,11 +11,14 @@
 
 .dashboard__section {
   grid-column: 1 / -1;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--kp-text);
-  margin: 20px 0 8px;
-  letter-spacing: -0.01em;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--kp-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 32px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--kp-border);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -30,8 +33,8 @@
 
 .dashboard__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
 }
 
 .dashboard {
@@ -41,39 +44,38 @@
 
   &__card {
     cursor: pointer;
-    transition: border-color 0.1s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
 
-    :host ::ng-deep .p-card {
-      border-radius: var(--kp-radius-md);
-      border: 1px solid var(--kp-border);
-      background: var(--kp-surface);
-      transition: border-color 0.1s ease;
+    .kp-card {
+      transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
 
-      &:hover {
-        border-color: var(--kp-primary);
-      }
-
-      .p-card-body { padding: 0; }
-      .p-card-content { padding: 20px; }
+    &:hover .kp-card {
+      box-shadow: var(--kp-shadow-md);
+      border-color: var(--kp-primary);
+      transform: translateY(-2px);
     }
   }
 
   &__card-body {
     display: flex;
     align-items: center;
-    gap: var(--kp-space-3);
+    gap: var(--kp-space-4);
+    width: 100%;
   }
 
   &__card-icon {
-    font-size: 1.25rem;
+    font-size: 1.35rem;
     color: var(--kp-primary);
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--kp-primary-muted);
-    border-radius: var(--kp-radius-sm);
+    border-radius: var(--kp-radius-lg);
     flex-shrink: 0;
   }
 
@@ -84,19 +86,20 @@
   }
 
   &__card-value {
-    font-size: 1.5rem;
-    font-weight: 600;
-    line-height: 1.2;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.1;
     color: var(--kp-text);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
   }
 
   &__card-label {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--kp-text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-top: 4px;
   }
 
   /* Skeleton loading */
@@ -106,31 +109,33 @@
 
   &__skeleton {
     background: var(--kp-surface);
-    border-radius: var(--kp-radius-md);
+    border-radius: var(--kp-radius-lg);
     padding: var(--kp-space-5);
     border: 1px solid var(--kp-border-light);
+    box-shadow: var(--kp-shadow-sm);
     display: flex;
     align-items: center;
-    gap: var(--kp-space-3);
+    gap: var(--kp-space-4);
     animation: pulse 1.5s infinite;
   }
 
   &__skeleton-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--kp-radius-sm);
+    width: 48px;
+    height: 48px;
+    border-radius: var(--kp-radius-lg);
     background: linear-gradient(90deg, var(--kp-border-light) 25%, var(--kp-bg-muted) 50%, var(--kp-border-light) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
 
   &__skeleton-text {
-    width: 80px;
-    height: 28px;
-    border-radius: 4px;
+    width: 100px;
+    height: 32px;
+    border-radius: 6px;
     background: linear-gradient(90deg, var(--kp-border-light) 25%, var(--kp-bg-muted) 50%, var(--kp-border-light) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
+    flex: 1;
   }
 }
 
@@ -142,4 +147,18 @@
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard__card .kp-card,
+  .dashboard__skeleton,
+  .dashboard__skeleton-icon,
+  .dashboard__skeleton-text {
+    transition: none;
+    animation: none;
+  }
+
+  .dashboard__card:hover .kp-card {
+    transform: none;
+  }
 }

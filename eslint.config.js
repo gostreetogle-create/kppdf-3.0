@@ -36,11 +36,11 @@ module.exports = tseslint.config(
        *  ВСЕ PrimeNG-модули, включая новые, без ручного обновления.
        * ============================================================ */
       'no-restricted-imports': [
-        'warn',
+        'error',
         {
           patterns: [
             {
-              group: ['primeng/!(api)'],
+              group: ['primeng/*', '!primeng/api'],
               message: 'Используйте kp-* обёртки из shared/ui/ вместо прямого импорта PrimeNG. ' +
                        'Исключение: primeng/api (сервисы/интерфейсы).',
             },
@@ -58,8 +58,11 @@ module.exports = tseslint.config(
       'no-restricted-imports': 'off',
     },
   },
-  /* ============================================================
-   *  Архитектурные границы (eslint-plugin-boundaries)
+  {
+    files: ['src/app/app.config.ts', '**/*.spec.ts'],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
   },
   /* ============================================================
    *  Архитектурные границы (eslint-plugin-boundaries)
@@ -137,7 +140,7 @@ module.exports = tseslint.config(
     ],
     rules: {
       '@angular-eslint/template/prefer-control-flow': 'off',
-      '@angular-eslint/template/label-has-associated-control': 'off',
+      '@angular-eslint/template/label-has-associated-control': 'warn',
       '@angular-eslint/template/no-negated-async': 'off',
     },
   }

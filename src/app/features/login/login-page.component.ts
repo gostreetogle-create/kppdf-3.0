@@ -1,21 +1,17 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
-import { PasswordModule } from 'primeng/password';
-import { ButtonModule } from 'primeng/button';
-import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { AuthService } from '../../core/auth.service';
+import { KpInputComponent, KpPasswordComponent, KpButtonComponent, KpToastComponent } from '../../shared/ui';
 
 @Component({
   selector: 'app-login-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [InputTextModule, PasswordModule, ButtonModule, FormsModule, ToastModule],
+  imports: [FormsModule, KpInputComponent, KpPasswordComponent, KpButtonComponent, KpToastComponent],
   template: `
     <div class="auth">
-      <!-- ═══════ Brand Zone ═══════ -->
       <div class="auth__brand">
         <div class="auth__brand-bg"></div>
         <div class="auth__brand-content">
@@ -36,7 +32,6 @@ import { AuthService } from '../../core/auth.service';
         </div>
       </div>
 
-      <!-- ═══════ Auth Card Zone ═══════ -->
       <div class="auth__card-wrap">
         <div class="auth__card">
           <div class="auth__card-header">
@@ -46,35 +41,25 @@ import { AuthService } from '../../core/auth.service';
           </div>
 
           <form class="auth__form" (ngSubmit)="doLogin()" novalidate>
-            <div class="auth__field">
-              <label for="username" class="auth__label">Логин</label>
-              <input
-                pInputText
-                id="username"
-                name="username"
-                [(ngModel)]="username"
-                placeholder="admin"
-                (keyup.enter)="doLogin()"
-                [disabled]="loading"
-                autocomplete="username"
-              />
-            </div>
-            <div class="auth__field">
-              <label class="auth__label">Пароль</label>
-              <p-password
-                name="password"
-                [(ngModel)]="password"
-                [feedback]="false"
-                [disabled]="loading"
-                (keyup.enter)="doLogin()"
-                autocomplete="current-password"
-              />
-            </div>
-            <p-button
-              type="submit"
+            <app-kp-input
+              label="Логин"
+              name="username"
+              [value]="username"
+              (valueChange)="username = $event"
+              placeholder="admin"
+              [disabled]="loading"
+            />
+            <app-kp-password
+              label="Пароль"
+              name="password"
+              [value]="password"
+              (valueChange)="password = $event"
+              [disabled]="loading"
+            />
+            <app-kp-button
               label="Войти в систему"
               [loading]="loading"
-              styleClass="auth__submit-btn"
+              styleClass="auth__submit-btn w-full"
             />
           </form>
 
@@ -85,7 +70,7 @@ import { AuthService } from '../../core/auth.service';
         </div>
       </div>
     </div>
-    <p-toast position="top-center" />
+    <app-kp-toast position="top-center" />
   `,
   styleUrl: './login-page.component.scss',
 })

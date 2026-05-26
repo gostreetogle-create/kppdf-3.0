@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 
 @Component({
-  selector: 'kp-input',
+  selector: 'app-kp-input',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, InputTextModule],
@@ -20,44 +20,22 @@ import { InputTextModule } from 'primeng/inputtext';
         pInputText
         [type]="type()"
         [ngModel]="value()"
-        (ngModelChange)="valueChange.emit($event)"
+        (ngModelChange)="value.set($event)"
         [placeholder]="placeholder()"
         [readonly]="readonly()"
         [disabled]="disabled()"
         [attr.required]="required() ? '' : null"
         [class.kp-input--has-error]="!!error()"
+        [class.kp-input--small]="size() === 'small'"
+        [class.kp-input--large]="size() === 'large'"
         class="kp-input__control w-full"
-        [size]="size()"
       />
       @if (error()) {
         <span class="kp-input__error">{{ error() }}</span>
       }
     </div>
   `,
-  styles: [`
-    .kp-input {
-      display: flex;
-      flex-direction: column;
-      gap: var(--kp-space-1, 0.25rem);
-    }
-    .kp-input__label {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--kp-text, #1e293b);
-    }
-    .kp-input__required {
-      color: var(--p-red-500, #ef4444);
-      margin-left: 0.125rem;
-    }
-    .kp-input__control.kp-input--has-error {
-      border-color: var(--p-red-400, #f87171) !important;
-    }
-    .kp-input__error {
-      font-size: 0.75rem;
-      color: var(--p-red-500, #ef4444);
-      margin-top: 0.125rem;
-    }
-  `],
+  styleUrl: './kp-input.component.scss',
 })
 export class KpInputComponent {
   readonly label = input<string>('');

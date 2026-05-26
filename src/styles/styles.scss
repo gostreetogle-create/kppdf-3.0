@@ -1,8 +1,8 @@
 /* ============================================================
-   KPPDF 3.0 — Глобальные стили (Linear-inspired)
-   Strict, minimal, data-dense. Border hierarchy. Single accent.
+   KPPDF 3.0 — Глобальные стили (Modern · Slate + Blue)
    ============================================================ */
 @use 'tokens' as *;
+@use '../app/shared/styles/form-fields';
 
 /* ── Design Tokens ── */
 :root {
@@ -33,6 +33,13 @@
   --font-md: var(--kp-font-size-body);
   --font-lg: 16px;
   --font-xl: 20px;
+}
+
+/* Dark theme (prefers-color-scheme) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    @include kp-dark-tokens;
+  }
 }
 
 /* ── Base Reset ── */
@@ -68,8 +75,20 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 /* ════════════════════════════════════════════════════════════
-   LAYOUT UTILITIES (Tailwind-compatible naming)
+   LAYOUT UTILITIES
    ════════════════════════════════════════════════════════════ */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
@@ -96,6 +115,54 @@ button { font-family: inherit; cursor: pointer; }
 .flex-1 { flex: 1; }
 
 /* ════════════════════════════════════════════════════════════
+   STATUS BADGES (pill-shaped, used across tables)
+   ════════════════════════════════════════════════════════════ */
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.status-pill--completed,
+.status-pill--active,
+.status-pill--approved {
+  background: var(--kp-status-completed-bg);
+  color: var(--kp-status-completed-text);
+}
+
+.status-pill--sent,
+.status-pill--draft,
+.status-pill--in-progress {
+  background: var(--kp-status-sent-bg);
+  color: var(--kp-status-sent-text);
+}
+
+.status-pill--confirmed,
+.status-pill--signed {
+  background: var(--kp-status-confirmed-bg);
+  color: var(--kp-status-confirmed-text);
+}
+
+.status-pill--pending,
+.status-pill--waiting {
+  background: var(--kp-status-pending-bg);
+  color: var(--kp-status-pending-text);
+}
+
+.status-pill--error,
+.status-pill--rejected,
+.status-pill--cancelled {
+  background: var(--kp-status-error-bg);
+  color: var(--kp-status-error-text);
+}
+
+/* ════════════════════════════════════════════════════════════
    DENSITY & RESPONSIVE
    ════════════════════════════════════════════════════════════ */
 
@@ -111,7 +178,7 @@ button { font-family: inherit; cursor: pointer; }
   --kp-layout-page-padding-y: 16px;
 }
 
-/* Page wrapper — центрированный контейнер */
+/* ── Page wrapper ── */
 .page {
   padding: var(--kp-layout-page-padding-y) var(--kp-layout-page-padding-x);
   max-width: var(--kp-layout-page-max);
@@ -120,38 +187,44 @@ button { font-family: inherit; cursor: pointer; }
   animation: kp-fade-in 0.15s ease-out;
 }
 
-/* Page header — строгий, на бордере */
+/* ── Page header ── */
 .page__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--kp-space-4);
+  margin-bottom: var(--kp-space-5);
   padding-bottom: var(--kp-space-3);
   border-bottom: 1px solid var(--kp-border);
 
   h1 {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
     color: var(--kp-text);
     letter-spacing: -0.02em;
   }
 }
 
-/* Page toolbar — панель инструментов */
+.page__subtitle {
+  font-size: 13px;
+  color: var(--kp-text-secondary);
+}
+
+/* ── Page toolbar ── */
 .page__toolbar {
   display: flex;
-  gap: var(--kp-space-2);
+  gap: var(--kp-space-3);
   align-items: center;
   flex-wrap: wrap;
 }
 
-/* Page content card — строгая панель с бордером (без glassmorphism) */
+/* ── Page content card ── */
 .page__content {
   background: var(--kp-surface);
   border-radius: var(--kp-radius-lg);
   padding: var(--kp-space-5);
   border: 1px solid var(--kp-border);
-  margin-bottom: var(--kp-space-4);
+  box-shadow: var(--kp-shadow-sm);
+  margin-bottom: var(--kp-space-5);
   animation: kp-fade-in 0.15s ease-out;
 }
 
@@ -164,7 +237,7 @@ button { font-family: inherit; cursor: pointer; }
   white-space: nowrap;
   text-align: right;
 
-  .p-button + .p-button { margin-left: 4px; }
+  .p-button + .p-button { margin-left: 6px; }
 }
 
 .table-scroll {
@@ -211,7 +284,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 /* ════════════════════════════════════════════════════════════
-   ANIMATIONS (minimal)
+   ANIMATIONS
    ════════════════════════════════════════════════════════════ */
 
 @keyframes kp-fade-in {
@@ -224,22 +297,95 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 /* ════════════════════════════════════════════════════════════
-   PRIMENG OVERRIDES (Linear: compact, no decoration)
+   PRIMENG OVERRIDES
    ════════════════════════════════════════════════════════════ */
 
+/* ── Table container (rounded + shadow) ── */
 .p-datatable {
-  border-radius: var(--kp-radius-md);
+  border-radius: var(--kp-radius-lg);
   overflow: hidden;
+  box-shadow: var(--kp-shadow-sm);
+  border: 1px solid var(--kp-border);
 }
 
-/* Buttons — no scale transforms (Linear style: strict, no motion decoration) */
+/* Table header */
+.p-datatable-thead > tr > th {
+  background: var(--kp-bg-soft) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11.5px !important;
+  color: var(--kp-text-secondary) !important;
+  border-bottom: 1px solid var(--kp-border) !important;
+}
+
+/* Table body rows — zebra via primeNG stripedRows */
+.p-datatable-tbody > tr {
+  transition: background var(--kp-transition-fast);
+}
+
+.p-datatable-tbody > tr:hover {
+  background: var(--kp-primary-soft) !important;
+}
+
+/* p-tag inside tables — pill style */
+.p-datatable-tbody .p-tag {
+  border-radius: 9999px !important;
+  padding: 3px 10px !important;
+  font-weight: 500 !important;
+}
+
+/* ── Buttons — smooth, no aggressive transforms ── */
 .p-button {
-  transition: background var(--kp-transition-fast), border-color var(--kp-transition-fast);
-  gap: 5px;
+  transition: background var(--kp-transition-fast), border-color var(--kp-transition-fast), box-shadow var(--kp-transition-fast);
+  gap: 6px;
   font-weight: 500;
 }
 
-.p-button.p-button-sm { gap: 4px; }
+.p-button.p-button-sm { gap: 5px; }
+
+/* Icon buttons (edit/delete rows) */
+.p-button.p-button-rounded.p-button-text {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px !important;
+}
+
+.p-button.p-button-rounded.p-button-text:hover {
+  background: var(--kp-bg-soft) !important;
+}
+
+.p-button.p-button-rounded.p-button-text.p-button-danger:hover {
+  background: var(--kp-danger-soft) !important;
+  color: var(--kp-danger) !important;
+}
+
+/* ── Dialog backdrop ── */
+.p-dialog-mask {
+  background: rgba(15, 23, 42, 0.5) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.p-dialog {
+  box-shadow: var(--kp-shadow-xl) !important;
+  border-radius: var(--kp-radius-xl) !important;
+}
+
+.p-dialog .p-dialog-header {
+  border-bottom: 1px solid var(--kp-border);
+}
+
+.p-dialog .p-dialog-footer {
+  border-top: 1px solid var(--kp-border);
+}
+
+/* ── Confirm dialog ── */
+.p-confirm-dialog {
+  .p-dialog-content {
+    padding: 1.5rem !important;
+  }
+}
 
 /* ════════════════════════════════════════════════════════════
    BOOLEAN INDICATOR

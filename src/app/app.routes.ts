@@ -17,12 +17,44 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard').then(c => c.DashboardPageComponent),
       },
       {
+        path: 'products',
+        loadComponent: () => import('./features/products').then(c => c.ProductsPageComponent),
+      },
+      {
         path: 'directories',
         loadComponent: () => import('./features/directories').then(c => c.DirectoriesPageComponent),
       },
       {
         path: 'modules',
         loadComponent: () => import('./features/modules').then(c => c.ModulesPageComponent),
+      },
+      {
+        path: 'tenders',
+        loadComponent: () => import('./features/tenders').then(c => c.TendersPageComponent),
+      },
+      {
+        path: 'quotations',
+        loadComponent: () => import('./features/quotations').then(c => c.QuotationsPageComponent),
+      },
+      {
+        path: 'orders',
+        loadComponent: () => import('./features/orders').then(c => c.OrdersPageComponent),
+      },
+      {
+        path: 'product-passports',
+        loadComponent: () => import('./features/product-passports').then(c => c.ProductPassportsPageComponent),
+      },
+      {
+        path: 'work-orders',
+        loadComponent: () => import('./features/work-orders').then(c => c.WorkOrdersPageComponent),
+      },
+      {
+        path: 'purchase-orders',
+        loadComponent: () => import('./features/purchase-orders').then(c => c.PurchaseOrdersPageComponent),
+      },
+      {
+        path: 'shipments',
+        loadComponent: () => import('./features/shipments').then(c => c.ShipmentsPageComponent),
       },
       {
         path: 'documents',

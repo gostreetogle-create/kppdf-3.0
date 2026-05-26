@@ -1,0 +1,52 @@
+/* Base field block — shared by kp-input, kp-select, kp-textarea, kp-input-number, kp-datepicker */
+@mixin kp-field-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kp-space-1, 0.25rem);
+}
+
+@mixin kp-field-label {
+  font-size: var(--kp-font-size-sm, 0.875rem);
+  font-weight: var(--kp-font-weight-medium, 500);
+  color: var(--kp-text);
+}
+
+@mixin kp-field-required {
+  color: var(--kp-danger);
+  margin-left: var(--kp-space-1, 0.25rem);
+}
+
+@mixin kp-field-error {
+  font-size: var(--kp-font-size-caption, 0.75rem);
+  color: var(--kp-danger);
+  margin-top: var(--kp-space-1, 0.125rem);
+}
+
+@mixin kp-field-control {
+  padding: var(--kp-space-2, 0.5rem) var(--kp-space-3, 0.75rem);
+  border: 1px solid var(--kp-border);
+  border-radius: var(--kp-radius-sm);
+  font-size: var(--kp-font-size-sm, 0.875rem);
+  font-family: inherit;
+  background: var(--kp-surface);
+  color: var(--kp-text);
+  width: 100%;
+  transition: border-color var(--kp-transition-fast, 150ms ease),
+    box-shadow var(--kp-transition-fast, 150ms ease);
+
+  &:focus {
+    outline: none;
+    border-color: var(--kp-primary);
+    box-shadow: var(--kp-focus-ring-premium, 0 0 0 3px rgba(37, 99, 235, 0.1));
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--kp-bg-soft);
+  }
+
+  &--error {
+    border-color: var(--kp-danger) !important;
+  }
+}

@@ -5,10 +5,9 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
 import { EmptyStateComponent } from './empty-state/empty-state.component';
+import { KpButtonComponent } from './kp-button.component';
 
-// ── Types ──────────────────────────────────────────────────
 export interface KpColumn {
   field: string;
   header: string;
@@ -31,16 +30,15 @@ export interface KpPageEvent {
 }
 
 @Component({
-  selector: 'kp-table',
+  selector: 'app-kp-table',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, FormsModule,
-    TableModule, TagModule, TooltipModule, InputTextModule, ButtonModule,
-    EmptyStateComponent,
+    TableModule, TagModule, TooltipModule, InputTextModule,
+    EmptyStateComponent, KpButtonComponent,
   ],
   template: `
-    <!-- Toolbar -->
     @if (showSearch() || showActions()) {
       <div class="kp-table__toolbar">
         <div class="kp-table__toolbar-left">
@@ -57,11 +55,14 @@ export interface KpPageEvent {
         <div class="kp-table__toolbar-right">
           @if (showSearch()) {
             <span class="p-input-icon-left kp-table__search">
-              <i class="pi pi-search"></i>
+              <i class="pi pi-search" aria-hidden="true"></i>
+              <label class="visually-hidden" [attr.for]="searchInputId">Поиск</label>
               <input
+                [id]="searchInputId"
                 pInputText
-                type="text"
+                type="search"
                 placeholder="Поиск..."
+                [attr.aria-label]="'Поиск'"
                 [ngModel]="searchQuery()"
                 (ngModelChange)="onSearch($event)"
                 size="small"
@@ -73,12 +74,10 @@ export interface KpPageEvent {
       </div>
     }
 
-    <!-- Loading -->
     @if (loading()) {
-      <div class="kp-table__loading">Загрузка данных...</div>
+      <div class="kp-table__loading" role="status">Загрузка данных...</div>
     }
 
-    <!-- Table -->
     @if (!loading()) {
       <p-table
         [value]="data()"
@@ -90,7 +89,7 @@ export interface KpPageEvent {
         [lazy]="true"
         [sortField]="sortField()"
         [sortOrder]="sortOrder()"
-        (onPage)="onPageChange.emit($event)"
+        (onPage)="pageEvent.emit($event)"
         (onSort)="onSortHandler($event)"
         size="small"
         styleClass="p-datatable-striped"
@@ -111,7 +110,7 @@ export interface KpPageEvent {
               </th>
             }
             @if (showRowActions()) {
-              <th style="width:90px">Действия</th>
+              <th class="kp-table__actions-col">Действия</th>
             }
           </tr>
         </ng-template>
@@ -121,16 +120,20 @@ export interface KpPageEvent {
               <td>
                 @switch (col.type) {
                   @case ('tag') {
-                    <p-tag [value]="row[col.field]" [severity]="severityFn()(row[col.field])" />
+                    <p-tag [value]="row[col.field]" [severity]="($any(severityFn())(row[col.field]))" />
                   }
                   @case ('boolean') {
-                    <i
-                      class="pi boolean-indicator"
-                      [class.pi-check-circle]="row[col.field]"
-                      [class.pi-circle]="!row[col.field]"
-                      [class.boolean-indicator--yes]="row[col.field]"
-                      [class.boolean-indicator--no]="!row[col.field]"
-                    ></i>
+                    <span class="kp-table__bool">
+                      <i
+                        class="pi boolean-indicator"
+                        [class.pi-check-circle]="row[col.field]"
+                        [class.pi-circle]="!row[col.field]"
+                        [class.boolean-indicator--yes]="row[col.field]"
+                        [class.boolean-indicator--no]="!row[col.field]"
+                        aria-hidden="true"
+                      ></i>
+                      <span class="visually-hidden">{{ row[col.field] ? 'Да' : 'Нет' }}</span>
+                    </span>
                   }
                   @case ('date') {
                     <span>{{ row[col.field] ? (row[col.field] | date:'dd.MM.yyyy') : '—' }}</span>
@@ -150,24 +153,30 @@ export interface KpPageEvent {
             @if (showRowActions()) {
               <td>
                 <div class="table-actions">
-                  <p-button
-                    icon="pi pi-pencil"
-                    [rounded]="true"
-                    [text]="true"
-                    severity="secondary"
-                    size="small"
-                    (click)="onEdit.emit(row)"
-                    pTooltip="Редактировать"
-                  />
-                  <p-button
-                    icon="pi pi-trash"
-                    [rounded]="true"
-                    [text]="true"
-                    severity="danger"
-                    size="small"
-                    (click)="onDelete.emit(row)"
-                    pTooltip="Удалить"
-                  />
+                  @if (canUpdate()) {
+                    <app-kp-button
+                      icon="pi pi-pencil"
+                      [rounded]="true"
+                      [text]="true"
+                      severity="secondary"
+                      size="small"
+                      tooltip="Редактировать"
+                      ariaLabel="Редактировать"
+                      (buttonClick)="edit.emit(row)"
+                    />
+                  }
+                  @if (canDelete()) {
+                    <app-kp-button
+                      icon="pi pi-trash"
+                      [rounded]="true"
+                      [text]="true"
+                      severity="danger"
+                      size="small"
+                      tooltip="Удалить"
+                      ariaLabel="Удалить"
+                      (buttonClick)="deleteRow.emit(row)"
+                    />
+                  }
                 </div>
               </td>
             }
@@ -188,50 +197,16 @@ export interface KpPageEvent {
       </p-table>
     }
   `,
-  styles: [`
-    .kp-table__toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--kp-space-2, 0.5rem);
-      margin-bottom: var(--kp-space-3, 0.75rem);
-    }
-    .kp-table__toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: var(--kp-space-2, 0.5rem);
-    }
-    .kp-table__toolbar-right {
-      display: flex;
-      align-items: center;
-      gap: var(--kp-space-2, 0.5rem);
-    }
-    .kp-table__title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--kp-text, #1e293b);
-    }
-    .kp-table__count {
-      font-size: 0.75rem;
-      color: var(--kp-text-muted, #94a3b8);
-    }
-    .kp-table__loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: var(--kp-space-8, 2rem);
-      color: var(--kp-text-muted, #94a3b8);
-    }
-  `],
+  styleUrl: './kp-table.component.scss',
 })
 export class KpTableComponent {
-  // ── Data ──
+  readonly searchInputId = `kp-search-${Math.random().toString(36).slice(2, 9)}`;
+
   readonly columns = input.required<KpColumn[]>();
-  readonly data = input.required<Record<string, unknown>[]>();
+  readonly data = input.required<object[]>();
   readonly total = input(0);
   readonly loading = input(false);
 
-  // ── Pagination ──
   readonly paginator = input(true);
   readonly page = model(1);
   readonly limit = model(15);
@@ -239,34 +214,28 @@ export class KpTableComponent {
   readonly sortField = model<string>('createdAt');
   readonly sortOrder = model<-1 | 1>(-1);
 
-  // ── Search ──
   readonly showSearch = input(true);
   readonly searchQuery = model<string>('');
 
-  // ── Toolbar ──
   readonly title = input<string>('');
   readonly showActions = input(true);
+  readonly showToolbarTitle = input(true);
 
-  // ── Row actions ──
   readonly showRowActions = input(true);
-  readonly permCreate = input<string>('');
+  readonly canUpdate = input(true);
+  readonly canDelete = input(true);
 
-  // ── Empty state ──
   readonly emptyMessage = input('Нет данных');
-
-  // ── Severity function ──
   readonly severityFn = input<(value: unknown) => string>(() => 'info');
 
-  // ── Outputs ──
-  readonly onSort = output<KpSortEvent>();
-  readonly onPageChange = output<KpPageEvent>();
-  readonly onSearchChange = output<string>();
-  readonly onEdit = output<Record<string, unknown>>();
-  readonly onDelete = output<Record<string, unknown>>();
+  readonly sortChange = output<KpSortEvent>();
+  readonly pageEvent = output<KpPageEvent>();
+  readonly searchChange = output<string>();
+  readonly edit = output<Record<string, unknown>>();
+  readonly deleteRow = output<Record<string, unknown>>();
 
-  // ── Handlers ──
   onSortHandler(event: { field?: string; order?: number }): void {
-    this.onSort.emit({
+    this.sortChange.emit({
       field: event.field || 'createdAt',
       order: (event.order === 1 ? 1 : -1) as 1 | -1,
     });
@@ -274,7 +243,7 @@ export class KpTableComponent {
 
   onSearch(value: string): void {
     this.searchQuery.set(value);
-    this.onSearchChange.emit(value);
+    this.searchChange.emit(value);
   }
 
   getSelectLabel(col: KpColumn, value: unknown): string {

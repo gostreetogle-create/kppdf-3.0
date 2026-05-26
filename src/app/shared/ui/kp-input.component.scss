@@ -1,0 +1,31 @@
+@use '../styles/kp-field' as field;
+
+.kp-input {
+  @include field.kp-field-root;
+}
+
+.kp-input__label {
+  @include field.kp-field-label;
+}
+
+.kp-input__required {
+  @include field.kp-field-required;
+}
+
+.kp-input__control.kp-input--has-error {
+  border-color: var(--kp-danger) !important;
+}
+
+.kp-input__error {
+  @include field.kp-field-error;
+}
+
+.kp-input--small {
+  font-size: var(--kp-font-size-sm, 0.875rem);
+  padding: var(--kp-space-2, 0.375rem) var(--kp-space-3, 0.75rem);
+}
+
+.kp-input--large {
+  font-size: var(--kp-font-size-body, 1rem);
+  padding: var(--kp-space-3, 0.625rem) var(--kp-space-4, 1rem);
+}

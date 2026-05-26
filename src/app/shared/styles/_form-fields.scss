@@ -1,0 +1,12 @@
+/* Shared form layout — used in CRUD dialogs */
+.form-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kp-space-4, 1rem);
+}
+
+.form-layout--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--kp-space-4, 1rem);
+}

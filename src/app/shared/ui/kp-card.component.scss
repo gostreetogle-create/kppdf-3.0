@@ -1,0 +1,8 @@
+.kp-card {
+  background: var(--kp-surface);
+  border: 1px solid var(--kp-border);
+  border-radius: var(--kp-radius-lg);
+  box-shadow: var(--kp-shadow-sm);
+  transition: box-shadow var(--kp-transition-base, 200ms ease),
+    transform var(--kp-transition-base, 200ms ease);
+}

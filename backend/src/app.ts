@@ -34,6 +34,7 @@ import { interactionRouter } from './modules/interactions/interaction.router';
 import { documentTemplateRouter } from './modules/document-templates/documentTemplate.router';
 import { tenderRouter } from './modules/tenders/tender.router';
 import { productPassportRouter } from './modules/product-passports/productPassport.router';
+import { complianceRuleRouter, complianceCheckRouter } from './modules/compliance-validator/complianceRule.router';
 
 const app = express();
 
@@ -102,6 +103,10 @@ app.use('/api/v1/directories/tenders', tenderRouter);
 
 // Product Passports (паспорта изделий)
 app.use('/api/v1/directories/product-passports', productPassportRouter);
+
+// Compliance Validator
+app.use('/api/v1/compliance/rules', complianceRuleRouter);
+app.use('/api/v1/compliance', complianceCheckRouter);
 
 // Document Templates
 app.use('/api/v1/document-templates', documentTemplateRouter);

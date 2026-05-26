@@ -9,6 +9,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
+    "lint:styles": "stylelint \"src/**/*.scss\"",
     "backend": "cd backend && node dev.js"
   },
   "private": true,

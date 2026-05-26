@@ -1,31 +1,24 @@
 import { Component, signal, computed, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, of, tap, catchError } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
-import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { MODULE_PERM_PREFIX } from '../../core/permissions';
-
-// PrimeNG
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { SelectModule } from 'primeng/select';
-import { TagModule } from 'primeng/tag';
-import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService, MessageService } from 'primeng/api';
-import { TooltipModule } from 'primeng/tooltip';
-import { TextareaModule } from 'primeng/textarea';
-import { DatePickerModule } from 'primeng/datepicker';
-
-// Shared UI
-import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
-
-// Service
 import { CrudApiService } from '../../shared/services/crud-api.service';
+
+import { ConfirmationService, MessageService } from 'primeng/api';
+import {
+  KpTableComponent,
+  KpButtonComponent,
+  KpDialogComponent,
+  KpToastComponent,
+  KpConfirmDialogComponent,
+  KpInputComponent,
+  KpSelectComponent,
+  KpTextareaComponent,
+  KpInputNumberComponent,
+  KpDatepickerComponent,
+  type KpColumn,
+  type KpSelectOption,
+} from '../../shared/ui';
 
 // ===== Column definition =====
 interface ColumnDef {
@@ -65,22 +58,15 @@ const DEPARTMENTS: { id: string; label: string; icon: string }[] = [
 
 /** Маппинг модуль → отдел */
 const MODULE_DEPT: Record<string, string> = {
-  tenders: 'office',
-  quotations: 'office',
-  orders: 'office',
   interactions: 'office',
-  'product-passports': 'production',
   boms: 'production',
   operations: 'production',
   'tech-processes': 'production',
-  'work-orders': 'production',
   'work-order-operations': 'production',
   'purchase-requests': 'warehouse',
-  'purchase-orders': 'warehouse',
   warehouses: 'warehouse',
   'stock-movements': 'warehouse',
   reservations: 'warehouse',
-  shipments: 'warehouse',
   'cost-calculations': 'accounting',
   'actual-costs': 'accounting',
   'shipping-docs': 'accounting',
@@ -92,10 +78,16 @@ const MODULE_DEPT: Record<string, string> = {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, FormsModule, TableModule, ButtonModule, DialogModule,
-    InputTextModule, InputNumberModule, SelectModule, TextareaModule,
-    TagModule, ToastModule, ConfirmDialogModule, DatePickerModule,
-    TooltipModule, EmptyStateComponent, HasPermissionDirective,
+    KpToastComponent,
+    KpConfirmDialogComponent,
+    KpTableComponent,
+    KpButtonComponent,
+    KpDialogComponent,
+    KpInputComponent,
+    KpSelectComponent,
+    KpTextareaComponent,
+    KpInputNumberComponent,
+    KpDatepickerComponent,
   ],
   providers: [MessageService, ConfirmationService],
   template: `
@@ -113,14 +105,13 @@ const MODULE_DEPT: Record<string, string> = {
           </div>
           <div class="mod-dept__tabs">
             @for (mod of group.modules; track mod.key) {
-              <p-button
+              <app-kp-button
                 [label]="mod.label"
                 [icon]="mod.icon"
                 [severity]="activeKey() === mod.key ? 'primary' : 'secondary'"
                 [outlined]="activeKey() !== mod.key"
-                (click)="selectModule(mod.key)"
-                [pTooltip]="mod.label"
-                tooltipPosition="bottom"
+                (buttonClick)="selectModule(mod.key)"
+                [tooltip]="mod.label"
                 size="small"
                 styleClass="mod-dept__btn"
               />
@@ -146,266 +137,125 @@ const MODULE_DEPT: Record<string, string> = {
               </span>
             }
           </div>
-          <div class="mod-toolbar__right">
-            <span class="p-input-icon-left mod-search">
-              <i class="pi pi-search"></i>
-              <input
-                pInputText
-                type="text"
-                class="mod-search__input"
-                placeholder="Поиск..."
-                [ngModel]="searchQuery()"
-                (ngModelChange)="onSearch($event)"
-              />
-            </span>
-            <p-button
-              *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.create'"
-              label="Добавить"
-              icon="pi pi-plus"
-              size="small"
-              (click)="showAdd()"
-            />
-          </div>
         </div>
 
-        <!-- Фильтры (только для тендеров) -->
-        @if (activeKey() === 'tenders') {
-          <div class="mod-filters">
-            <p-select
-              [options]="companyOptions()"
-              [(ngModel)]="selectedCompanyFilter"
-              (ngModelChange)="onFilterChange()"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Все компании"
-              [showClear]="true"
-              class="mod-filters__select"
-              size="small"
-            />
-            <p-select
-              [options]="tenderStatusOptions"
-              [(ngModel)]="selectedStatusFilter"
-              (ngModelChange)="onFilterChange()"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Все статусы"
-              [showClear]="true"
-              class="mod-filters__select"
-              size="small"
-            />
-          </div>
-        }
-
-        <!-- Спиннер загрузки -->
-        @if (loading()) {
-          <div class="loading-state">Загрузка...</div>
-        }
-
-        <!-- Таблица -->
-        @if (!loading()) {
-          <p-table
-            [value]="rows()"
-            [stripedRows]="true"
-            [paginator]="true"
-            [rows]="limit()"
-            [totalRecords]="totalRecords()"
-            [rowsPerPageOptions]="[10, 15, 25, 50]"
-            [lazy]="true"
-            [sortField]="sortField()"
-            [sortOrder]="sortOrder()"
-            (onPage)="onPageChange($event)"
-            (onSort)="onSort($event)"
-            size="small"
-            styleClass="p-datatable-striped"
-            [showCurrentPageReport]="true"
-            currentPageReportTemplate="Записи {first}–{last} из {totalRecords}"
-          >
-            <ng-template pTemplate="header">
-              <tr>
-                @for (col of currentMod()?.columns; track col.field || $index) {
-                  <th [style.width]="col.width">{{ col.header }}</th>
-                }
-                <th style="width:90px">Действия</th>
-              </tr>
+        <app-kp-table
+          [columns]="tableColumns()"
+          [data]="rows()"
+          [total]="totalRecords()"
+          [loading]="loading()"
+          [searchQuery]="searchQuery()"
+          [limit]="limit()"
+          [sortField]="sortField()"
+          [sortOrder]="sortOrder()"
+          [title]="currentMod()?.label || ''"
+          [canUpdate]="canEditModule()"
+          [canDelete]="canDeleteModule()"
+          [severityFn]="severityFn"
+          (searchChange)="onSearch($event)"
+          (pageEvent)="onPageChange($event)"
+          (sortChange)="onSort($event)"
+          (edit)="showEdit($event)"
+          (deleteRow)="confirmDelete($event)"
+        >
+          @if (canCreateModule()) {
+            <ng-template table-actions>
+              <app-kp-button
+                label="Добавить"
+                icon="pi pi-plus"
+                size="small"
+                (buttonClick)="showAdd()"
+              />
             </ng-template>
-            <ng-template pTemplate="body" let-row>
-              <tr>
-                @for (col of currentMod()?.columns; track col.field || $index) {
-                  <td>
-                    @switch (col.type) {
-                      @case ('tag') {
-                        <p-tag [value]="row[col.field]" [severity]="getSeverity(row[col.field])" />
-                      }
-                      @case ('boolean') {
-                        <i
-                          class="pi boolean-indicator"
-                          [class.pi-check-circle]="row[col.field]"
-                          [class.pi-circle]="!row[col.field]"
-                          [class.boolean-indicator--yes]="row[col.field]"
-                          [class.boolean-indicator--no]="!row[col.field]"
-                        ></i>
-                      }
-                      @case ('date') {
-                        <span>{{ row[col.field] ? (row[col.field] | date:'dd.MM.yyyy') : '—' }}</span>
-                      }
-                      @default {
-                        <span>{{ getCellValue(row, col) }}</span>
-                      }
-                    }
-                  </td>
-                }
-                <td>
-                  <div class="table-actions">
-                    <p-button
-                      *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.edit'"
-                      icon="pi pi-pencil"
-                      [rounded]="true"
-                      [text]="true"
-                      severity="secondary"
-                      size="small"
-                      (click)="showEdit(row)"
-                      pTooltip="Редактировать"
-                    />
-                    <p-button
-                      *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.delete'"
-                      icon="pi pi-trash"
-                      [rounded]="true"
-                      [text]="true"
-                      severity="danger"
-                      size="small"
-                      (click)="confirmDelete(row)"
-                      pTooltip="Удалить"
-                    />
-                  </div>
-                </td>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="emptymessage">
-              <tr>
-                <td [attr.colspan]="(currentMod()?.columns?.length || 0) + 1">
-                  <app-empty-state
-                    [compact]="true"
-                    [description]="'Нет данных. Нажмите «Добавить» чтобы создать запись.'"
-                  >
-                    <i empty-icon class="pi pi-inbox"></i>
-                    <div empty-actions>
-                      <p-button
-                        *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.create'"
-                        label="Добавить"
-                        icon="pi pi-plus"
-                        size="small"
-                        (click)="showAdd()"
-                      />
-                    </div>
-                  </app-empty-state>
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
-        }
+          }
+        </app-kp-table>
       </div>
     </div>
 
     <!-- ════════════════════════════════════════════════════════════
          Диалог создания/редактирования
          ════════════════════════════════════════════════════════════ -->
-    <p-dialog
-      [(visible)]="dialogVisible"
+    <app-kp-dialog
+      [visible]="dialogVisible()"
+      (visibleChange)="dialogVisible.set($event)"
       [header]="dialogTitle"
-      [modal]="true"
-      [draggable]="false"
-      [resizable]="false"
-      [style]="{ width: '480px', maxWidth: '90vw' }"
-      (onHide)="closeDialog()"
+      (hide)="closeDialog()"
     >
-      <!-- Body: flex-col gap-4 между полями -->
-      <div class="flex flex-col gap-4">
+      <div class="form-layout">
         @for (col of (currentMod()?.columns || []); track col.field || $index) {
-          <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">
-              {{ col.header }}
-              @if (col.required) { <span class="text-secondary">*</span> }
-            </label>
-
-            @if (col.type === 'text') {
-              <input
-                pInputText
-                [(ngModel)]="editRow[col.field]"
-                [attr.required]="col.required ? '' : null"
-                [readonly]="col.readonly || false"
-                class="w-full"
-                size="small"
-              />
-            } @else if (col.type === 'number') {
-              <p-inputNumber
-                [(ngModel)]="editRow[col.field]"
-                class="w-full"
-                size="small"
-              />
-            } @else if (col.type === 'textarea') {
-              <textarea
-                pInputTextarea
-                [(ngModel)]="editRow[col.field]"
-                class="w-full"
-                rows="3"
-              ></textarea>
-            } @else if (col.options && col.options.length > 0) {
-              <p-select
-                [options]="col.options || []"
-                [(ngModel)]="editRow[col.field]"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Выберите..."
-                [showClear]="!col.required"
-                class="w-full"
-                size="small"
-              />
-            } @else if (col.type === 'boolean') {
-              <p-select
-                [options]="booleanOptions"
-                [(ngModel)]="editRow[col.field]"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Выберите..."
-                class="w-full"
-                size="small"
-              />
-            } @else if (col.type === 'date') {
-              <p-datepicker
-                [(ngModel)]="editRow[col.field]"
-                class="w-full"
-                size="small"
-                dateFormat="dd.mm.yy"
-              />
-            }
-          </div>
+          @if (col.type === 'text') {
+            <app-kp-input
+              [label]="col.header"
+              [name]="col.field"
+              [value]="toStr(editRow[col.field])"
+              (valueChange)="editRow[col.field] = $event"
+              [required]="col.required || false"
+              [readonly]="col.readonly || false"
+            />
+          } @else if (col.type === 'number') {
+            <app-kp-input-number
+              [label]="col.header"
+              [name]="col.field"
+              [value]="toNum(editRow[col.field])"
+              (valueChange)="editRow[col.field] = $event"
+              [required]="col.required || false"
+            />
+          } @else if (col.type === 'textarea') {
+            <app-kp-textarea
+              [label]="col.header"
+              [name]="col.field"
+              [value]="toStr(editRow[col.field])"
+              (valueChange)="editRow[col.field] = $event"
+              [required]="col.required || false"
+            />
+          } @else if (col.options && col.options.length > 0) {
+            <app-kp-select
+              [label]="col.header"
+              [name]="col.field"
+              [value]="toStr(editRow[col.field])"
+              (valueChange)="editRow[col.field] = $event"
+              [options]="col.options"
+              [required]="col.required || false"
+            />
+          } @else if (col.type === 'boolean') {
+            <app-kp-select
+              [label]="col.header"
+              [name]="col.field"
+              [value]="toStr(editRow[col.field])"
+              (valueChange)="editRow[col.field] = $event === 'true'"
+              [options]="booleanSelectOptions"
+              [required]="col.required || false"
+            />
+          } @else if (col.type === 'date') {
+            <app-kp-datepicker
+              [label]="col.header"
+              [name]="col.field"
+              [value]="formatDateValue(editRow[col.field])"
+              (valueChange)="editRow[col.field] = $event"
+              [required]="col.required || false"
+            />
+          }
         }
       </div>
-
-      <!-- Footer -->
-      <ng-template pTemplate="footer">
-        <div class="flex justify-end gap-2">
-          <p-button
-            label="Отмена"
-            severity="secondary"
-            [outlined]="true"
-            size="small"
-            (click)="closeDialog()"
-            [disabled]="saving()"
-          />
-          <p-button
-            label="Сохранить"
-            size="small"
-            (click)="save()"
-            [loading]="saving()"
-          />
-        </div>
-      </ng-template>
-    </p-dialog>
+      <div kpDialogFooter class="flex justify-end gap-2">
+        <app-kp-button
+          label="Отмена"
+          severity="secondary"
+          [outlined]="true"
+          (buttonClick)="closeDialog()"
+          [disabled]="saving()"
+        />
+        <app-kp-button
+          label="Сохранить"
+          (buttonClick)="save()"
+          [loading]="saving()"
+        />
+      </div>
+    </app-kp-dialog>
 
     <!-- Toast -->
-    <p-toast position="top-right" />
-    <p-confirmDialog />
+    <app-kp-toast position="top-right" />
+    <app-kp-confirm-dialog />
   `,
   styleUrl: './modules-page.component.scss',
 })
@@ -415,7 +265,7 @@ export class ModulesPageComponent implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
 
   // Состояние
-  readonly activeKey = signal<string>('quotations');
+  readonly activeKey = signal<string>('boms');
   readonly rows = signal<Record<string, unknown>[]>([]);
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -426,30 +276,10 @@ export class ModulesPageComponent implements OnInit {
   readonly sortField = signal('createdAt');
   readonly sortOrder = signal<-1 | 1>(-1);
 
-  // Компании для фильтра / отображения в тендерах
-  readonly companies = signal<{ _id: string; name: string; shortName: string }[]>([]);
-  readonly companyOptions = computed(() =>
-    this.companies().map((c) => ({ label: c.shortName || c.name, value: c._id })),
-  );
-  readonly companyMap = computed(() => {
-    const map: Record<string, string> = {};
-    for (const c of this.companies()) map[c._id] = c.shortName || c.name;
-    return map;
-  });
-  readonly selectedCompanyFilter = signal<string>('');
-  readonly selectedStatusFilter = signal<string>('');
 
-  // Опции статусов для тендеров
-  readonly tenderStatusOptions = [
-    { label: 'Новый', value: 'new' },
-    { label: 'В работе', value: 'in_progress' },
-    { label: 'КП отправлено', value: 'kp_sent' },
-    { label: 'Выигран', value: 'won' },
-    { label: 'Проигран', value: 'lost' },
-  ];
 
   // Диалог
-  dialogVisible = false;
+  dialogVisible = signal(false);
   dialogTitle = '';
   editRow: Record<string, unknown> = {};
   isEditing = false;
@@ -460,67 +290,6 @@ export class ModulesPageComponent implements OnInit {
 
   // ===== Определения модулей =====
   readonly modules: ModuleConfig[] = [
-    {
-      key: 'tenders',
-      label: 'Запросы',
-      icon: 'pi pi-inbox',
-      basePath: '/directories/tenders',
-      idField: '_id',
-      columns: [
-        { field: 'number', header: 'Номер', type: 'text', width: '120px', readonly: true },
-        { field: 'date', header: 'Дата', type: 'date', width: '110px' },
-        { field: 'companyId', header: 'Компания', type: 'select', width: '150px' },
-        { field: 'subject', header: 'Тема', type: 'text' },
-        { field: 'productName', header: 'Товар', type: 'text', width: '160px' },
-        { field: 'quantity', header: 'Кол-во', type: 'number', width: '80px' },
-        { field: 'legalBasis', header: 'Прав. основа', type: 'text', width: '120px' },
-        { field: 'statusId', header: 'Статус', type: 'tag', width: '150px' },
-      ],
-    },
-    {
-      key: 'product-passports',
-      label: 'Паспорта',
-      icon: 'pi pi-id-card',
-      basePath: '/directories/product-passports',
-      idField: '_id',
-      columns: [
-        { field: 'passportNumber', header: '№ паспорта', type: 'number', width: '110px' },
-        { field: 'name', header: 'Наименование', type: 'text' },
-        { field: 'category', header: 'Категория', type: 'text', width: '150px' },
-        { field: 'date', header: 'Дата', type: 'date', width: '110px' },
-        { field: 'height', header: 'Высота', type: 'number', width: '80px' },
-        { field: 'weight', header: 'Вес (кг)', type: 'number', width: '90px' },
-        { field: 'installationSite', header: 'Объект', type: 'text' },
-      ],
-    },
-    {
-      key: 'quotations',
-      label: 'КП',
-      icon: 'pi pi-file-edit',
-      basePath: '/directories/quotations',
-      idField: '_id',
-      columns: [
-        { field: 'number', header: 'Номер', type: 'text', width: '140px', readonly: true },
-        { field: 'counterpartyId', header: 'Контрагент', type: 'text' },
-        { field: 'date', header: 'Дата', type: 'date', width: '120px' },
-        { field: 'statusId', header: 'Статус', type: 'tag', width: '110px' },
-        { field: 'total', header: 'Сумма', type: 'number', width: '120px' },
-      ],
-    },
-    {
-      key: 'orders',
-      label: 'Заказы',
-      icon: 'pi pi-shopping-cart',
-      basePath: '/directories/orders',
-      idField: '_id',
-      columns: [
-        { field: 'number', header: 'Номер', type: 'text', width: '140px', readonly: true },
-        { field: 'counterpartyId', header: 'Контрагент', type: 'text' },
-        { field: 'date', header: 'Дата', type: 'date', width: '120px' },
-        { field: 'statusId', header: 'Статус', type: 'tag', width: '110px' },
-        { field: 'total', header: 'Сумма', type: 'number', width: '120px' },
-      ],
-    },
     {
       key: 'boms',
       label: 'BOM',
@@ -573,20 +342,6 @@ export class ModulesPageComponent implements OnInit {
       ],
     },
     {
-      key: 'purchase-orders',
-      label: 'Заказы пост.',
-      icon: 'pi pi-truck',
-      basePath: '/directories/purchase-orders',
-      idField: '_id',
-      columns: [
-        { field: 'number', header: 'Номер', type: 'text', width: '140px', readonly: true },
-        { field: 'supplierId', header: 'Поставщик', type: 'text' },
-        { field: 'orderDate', header: 'Дата', type: 'date', width: '120px' },
-        { field: 'statusId', header: 'Статус', type: 'tag', width: '110px' },
-        { field: 'total', header: 'Сумма', type: 'number', width: '120px' },
-      ],
-    },
-    {
       key: 'warehouses',
       label: 'Склады',
       icon: 'pi pi-home',
@@ -625,20 +380,6 @@ export class ModulesPageComponent implements OnInit {
       ],
     },
     {
-      key: 'work-orders',
-      label: 'Наряды',
-      icon: 'pi pi-wrench',
-      basePath: '/directories/work-orders',
-      idField: '_id',
-      columns: [
-        { field: 'number', header: 'Номер', type: 'text', width: '140px', readonly: true },
-        { field: 'orderId', header: 'Заказ', type: 'text' },
-        { field: 'productId', header: 'Товар', type: 'text' },
-        { field: 'qty', header: 'Кол-во', type: 'number', width: '100px' },
-        { field: 'statusId', header: 'Статус', type: 'tag', width: '110px' },
-      ],
-    },
-    {
       key: 'work-order-operations',
       label: 'Операции нар.',
       icon: 'pi pi-list-check',
@@ -674,19 +415,6 @@ export class ModulesPageComponent implements OnInit {
         { field: 'type', header: 'Тип', type: 'tag', width: '120px' },
         { field: 'amount', header: 'Сумма', type: 'number', width: '120px' },
         { field: 'date', header: 'Дата', type: 'date', width: '120px' },
-      ],
-    },
-    {
-      key: 'shipments',
-      label: 'Отгрузки',
-      icon: 'pi pi-box',
-      basePath: '/directories/shipments',
-      idField: '_id',
-      columns: [
-        { field: 'number', header: 'Номер', type: 'text', width: '140px', readonly: true },
-        { field: 'orderId', header: 'Заказ', type: 'text' },
-        { field: 'date', header: 'Дата', type: 'date', width: '120px' },
-        { field: 'statusId', header: 'Статус', type: 'tag', width: '110px' },
       ],
     },
     {
@@ -731,23 +459,7 @@ export class ModulesPageComponent implements OnInit {
   ];
 
   currentMod = () => {
-    const mod = this.modules.find((m) => m.key === this.activeKey()) ?? null;
-    if (!mod) return null;
-    if (mod.key === 'tenders') {
-      return {
-        ...mod,
-        columns: mod.columns.map((col) => {
-          if (col.field === 'companyId') {
-            return { ...col, options: this.companyOptions() };
-          }
-          if (col.field === 'statusId') {
-            return { ...col, options: this.tenderStatusOptions };
-          }
-          return col;
-        }),
-      };
-    }
-    return mod;
+    return this.modules.find((m) => m.key === this.activeKey()) ?? null;
   };
 
   private readonly auth = inject(AuthService);
@@ -796,12 +508,7 @@ export class ModulesPageComponent implements OnInit {
         search: this.searchQuery() || undefined,
         sort: this.sortField(),
         order: this.sortOrder() === 1 ? 'asc' : 'desc',
-        filters: this.activeKey() === 'tenders'
-          ? {
-              companyId: this.selectedCompanyFilter(),
-              statusId: this.selectedStatusFilter(),
-            }
-          : undefined,
+        filters: undefined,
       })
       .pipe(
         tap({
@@ -829,13 +536,8 @@ export class ModulesPageComponent implements OnInit {
     this.activeKey.set(key);
     this.page.set(1);
     this.searchQuery.set('');
-    this.selectedCompanyFilter.set('');
-    this.selectedStatusFilter.set('');
     this.sortField.set('createdAt');
     this.sortOrder.set(-1);
-    if (key === 'tenders') {
-      this.loadCompanies();
-    }
     this.loadData();
   }
 
@@ -847,10 +549,56 @@ export class ModulesPageComponent implements OnInit {
   }
 
   // ===== Сортировка =====
-  onSort(event: { field: string; order: number }): void {
+  onSort(event: { field: string; order: 1 | -1 }): void {
     this.sortField.set(event.field || 'createdAt');
-    this.sortOrder.set(event.order === 1 ? 1 : -1);
+    this.sortOrder.set(event.order);
     this.loadData();
+  }
+
+  readonly tableColumns = computed((): KpColumn[] => {
+    const mod = this.currentMod();
+    if (!mod) return [];
+    return mod.columns.map((c) => ({ ...c, sortable: true }));
+  });
+
+  readonly severityFn = (value: unknown): string => this.getSeverity(value);
+
+  readonly booleanSelectOptions: KpSelectOption[] = [
+    { label: 'Да', value: 'true' },
+    { label: 'Нет', value: 'false' },
+  ];
+
+  canEditModule(): boolean {
+    return this.auth.hasPermission(`${MODULE_PERM_PREFIX[this.activeKey()] || 'office.'}.edit`);
+  }
+
+  canDeleteModule(): boolean {
+    return this.auth.hasPermission(`${MODULE_PERM_PREFIX[this.activeKey()] || 'office.'}.delete`);
+  }
+
+  canCreateModule(): boolean {
+    return this.auth.hasPermission(`${MODULE_PERM_PREFIX[this.activeKey()] || 'office.'}.create`);
+  }
+
+  toStr(value: unknown): string {
+    return String(value ?? '');
+  }
+
+  toNum(value: unknown): number | null {
+    if (value == null || value === '') return null;
+    return Number(value);
+  }
+
+  formatDateValue(value: unknown): string {
+    if (!value) return '';
+    if (typeof value === 'string') return value.slice(0, 10);
+    if (value instanceof Date) {
+      const y = value.getFullYear();
+      const m = String(value.getMonth() + 1).padStart(2, '0');
+      const d = String(value.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    return String(value);
   }
 
   // ===== Пагинация =====
@@ -866,7 +614,7 @@ export class ModulesPageComponent implements OnInit {
     this.editId = null;
     this.dialogTitle = `Создание ${this.currentMod()?.label}`;
     this.editRow = {};
-    this.dialogVisible = true;
+    this.dialogVisible.set(true);
   }
 
   // ===== Показать диалог редактирования =====
@@ -875,7 +623,7 @@ export class ModulesPageComponent implements OnInit {
     this.editId = (row[this.currentMod()?.idField || '_id'] as string) ?? null;
     this.dialogTitle = `Редактирование ${this.currentMod()?.label}`;
     this.editRow = { ...row };
-    this.dialogVisible = true;
+    this.dialogVisible.set(true);
   }
 
   // ===== Подтверждение удаления =====
@@ -993,51 +741,16 @@ export class ModulesPageComponent implements OnInit {
 
   // ===== Закрыть диалог =====
   closeDialog(): void {
-    this.dialogVisible = false;
+    this.dialogVisible.set(false);
     this.editRow = {};
     this.editId = null;
     this.isEditing = false;
   }
 
-  // ===== Загрузка компаний (для модуля тендеров) =====
-  private loadCompanies(): void {
-    this.crudApi
-      .list<{ _id: string; name: string; shortName: string }>('/directories/counterparties', {
-        all: true,
-        limit: 100,
-        filters: { roles: 'company' },
-      })
-      .subscribe({
-        next: (res) => this.companies.set(res.data || []),
-        error: () => this.companies.set([]),
-      });
-  }
-
-  // ===== Получить название компании по ID =====
-  getCompanyName(id: string): string {
-    return this.companyMap()[id] || id;
-  }
-
   // ===== Получить отображаемое значение ячейки =====
   getCellValue(row: Record<string, unknown>, col: ColumnDef): string {
-    const val = row[col.field];
-    if (col.field === 'companyId' && this.activeKey() === 'tenders') {
-      return this.getCompanyName(val as string) || String(val ?? '—');
-    }
-    return String(val ?? '—');
+    return String(row[col.field] ?? '—');
   }
-
-  // ===== Изменение фильтра =====
-  onFilterChange(): void {
-    this.page.set(1);
-    this.loadData();
-  }
-
-  // ===== Опции для булевых полей =====
-  readonly booleanOptions = [
-    { label: 'Да', value: true },
-    { label: 'Нет', value: false },
-  ];
 
   // ===== Severity для Tag =====
   getSeverity(value: unknown): 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' {

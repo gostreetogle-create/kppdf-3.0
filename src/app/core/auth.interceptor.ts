@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { HttpRequest, HttpHandlerFn, HttpEvent, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, switchMap, catchError, BehaviorSubject, of, take } from 'rxjs';
+import { Observable, throwError, switchMap, catchError, BehaviorSubject, take } from 'rxjs';
 import { AuthService } from './auth.service';
 
 /** Флаг: идёт ли сейчас refresh */

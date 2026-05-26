@@ -1,0 +1,22 @@
+@use '../styles/kp-field' as field;
+
+.kp-select {
+  @include field.kp-field-root;
+}
+
+.kp-select__label {
+  @include field.kp-field-label;
+}
+
+.kp-select__required {
+  @include field.kp-field-required;
+}
+
+.kp-select__control {
+  @include field.kp-field-control;
+  cursor: pointer;
+}
+
+.kp-select__error {
+  @include field.kp-field-error;
+}

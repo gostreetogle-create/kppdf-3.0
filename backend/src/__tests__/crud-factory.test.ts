@@ -8,9 +8,9 @@ interface RouterLayer {
   route?: {
     path?: string;
     methods?: Record<string, boolean>;
-    stack?: Array<{
+    stack?: {
       handle: (req: Request, res: Response, next?: () => void) => void | Promise<void>;
-    }>;
+    }[];
   };
 }
 
@@ -55,7 +55,11 @@ function getListHandler(router: Router): (req: Request, res: Response) => void |
   const listRoute = stack.find(
     (layer) => layer.route?.path === '/' && layer.route?.methods?.['get'],
   );
-  const handler = listRoute?.route?.stack?.[0]?.handle;
+  const handlers = listRoute?.route?.stack;
+  if (!handlers || handlers.length === 0) throw new Error('List handler not found');
+  // Берём ПОСЛЕДНИЙ обработчик в стеке — это настоящий route handler,
+  // а не middleware (noop/requirePermission), которые идут первыми.
+  const handler = handlers[handlers.length - 1]?.handle;
   if (!handler) throw new Error('List handler not found');
   return handler;
 }
@@ -166,7 +170,7 @@ describe('CRUD Factory', () => {
 
       const findArg = mockModel.find.mock.calls[0]?.[0] as Record<string, unknown>;
       expect(findArg.$or).toBeDefined();
-      const or = findArg.$or as Array<Record<string, unknown>>;
+      const or = findArg.$or as Record<string, unknown>[];
       expect(or.length).toBeGreaterThanOrEqual(1);
       // Default searchFields: ['name', 'number', 'label']
       const fields = or.map((c) => Object.keys(c)[0]);

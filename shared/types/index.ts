@@ -28,3 +28,4 @@ export type { IQuotationItem } from './quotationItem.interface';
 export type { IDocumentTemplate, IDocumentBlock, DocumentBlockType, DocType } from './documentTemplate.interface';
 export type { ITender } from './tender.interface';
 export type { IProductPassport } from './productPassport.interface';
+export type { IComplianceRule, IComplianceCheck, IComplianceBatchResult, IComplianceSummary, ComplianceOperator, ComplianceSeverity } from './compliance.interface';

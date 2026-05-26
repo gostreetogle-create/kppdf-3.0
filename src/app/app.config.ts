@@ -59,45 +59,45 @@ const KppdfPreset = definePreset(Aura, {
     },
     card: {
       root: {
-        borderRadius: '10px',
-        shadow: '0 1px 3px rgba(0,0,0,0.04)',
+        borderRadius: '12px',
+        shadow: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
       },
       body: {
-        padding: '1.75rem',
+        padding: '1.25rem',
       },
     },
     button: {
       root: {
         borderRadius: '8px',
         paddingX: '0.85rem',
-        paddingY: '0.45rem',
+        paddingY: '0.5rem',
         sm: {
           fontSize: '13px',
-          paddingX: '0.7rem',
+          paddingX: '0.75rem',
           paddingY: '0.35rem',
         },
       },
     },
     dialog: {
       root: {
-        borderRadius: '12px',
-        shadow: '0 8px 32px rgba(0,0,0,0.12)',
+        borderRadius: '16px',
+        shadow: '0 12px 32px rgba(0,0,0,0.12)',
       },
       title: {
         fontSize: '16px',
         fontWeight: '600',
       },
       header: {
-        padding: '1.25rem 1.75rem',
+        padding: '1.25rem 1.5rem 0.75rem',
       },
       content: {
-        padding: '0.75rem 1.75rem 1.5rem',
+        padding: '0.5rem 1.5rem 1rem',
       },
     },
     tag: {
       root: {
-        borderRadius: '4px',
-        padding: '0.2rem 0.6rem',
+        borderRadius: '9999px',
+        padding: '0.25rem 0.75rem',
         fontSize: '12px',
         fontWeight: '500',
       },

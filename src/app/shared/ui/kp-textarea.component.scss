@@ -1,0 +1,23 @@
+@use '../styles/kp-field' as field;
+
+.kp-textarea {
+  @include field.kp-field-root;
+}
+
+.kp-textarea__label {
+  @include field.kp-field-label;
+}
+
+.kp-textarea__required {
+  @include field.kp-field-required;
+}
+
+.kp-textarea__control {
+  @include field.kp-field-control;
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
+.kp-textarea__error {
+  @include field.kp-field-error;
+}

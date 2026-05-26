@@ -3,7 +3,7 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
-  selector: 'kp-button',
+  selector: 'app-kp-button',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ButtonModule, TooltipModule],
@@ -21,8 +21,9 @@ import { TooltipModule } from 'primeng/tooltip';
       [raised]="raised()"
       [styleClass]="styleClass()"
       [pTooltip]="tooltip()"
+      [attr.aria-label]="ariaLabel() || label() || tooltip() || null"
       tooltipPosition="top"
-      (onClick)="onClick.emit($event)"
+      (onClick)="buttonClick.emit($event)"
     />
   `,
 })
@@ -39,6 +40,7 @@ export class KpButtonComponent {
   readonly raised = input(false);
   readonly styleClass = input<string>('');
   readonly tooltip = input<string>('');
+  readonly ariaLabel = input<string>('');
 
-  readonly onClick = output<MouseEvent>();
+  readonly buttonClick = output<MouseEvent>();
 }
