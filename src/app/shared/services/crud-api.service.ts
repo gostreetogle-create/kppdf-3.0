@@ -24,6 +24,8 @@ export interface CrudQuery {
   sort?: string;
   order?: 'asc' | 'desc';
   all?: boolean;
+  /** Дополнительные фильтры — передаются как query params */
+  filters?: Record<string, string>;
 }
 
 /**
@@ -45,6 +47,12 @@ export class CrudApiService {
     if (query.sort) params['sort'] = query.sort;
     if (query.order) params['order'] = query.order;
     if (query.all) params['all'] = 'true';
+    // Дополнительные фильтры
+    if (query.filters) {
+      for (const [key, val] of Object.entries(query.filters)) {
+        if (val) params[key] = val;
+      }
+    }
 
     return this.http.get<PaginatedResponse<T>>(`${this.apiBase}${basePath}`, { params });
   }

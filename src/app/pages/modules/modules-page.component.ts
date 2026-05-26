@@ -1,7 +1,9 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, of, tap, catchError } from 'rxjs';
+import { AuthService } from '../../core/auth.service';
+import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 
 // PrimeNG
 import { TableModule } from 'primeng/table';
@@ -20,6 +22,30 @@ import { DatePickerModule } from 'primeng/datepicker';
 
 // Shared UI
 import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
+
+// ===== Маппинг ключ модуля → префикс разрешения =====
+const MODULE_PERM_PREFIX: Record<string, string> = {
+  tenders: 'office.tenders',
+  'product-passports': 'production.productPassports',
+  quotations: 'office.quotations',
+  orders: 'office.orders',
+  boms: 'production.boms',
+  operations: 'production.operations',
+  'tech-processes': 'production.techProcesses',
+  'purchase-requests': 'warehouse.purchaseRequests',
+  'purchase-orders': 'warehouse.purchaseOrders',
+  warehouses: 'warehouse.warehouses',
+  'stock-movements': 'warehouse.stockMovements',
+  reservations: 'warehouse.reservations',
+  'work-orders': 'production.workOrders',
+  'work-order-operations': 'production.workOrderOperations',
+  'cost-calculations': 'accounting.costCalculations',
+  'actual-costs': 'accounting.actualCosts',
+  shipments: 'warehouse.shipments',
+  'shipping-docs': 'accounting.shippingDocs',
+  counters: 'admin.counters',
+  interactions: 'office.interactions',
+};
 
 // Service
 import { CrudApiService } from '../../shared/services/crud-api.service';
@@ -52,7 +78,7 @@ interface ModuleConfig {
     FormsModule, TableModule, ButtonModule, DialogModule,
     InputTextModule, InputNumberModule, SelectModule, TextareaModule,
     TagModule, ToastModule, ConfirmDialogModule, DatePickerModule,
-    TooltipModule, EmptyStateComponent,
+    TooltipModule, EmptyStateComponent, HasPermissionDirective,
   ],
   providers: [MessageService, ConfirmationService],
   template: `
@@ -61,10 +87,10 @@ interface ModuleConfig {
         <h1>Бизнес-процессы</h1>
       </div>
 
-      <!-- Навигация по модулям -->
+      <!-- Навигация по модулям (только с правом просмотра) -->
       <div class="mod-tabs">
         <p-button
-          *ngFor="let mod of modules"
+          *ngFor="let mod of visibleModules()"
           [label]="mod.label"
           [icon]="mod.icon"
           [severity]="activeKey() === mod.key ? 'primary' : 'secondary'"
@@ -105,12 +131,39 @@ interface ModuleConfig {
               />
             </span>
             <p-button
+              *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.create'"
               label="Добавить"
               icon="pi pi-plus"
               size="small"
               (click)="showAdd()"
             />
           </div>
+        </div>
+
+        <!-- Фильтры (только для тендеров) -->
+        <div class="mod-filters" *ngIf="activeKey() === 'tenders'">
+          <p-select
+            [options]="companyOptions()"
+            [(ngModel)]="selectedCompanyFilter"
+            (ngModelChange)="onFilterChange()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Все компании"
+            [showClear]="true"
+            class="mod-filters__select"
+            size="small"
+          />
+          <p-select
+            [options]="tenderStatusOptions"
+            [(ngModel)]="selectedStatusFilter"
+            (ngModelChange)="onFilterChange()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Все статусы"
+            [showClear]="true"
+            class="mod-filters__select"
+            size="small"
+          />
         </div>
 
         <!-- Спиннер загрузки -->
@@ -164,12 +217,13 @@ interface ModuleConfig {
                   <span *ngSwitchCase="'date'">
                     {{ row[col.field] ? (row[col.field] | date:'dd.MM.yyyy') : '—' }}
                   </span>
-                  <span *ngSwitchDefault>{{ row[col.field] }}</span>
+                  <span *ngSwitchDefault>{{ getCellValue(row, col) }}</span>
                 </ng-container>
               </td>
               <td>
                 <div class="table-actions">
                   <p-button
+                    *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.edit'"
                     icon="pi pi-pencil"
                     [rounded]="true"
                     [text]="true"
@@ -179,6 +233,7 @@ interface ModuleConfig {
                     pTooltip="Редактировать"
                   />
                   <p-button
+                    *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.delete'"
                     icon="pi pi-trash"
                     [rounded]="true"
                     [text]="true"
@@ -201,6 +256,7 @@ interface ModuleConfig {
                   <i empty-icon class="pi pi-inbox"></i>
                   <div empty-actions>
                     <p-button
+                      *appHasPermission="(modulePermPrefix[activeKey()] || 'office.') + '.create'"
                       label="Добавить"
                       icon="pi pi-plus"
                       size="small"
@@ -351,6 +407,28 @@ export class ModulesPageComponent implements OnInit {
   readonly sortField = signal('createdAt');
   readonly sortOrder = signal<-1 | 1>(-1);
 
+  // Компании для фильтра / отображения в тендерах
+  readonly companies = signal<{ _id: string; name: string; shortName: string }[]>([]);
+  readonly companyOptions = computed(() =>
+    this.companies().map((c) => ({ label: c.shortName || c.name, value: c._id })),
+  );
+  readonly companyMap = computed(() => {
+    const map: Record<string, string> = {};
+    for (const c of this.companies()) map[c._id] = c.shortName || c.name;
+    return map;
+  });
+  readonly selectedCompanyFilter = signal<string>('');
+  readonly selectedStatusFilter = signal<string>('');
+
+  // Опции статусов для тендеров
+  readonly tenderStatusOptions = [
+    { label: 'Новый', value: 'new' },
+    { label: 'В работе', value: 'in_progress' },
+    { label: 'КП отправлено', value: 'kp_sent' },
+    { label: 'Выигран', value: 'won' },
+    { label: 'Проигран', value: 'lost' },
+  ];
+
   // Диалог
   dialogVisible = false;
   dialogTitle = '';
@@ -363,6 +441,40 @@ export class ModulesPageComponent implements OnInit {
 
   // ===== Определения модулей =====
   readonly modules: ModuleConfig[] = [
+    // ── Входящие запросы ──
+    {
+      key: 'tenders',
+      label: 'Запросы',
+      icon: 'pi pi-inbox',
+      basePath: '/directories/tenders',
+      idField: '_id',
+      columns: [
+        { field: 'number', header: 'Номер', type: 'text', width: '120px', readonly: true },
+        { field: 'date', header: 'Дата', type: 'date', width: '110px' },
+        { field: 'companyId', header: 'Компания', type: 'select', width: '150px' },
+        { field: 'subject', header: 'Тема', type: 'text' },
+        { field: 'productName', header: 'Товар', type: 'text', width: '160px' },
+        { field: 'quantity', header: 'Кол-во', type: 'number', width: '80px' },
+        { field: 'legalBasis', header: 'Прав. основа', type: 'text', width: '120px' },
+        { field: 'statusId', header: 'Статус', type: 'tag', width: '150px' },
+      ],
+    },
+    {
+      key: 'product-passports',
+      label: 'Паспорта',
+      icon: 'pi pi-id-card',
+      basePath: '/directories/product-passports',
+      idField: '_id',
+      columns: [
+        { field: 'passportNumber', header: '№ паспорта', type: 'number', width: '110px' },
+        { field: 'name', header: 'Наименование', type: 'text' },
+        { field: 'category', header: 'Категория', type: 'text', width: '150px' },
+        { field: 'date', header: 'Дата', type: 'date', width: '110px' },
+        { field: 'height', header: 'Высота', type: 'number', width: '80px' },
+        { field: 'weight', header: 'Вес (кг)', type: 'number', width: '90px' },
+        { field: 'installationSite', header: 'Объект', type: 'text' },
+      ],
+    },
     // ── CRM ──
     {
       key: 'quotations',
@@ -608,11 +720,40 @@ export class ModulesPageComponent implements OnInit {
     },
   ];
 
-  currentMod = () => this.modules.find((m) => m.key === this.activeKey()) ?? null;
+  currentMod = () => {
+    const mod = this.modules.find((m) => m.key === this.activeKey()) ?? null;
+    if (!mod) return null;
+    // Для тендеров подставляем динамические опции (компании)
+    if (mod.key === 'tenders') {
+      return {
+        ...mod,
+        columns: mod.columns.map((col) => {
+          if (col.field === 'companyId') {
+            return { ...col, options: this.companyOptions() };
+          }
+          if (col.field === 'statusId') {
+            return { ...col, options: this.tenderStatusOptions };
+          }
+          return col;
+        }),
+      };
+    }
+    return mod;
+  };
 
   // ===== TrackBy =====
   trackByField = (index: number, item: ColumnDef): string =>
     item.field || String(index);
+
+  private readonly auth = inject(AuthService);
+
+  /** Маппинг модуля → префикс разрешения (для шаблона) */
+  readonly modulePermPrefix = MODULE_PERM_PREFIX;
+
+  /** Видимые модули — только те, на чтение которых есть права */
+  readonly visibleModules = computed(() =>
+    this.modules.filter((m) => this.auth.hasPermission(`${MODULE_PERM_PREFIX[m.key] || 'office.'}.view`)),
+  );
 
   constructor() {
     this.searchSubject
@@ -637,6 +778,12 @@ export class ModulesPageComponent implements OnInit {
         search: this.searchQuery() || undefined,
         sort: this.sortField(),
         order: this.sortOrder() === 1 ? 'asc' : 'desc',
+        filters: this.activeKey() === 'tenders'
+          ? {
+              companyId: this.selectedCompanyFilter(),
+              statusId: this.selectedStatusFilter(),
+            }
+          : undefined,
       })
       .pipe(
         tap({
@@ -664,8 +811,13 @@ export class ModulesPageComponent implements OnInit {
     this.activeKey.set(key);
     this.page.set(1);
     this.searchQuery.set('');
+    this.selectedCompanyFilter.set('');
+    this.selectedStatusFilter.set('');
     this.sortField.set('createdAt');
     this.sortOrder.set(-1);
+    if (key === 'tenders') {
+      this.loadCompanies();
+    }
     this.loadData();
   }
 
@@ -830,6 +982,40 @@ export class ModulesPageComponent implements OnInit {
     this.isEditing = false;
   }
 
+  // ===== Загрузка компаний (для модуля тендеров) =====
+  private loadCompanies(): void {
+    this.crudApi
+      .list<{ _id: string; name: string; shortName: string }>('/directories/counterparties', {
+        all: true,
+        limit: 100,
+        filters: { roles: 'company' },
+      })
+      .subscribe({
+        next: (res) => this.companies.set(res.data || []),
+        error: () => this.companies.set([]),
+      });
+  }
+
+  // ===== Получить название компании по ID =====
+  getCompanyName(id: string): string {
+    return this.companyMap()[id] || id;
+  }
+
+  // ===== Получить отображаемое значение ячейки =====
+  getCellValue(row: Record<string, unknown>, col: ColumnDef): string {
+    const val = row[col.field];
+    if (col.field === 'companyId' && this.activeKey() === 'tenders') {
+      return this.getCompanyName(val as string) || String(val ?? '—');
+    }
+    return String(val ?? '—');
+  }
+
+  // ===== Изменение фильтра =====
+  onFilterChange(): void {
+    this.page.set(1);
+    this.loadData();
+  }
+
   // ===== Опции для булевых полей =====
   readonly booleanOptions = [
     { label: 'Да', value: true },
@@ -874,6 +1060,11 @@ export class ModulesPageComponent implements OnInit {
       torg12: 'info',
       ttn: 'warn',
       invoice: 'success',
+      // tender statuses
+      in_progress: 'warn',
+      kp_sent: 'info',
+      won: 'success',
+      lost: 'danger',
       // active/inactive
       Резерв: 'warn',
       'В работе': 'info',

@@ -26,6 +26,8 @@ import { ShipmentModel } from './modules/shipments/shipment.model';
 import { ShippingDocModel } from './modules/shipping-docs/shippingDoc.model';
 import { CounterModel } from './modules/counters/counter.model';
 import { InteractionModel } from './modules/interactions/interaction.model';
+import { TenderModel } from './modules/tenders/tender.model';
+import { ProductPassportModel } from './modules/product-passports/productPassport.model';
 
 async function seed(): Promise<void> {
   console.log('🌱 KPPDF 3.0 — Seed: наполнение БД тестовыми и часто используемыми данными\n');
@@ -98,35 +100,96 @@ async function seed(): Promise<void> {
     { name: 'ООО «СтройМаш»', shortName: 'СтройМаш', legalForm: 'ООО', roles: ['client', 'supplier'], inn: '7703456789', kpp: '770301001', phone: '+7 (495) 555-44-33', email: 'info@stroymash.ru', isActive: true },
     { name: 'ИП Петров В.К.', shortName: 'Петров', legalForm: 'ИП', roles: ['client'], inn: '770923456780', phone: '+7 (916) 777-88-99', email: 'petrov@yandex.ru', isActive: true },
     { name: 'ЗАО «НефтеМаш»', shortName: 'НефтеМаш', legalForm: 'АО', roles: ['client'], inn: '7707890123', phone: '+7 (495) 222-33-44', email: 'info@neftemash.ru', isActive: true },
-    // Наша компания
+    // Наши компании (юрлица, от лица которых работаем)
     { name: 'ООО «КППДФ»', shortName: 'КППДФ', legalForm: 'ООО', roles: ['company'], inn: '7704567890', kpp: '770401001', ogrn: '1027700132196', phone: '+7 (495) 333-22-11', email: 'info@kppdf.ru', isActive: true, bankName: 'Сбербанк', bik: '044525225', checkingAccount: '40702810123450000001', correspondentAccount: '30101810400000000225' },
+    { name: 'ООО «СпортИН-ЮГ»', shortName: 'СпортИН-ЮГ', legalForm: 'ООО', roles: ['company'], inn: '7705567891', kpp: '770501001', phone: '+7 (861) 123-45-67', email: 'sportin-yug@mail.ru', isActive: true },
+    { name: 'ООО «СпортСтройЮГ»', shortName: 'СпортСтройЮГ', legalForm: 'ООО', roles: ['company'], inn: '7706567892', kpp: '770601001', phone: '+7 (861) 234-56-78', email: 'sportstroy_yug@mail.ru', isActive: true },
+    { name: 'ООО «Приват-деал»', shortName: 'Приват-деал', legalForm: 'ООО', roles: ['company'], inn: '7707567893', kpp: '770701001', phone: '+7 (495) 345-67-89', email: 'info-privatdeal@mail.ru', isActive: true },
   ]);
   console.log(`  ✅ Контрагенты (часто используемые): ${counterparties.length}`);
 
   // ================================================================
-  // 4. РОЛИ
+  // 4. РОЛИ (RBAC — полная матрица permissions)
   // ================================================================
   await RoleModel.deleteMany({});
   const roles = await RoleModel.insertMany([
-    { name: 'admin', label: 'Администратор', description: 'Полный доступ ко всем функциям', permissions: ['*'], isSystem: true, sortOrder: 1 },
-    { name: 'manager', label: 'Менеджер', description: 'Управление заказами, КП, справочниками', permissions: ['product.*', 'counterparty.*', 'order.*', 'quotation.*'], isSystem: true, sortOrder: 2 },
-    { name: 'viewer', label: 'Наблюдатель', description: 'Только просмотр, без редактирования', permissions: ['*.view'], isSystem: true, sortOrder: 3 },
-    { name: 'engineer', label: 'Инженер', description: 'Работа с чертежами, BOM, техпроцессами', permissions: ['product.view', 'product.edit', 'bom.*', 'techprocess.*'], isSystem: false, sortOrder: 4 },
-    { name: 'storekeeper', label: 'Кладовщик', description: 'Управление складом и движениями', permissions: ['warehouse.*', 'stock.*'], isSystem: false, sortOrder: 5 },
+    { name: 'admin', label: 'Администратор', description: 'Полный доступ ко всем функциям системы', permissions: ['*'], isSystem: true, sortOrder: 1 },
+    { name: 'director', label: 'Директор', description: 'Просмотр всего + утверждение ключевых решений', permissions: [
+        '*.view',
+        'office.quotations.approve',
+        'office.orders.approve',
+        'warehouse.purchaseRequests.approve',
+        'warehouse.purchaseOrders.approve',
+      ], isSystem: true, sortOrder: 2 },
+    { name: 'manager', label: 'Менеджер', description: 'Управление тендерами, КП, заказами, контрагентами', permissions: [
+        'office.*',
+      ], isSystem: true, sortOrder: 3 },
+    { name: 'accountant', label: 'Бухгалтер', description: 'Калькуляции, фактические затраты, отгрузочные документы', permissions: [
+        'accounting.*',
+        'office.orders.view',
+        'office.counterparties.view',
+      ], isSystem: true, sortOrder: 4 },
+    { name: 'engineer', label: 'Инженер-конструктор', description: 'BOM, техпроцессы, паспорта изделий', permissions: [
+        'production.*',
+        'office.interactions.view',
+        'office.interactions.create',
+      ], isSystem: false, sortOrder: 5 },
+    { name: 'foreman', label: 'Мастер цеха', description: 'Производственные наряды, операции, создание паспортов', permissions: [
+        'production.operations.view',
+        'production.workOrders.create',
+        'production.workOrders.edit',
+        'production.workOrderOperations.create',
+        'production.workOrderOperations.edit',
+        'production.productPassports.create',
+        'production.boms.view',
+        'production.techProcesses.view',
+        'production.workOrders.view',
+        'production.workOrderOperations.view',
+        'production.productPassports.view',
+        'office.interactions.view',
+        'office.interactions.create',
+        'warehouse.products.view',
+      ], isSystem: false, sortOrder: 6 },
+    { name: 'storekeeper', label: 'Зав. складом', description: 'Склад, движения, закупки, отгрузки', permissions: [
+        'warehouse.warehouses.*',
+        'warehouse.stockMovements.*',
+        'warehouse.reservations.*',
+        'warehouse.purchaseRequests.*',
+        'warehouse.purchaseRequests.approve',
+        'warehouse.purchaseOrders.view',
+        'warehouse.shipments.*',
+        'warehouse.products.view',
+        'office.counterparties.view',
+        'office.orders.view',
+      ], isSystem: false, sortOrder: 7 },
+    { name: 'purchaser', label: 'Снабженец', description: 'Заявки на закуп, заказы поставщикам', permissions: [
+        'warehouse.purchaseRequests.*',
+        'warehouse.purchaseOrders.*',
+        'warehouse.warehouses.view',
+        'warehouse.products.view',
+        'office.counterparties.view',
+      ], isSystem: false, sortOrder: 8 },
+    { name: 'viewer', label: 'Наблюдатель', description: 'Только просмотр (кроме администрирования)', permissions: [
+        '*.view',
+      ], isSystem: true, sortOrder: 9 },
   ]);
   console.log(`  ✅ Роли: ${roles.length}`);
 
   // ================================================================
-  // 5. ПОЛЬЗОВАТЕЛИ
+  // 5. ПОЛЬЗОВАТЕЛИ (тестовые — по одному на каждую роль)
   // ================================================================
   await UserModel.deleteMany({});
   // Plain-text пароли — pre('save') хук сам захеширует их bcrypt
   const userData = [
     { username: 'admin', email: 'admin@kppdf.ru', displayName: 'Главный администратор', passwordHash: 'admin123', role: 'admin', isActive: true },
+    { username: 'director', email: 'director@kppdf.ru', displayName: 'Соколов Дмитрий', passwordHash: 'director123', role: 'director', isActive: true },
     { username: 'manager', email: 'manager@kppdf.ru', displayName: 'Петров Иван', passwordHash: 'manager123', role: 'manager', isActive: true },
-    { username: 'viewer', email: 'viewer@kppdf.ru', displayName: 'Сидоров Николай', passwordHash: 'viewer123', role: 'viewer', isActive: true },
+    { username: 'accountant', email: 'accountant@kppdf.ru', displayName: 'Смирнова Елена', passwordHash: 'accountant123', role: 'accountant', isActive: true },
     { username: 'engineer', email: 'engineer@kppdf.ru', displayName: 'Кузнецов Андрей', passwordHash: 'engineer123', role: 'engineer', isActive: true },
-    { username: 'storekeeper', email: 'store@kppdf.ru', displayName: 'Склад Иванов', passwordHash: 'storekeeper123', role: 'storekeeper', isActive: true },
+    { username: 'foreman', email: 'foreman@kppdf.ru', displayName: 'Михайлов Сергей', passwordHash: 'foreman123', role: 'foreman', isActive: true },
+    { username: 'storekeeper', email: 'store@kppdf.ru', displayName: 'Иванов Александр', passwordHash: 'storekeeper123', role: 'storekeeper', isActive: true },
+    { username: 'purchaser', email: 'purchaser@kppdf.ru', displayName: 'Козлова Ольга', passwordHash: 'purchaser123', role: 'purchaser', isActive: true },
+    { username: 'viewer', email: 'viewer@kppdf.ru', displayName: 'Сидоров Николай', passwordHash: 'viewer123', role: 'viewer', isActive: true },
   ];
   const users = await Promise.all(userData.map((u) => UserModel.create(u)));
   console.log(`  ✅ Пользователи: ${users.length}`);
@@ -241,6 +304,7 @@ async function seed(): Promise<void> {
     { entity: 'work_order', prefix: 'Н-', year: 2026, seq: 0 },
     { entity: 'shipment', prefix: 'ОТ-', year: 2026, seq: 0 },
     { entity: 'shipping_doc', prefix: 'ДО-', year: 2026, seq: 0 },
+    { entity: 'tender', prefix: 'Т-', year: 2026, seq: 27 },
   ]);
   console.log(`  ✅ Счётчики: ${counters.length}`);
 
@@ -458,6 +522,86 @@ async function seed(): Promise<void> {
   console.log(`  ✅ Взаимодействия: ${interactions.length}`);
 
   // ================================================================
+  // 27. ТЕНДЕРЫ (входящие запросы) — из mail_data.html
+  // ================================================================
+  await TenderModel.deleteMany({});
+  let tendersCount = 0;
+  const companyIds = [
+    counterparties.find(c => c.name.includes('СпортИН'))?._id.toString() || '',
+    counterparties.find(c => c.name.includes('СпортСтрой'))?._id.toString() || '',
+    counterparties.find(c => c.name.includes('Приват'))?._id.toString() || '',
+  ];
+  if (companyIds.filter(Boolean).length === 3) {
+    const tenderProducts = ['Велопарковка', 'Скамья парковая', 'Урна', 'Стойка баскетбольная', 'Тренажёр уличный', 'Турник', 'Ограждение', 'Информационный стенд', 'Флагшток'];
+    const tenders = [];
+    for (let i = 0; i < 9; i++) {
+      for (let j = 0; j < 3; j++) {
+        const num = 94 + i + j * 9;
+        tenders.push({
+          number: `Т-2026-${String(tenders.length + 1).padStart(3, '0')}`,
+          tenderId: `5202_${num}`,
+          date: new Date('2026-05-22'),
+          companyId: companyIds[j],
+          email: ['sportin-yug@mail.ru', 'sportstroy_yug@mail.ru', 'info-privatdeal@mail.ru'][j],
+          subject: `Поставка ${tenderProducts[i].toLowerCase()} для нужд МО «Город Майкоп»`,
+          productName: tenderProducts[i],
+          quantity: Math.floor(Math.random() * 5) + 1,
+          unit: 'шт',
+          attachments: 'Таблица 1',
+          deliveryTerms: 'Стоимость включает изготовление, упаковку, доставку, установку',
+          responseRequirements: 'КП с указанием НМЦК, спецификация, сертификаты',
+          legalBasis: 'Федеральный закон № 44-ФЗ «О контрактной системе»',
+          statusId: ['new', 'in_progress', 'kp_sent', 'won', 'lost'][(i + j) % 5],
+          isActive: true,
+        });
+      }
+    }
+    // Сортируем в порядке возрастания номера
+    tenders.sort((a, b) => a.number.localeCompare(b.number));
+    await TenderModel.insertMany(tenders);
+    tendersCount = tenders.length;
+    console.log(`  ✅ Тендеры (входящие запросы): ${tenders.length}`);
+  } else {
+    console.log(`  ⚠️ Тендеры: пропущены (нужны компании с role='company')`);
+  }
+
+  // ================================================================
+  // 28. ПАСПОРТА ИЗДЕЛИЙ — из pasports.html
+  // ================================================================
+  await ProductPassportModel.deleteMany({});
+  const passportProducts = [
+    { name: 'Стойка баскетбольная', category: 'Спортивное оборудование', height: 3050, length: 1200, width: 800, weight: 95 },
+    { name: 'Тренажёр «Жим от груди»', category: 'Уличный тренажёр', height: 1800, length: 1200, width: 900, weight: 65 },
+    { name: 'Турник-брусья', category: 'Воркаут', height: 2400, length: 1500, width: 200, weight: 45 },
+    { name: 'Скамья парковая', category: 'Благоустройство', height: 800, length: 1800, width: 500, weight: 35 },
+    { name: 'Велопарковка', category: 'Благоустройство', height: 900, length: 800, width: 400, weight: 25 },
+    { name: 'Урна', category: 'Благоустройство', height: 600, length: 400, width: 400, weight: 12 },
+    { name: 'Информационный стенд', category: 'Стенд', height: 2000, length: 1200, width: 100, weight: 30 },
+    { name: 'Флагшток', category: 'Стела', height: 8000, length: 0, width: 0, weight: 55 },
+  ];
+  const passports = await ProductPassportModel.insertMany(
+    passportProducts.map((p, i) => ({
+      productId: products[i]?._id?.toString() || '',
+      passportNumber: 224 + i,
+      date: new Date(2025, 7 + Math.floor(i / 10), 15 + (i % 15)),
+      warrantyCode: `2025${8 + Math.floor(i / 10)}-${224 + i}`,
+      productCode: 2254 + i,
+      photo: '',
+      category: p.category,
+      name: p.name,
+      height: p.height,
+      length: p.length,
+      width: p.width,
+      weight: p.weight,
+      description: `${p.name} изготовлена из стали с порошковым покрытием. Устанавливается в местах общественного пользования.`,
+      installationSite: i % 2 === 0 ? 'Ейское, п. Ближнеейск, ул. Садовая, 21' : '',
+      supplier: i === 0 ? 'ИП Желонкин' : undefined,
+      isActive: true,
+    }))
+  );
+  console.log(`  ✅ Паспорта изделий: ${passports.length}`);
+
+  // ================================================================
   // ИТОГО
   // ================================================================
   console.log('\n' + '='.repeat(50));
@@ -490,6 +634,8 @@ async function seed(): Promise<void> {
   console.log('Отгрузки            :', shipments.length);
   console.log('Отгруз. документы   :', shippingDocs.length);
   console.log('Взаимодействия      :', interactions.length);
+  console.log('Тендеры             :', tendersCount);
+  console.log('Паспорта изделий    :', passports.length);
   console.log('');
   console.log('📌 Все данные можно редактировать через интерфейс справочников.');
 

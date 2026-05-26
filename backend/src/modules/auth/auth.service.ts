@@ -1,6 +1,7 @@
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import { config } from '../../config';
 import { UserModel } from '../users/user.model';
+import { RoleModel } from '../roles/role.model';
 import type { JwtPayload, TokensPair } from '../../types/auth';
 
 export class AuthService {
@@ -14,6 +15,10 @@ export class AuthService {
     const valid = await user.comparePassword(password);
     if (!valid) return null;
 
+    // Загружаем permissions из Role
+    const role = await RoleModel.findOne({ name: user.role });
+    const permissions = role?.permissions || [];
+
     // Update lastLogin
     user.lastLoginAt = new Date().toISOString();
     await user.save();
@@ -22,6 +27,7 @@ export class AuthService {
       userId: user._id.toString(),
       username: user.username,
       role: user.role,
+      permissions,
     });
   }
 
@@ -34,10 +40,15 @@ export class AuthService {
       const user = await UserModel.findById(decoded.userId);
       if (!user || !user.isActive) return null;
 
+      // Загружаем permissions из Role
+      const role = await RoleModel.findOne({ name: user.role });
+      const permissions = role?.permissions || [];
+
       return this.generateTokens({
         userId: user._id.toString(),
         username: user.username,
         role: user.role,
+        permissions,
       });
     } catch {
       return null;
@@ -50,7 +61,12 @@ export class AuthService {
   private generateTokens(payload: JwtPayload): TokensPair {
     // Передаём как plain object literal (а не реэкспорт payload),
     // чтобы TS однозначно выбрал object-overload, а не string-overload
-    const data = { userId: payload.userId, username: payload.username, role: payload.role };
+    const data = {
+      userId: payload.userId,
+      username: payload.username,
+      role: payload.role,
+      permissions: payload.permissions || [],
+    };
 
     // jsonwebtoken@9: SignOptions['expiresIn'] = number | StringValue (branded literal).
     // Значение из process.env — широкий string, требуется явный каст.

@@ -31,6 +31,9 @@ import { actualCostRouter } from './modules/actual-costs/actualCost.router';
 import { shipmentRouter } from './modules/shipments/shipment.router';
 import { shippingDocRouter } from './modules/shipping-docs/shippingDoc.router';
 import { interactionRouter } from './modules/interactions/interaction.router';
+import { documentTemplateRouter } from './modules/document-templates/documentTemplate.router';
+import { tenderRouter } from './modules/tenders/tender.router';
+import { productPassportRouter } from './modules/product-passports/productPassport.router';
 
 const app = express();
 
@@ -93,6 +96,15 @@ app.use('/api/v1/directories/actual-costs', actualCostRouter);
 app.use('/api/v1/directories/shipments', shipmentRouter);
 app.use('/api/v1/directories/shipping-docs', shippingDocRouter);
 app.use('/api/v1/directories/interactions', interactionRouter);
+
+// Tenders (входящие запросы)
+app.use('/api/v1/directories/tenders', tenderRouter);
+
+// Product Passports (паспорта изделий)
+app.use('/api/v1/directories/product-passports', productPassportRouter);
+
+// Document Templates
+app.use('/api/v1/document-templates', documentTemplateRouter);
 
 // In production, serve the Angular frontend (before notFound!)
 if (process.env.NODE_ENV === 'production') {

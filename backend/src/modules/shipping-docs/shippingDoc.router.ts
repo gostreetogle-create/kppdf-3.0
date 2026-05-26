@@ -8,4 +8,4 @@ export const shippingDocRouter = createCrudRouter(ShippingDocModel, undefined, {
       body.number = await getNextNumber('shipping_doc');
     }
   },
-});
+}, 'accounting.shippingDocs');

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { NgFor, NgIf } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
@@ -9,6 +9,8 @@ interface MenuItem {
   label: string;
   icon: string;
   route: string;
+  /** Проверка — показывать пункт, только если есть хотя бы одно из этих разрешений */
+  requiresAny?: string[];
 }
 
 @Component({
@@ -26,7 +28,7 @@ interface MenuItem {
 
         <nav class="layout__nav">
           <a
-            *ngFor="let item of menuItems"
+            *ngFor="let item of visibleMenuItems()"
             class="layout__nav-item"
             [routerLink]="item.route"
             routerLinkActive="layout__nav-item--active"
@@ -42,7 +44,7 @@ interface MenuItem {
             <i class="pi pi-user"></i>
             <div class="layout__user-info">
               <span class="layout__user-name">{{ user()?.username }}</span>
-              <span class="layout__user-role">{{ user()?.role }}</span>
+              <span class="layout__user-role">{{ getRoleLabel(user()?.role || '') }}</span>
             </div>
             <p-button
               icon="pi pi-sign-out"
@@ -64,13 +66,41 @@ interface MenuItem {
 export class AdminLayoutComponent {
   private readonly auth = inject(AuthService);
 
-  readonly menuItems: MenuItem[] = [
-    { label: 'Дашборд', icon: 'pi pi-home', route: '/dashboard' },
-    { label: 'Бизнес-процессы', icon: 'pi pi-cubes', route: '/modules' },
-    { label: 'Справочники', icon: 'pi pi-book', route: '/directories' },
+  readonly menuItems: (MenuItem & { alwaysShow?: boolean })[] = [
+    { label: 'Дашборд', icon: 'pi pi-home', route: '/dashboard', alwaysShow: true },
+    { label: 'Документы', icon: 'pi pi-file-edit', route: '/documents', alwaysShow: true },
+    { label: 'Бизнес-процессы', icon: 'pi pi-cubes', route: '/modules', alwaysShow: true },
+    { label: 'Справочники', icon: 'pi pi-book', route: '/directories', requiresAny: ['admin.*'] },
   ];
 
+  readonly visibleMenuItems = computed(() =>
+    this.menuItems.filter((item) => {
+      if (item.alwaysShow) return true;
+      if (item.requiresAny) {
+        return item.requiresAny.some((p) => this.auth.hasPermission(p));
+      }
+      return true;
+    }),
+  );
+
   readonly user = this.auth.getUser.bind(this.auth);
+
+  /** Читаемые названия ролей */
+  private readonly roleLabels: Record<string, string> = {
+    admin: 'Администратор',
+    director: 'Директор',
+    manager: 'Менеджер',
+    accountant: 'Бухгалтер',
+    engineer: 'Инженер',
+    foreman: 'Мастер цеха',
+    storekeeper: 'Зав. складом',
+    purchaser: 'Снабженец',
+    viewer: 'Наблюдатель',
+  };
+
+  getRoleLabel(role: string): string {
+    return this.roleLabels[role] || role;
+  }
 
   logout(): void {
     this.auth.logout();

@@ -1,7 +1,9 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, of, tap, catchError } from 'rxjs';
+import { AuthService } from '../../core/auth.service';
+import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 
 // PrimeNG
 import { TableModule } from 'primeng/table';
@@ -24,6 +26,18 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.com
 // Services
 import { DirectoryService } from '../../core/directory.service';
 import { NotificationService } from '../../core/notification.service';
+
+// ===== Маппинг справочник → префикс разрешения =====
+const DIR_PERM_PREFIX: Record<string, string> = {
+  products: 'office.products',
+  categories: 'admin.categories',
+  counterparties: 'office.counterparties',
+  users: 'admin.users',
+  roles: 'admin.roles',
+  statuses: 'admin.statuses',
+  'work-types': 'admin.workTypes',
+  settings: 'admin.settings',
+};
 
 // ===== Column definition =====
 interface ColumnDef {
@@ -55,7 +69,7 @@ interface DirectoryConfig {
     InputTextModule, InputNumberModule, SelectModule,
     TagModule, CardModule, ToastModule, ConfirmDialogModule,
     TooltipModule,
-    PageLayoutComponent, EmptyStateComponent,
+    PageLayoutComponent, EmptyStateComponent, HasPermissionDirective,
   ],
   template: `
     <app-page-layout>
@@ -64,10 +78,10 @@ interface DirectoryConfig {
         <p class="page__subtitle">Часто используемые данные — редактируйте, добавляйте, управляйте</p>
       </div>
 
-      <!-- Навигация по справочникам -->
+      <!-- Навигация по справочникам (только с правом просмотра) -->
       <div class="dir-tabs">
         <p-button
-          *ngFor="let dir of directories"
+          *ngFor="let dir of visibleDirs()"
           [label]="dir.label"
           [icon]="dir.icon"
           [severity]="activeKey() === dir.key ? 'primary' : 'secondary'"
@@ -100,6 +114,7 @@ interface DirectoryConfig {
             />
           </span>
           <p-button
+            *appHasPermission="(dirPermPrefix[activeKey()] || 'admin.') + '.create'"
             label="Добавить"
             icon="pi pi-plus"
             size="small"
@@ -176,6 +191,7 @@ interface DirectoryConfig {
             <td>
               <div class="table-actions">
                 <p-button
+                  *appHasPermission="(dirPermPrefix[activeKey()] || 'admin.') + '.edit'"
                   icon="pi pi-pencil"
                   [rounded]="true"
                   [text]="true"
@@ -185,6 +201,7 @@ interface DirectoryConfig {
                   pTooltip="Редактировать"
                 />
                 <p-button
+                  *appHasPermission="(dirPermPrefix[activeKey()] || 'admin.') + '.delete'"
                   icon="pi pi-trash"
                   [rounded]="true"
                   [text]="true"
@@ -207,6 +224,7 @@ interface DirectoryConfig {
                 <i empty-icon class="pi pi-inbox"></i>
                 <div empty-actions>
                   <p-button
+                    *appHasPermission="(dirPermPrefix[activeKey()] || 'admin.') + '.create'"
                     label="Создать"
                     icon="pi pi-plus"
                     size="small"
@@ -331,6 +349,16 @@ export class DirectoriesPageComponent implements OnInit {
   private readonly directoryService = inject(DirectoryService);
   private readonly notification = inject(NotificationService);
   private readonly confirmationService = inject(ConfirmationService);
+
+  private readonly auth = inject(AuthService);
+
+  /** Маппинг справочника → префикс разрешения (для шаблона) */
+  readonly dirPermPrefix = DIR_PERM_PREFIX;
+
+  /** Видимые справочники — только с правом просмотра */
+  readonly visibleDirs = computed(() =>
+    this.directories.filter((d) => this.auth.hasPermission(`${DIR_PERM_PREFIX[d.key] || 'admin.'}.view`)),
+  );
 
   // Состояние
   readonly activeKey = signal<string>('products');

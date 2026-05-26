@@ -24,6 +24,14 @@ export const routes: Routes = [
         path: 'modules',
         loadComponent: () => import('./pages/modules/modules-page.component').then(c => c.ModulesPageComponent),
       },
+      {
+        path: 'documents',
+        loadComponent: () => import('./pages/documents/documents-page.component').then(c => c.DocumentsPageComponent),
+      },
+      {
+        path: 'documents/:id',
+        loadComponent: () => import('./pages/documents/document-editor.component').then(c => c.DocumentEditorComponent),
+      },
     ],
   },
   {

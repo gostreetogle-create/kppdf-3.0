@@ -14,7 +14,7 @@ const userSchema = new Schema<IUserDocument>(
     email: { type: String, unique: true, sparse: true, lowercase: true },
     displayName: { type: String, required: true },
     passwordHash: { type: String, required: true },
-    role: { type: String, enum: ['admin', 'manager', 'viewer', 'engineer', 'storekeeper'], default: 'viewer' },
+    role: { type: String, required: true, default: 'viewer' },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: String },
   },

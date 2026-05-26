@@ -8,4 +8,4 @@ export const shipmentRouter = createCrudRouter(ShipmentModel, undefined, {
       body.number = await getNextNumber('shipment');
     }
   },
-});
+}, 'warehouse.shipments');

@@ -8,4 +8,4 @@ export const workOrderRouter = createCrudRouter(WorkOrderModel, undefined, {
       body.number = await getNextNumber('work_order');
     }
   },
-});
+}, 'production.workOrders');

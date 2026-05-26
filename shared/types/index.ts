@@ -24,4 +24,7 @@ export type { IShipment } from './shipment.interface';
 export type { IShippingDoc } from './shippingDoc.interface';
 export type { IInteraction } from './interaction.interface';
 export type { ICounter } from './counter.interface';
-
+export type { IQuotationItem } from './quotationItem.interface';
+export type { IDocumentTemplate, IDocumentBlock, DocumentBlockType, DocType } from './documentTemplate.interface';
+export type { ITender } from './tender.interface';
+export type { IProductPassport } from './productPassport.interface';

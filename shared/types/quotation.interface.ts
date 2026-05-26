@@ -1,3 +1,5 @@
+import type { IQuotationItem } from './quotationItem.interface';
+
 export interface IQuotation {
   _id?: string;
   number: string;
@@ -8,7 +10,8 @@ export interface IQuotation {
   total?: number;
   notes?: string;
   isActive?: boolean;
-  // items: [{ productId: string, qty: Number, price: Number, dis...
+  templateId?: string;
+  items: IQuotationItem[];
   createdAt?: string;
   updatedAt?: string;
 }

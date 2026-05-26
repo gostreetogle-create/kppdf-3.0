@@ -8,4 +8,4 @@ export const orderRouter = createCrudRouter(OrderModel, undefined, {
       body.number = await getNextNumber('order');
     }
   },
-});
+}, 'office.orders');

@@ -9,5 +9,5 @@ module.exports = {
     '^.+\\.ts$': 'ts-jest',
   },
   // Silence console.log during tests
-  setupFilesAfterSetup: [],
+  setupFiles: [],
 };

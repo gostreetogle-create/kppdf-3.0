@@ -8,4 +8,4 @@ export const purchaseOrderRouter = createCrudRouter(PurchaseOrderModel, undefine
       body.number = await getNextNumber('purchase_order');
     }
   },
-});
+}, 'warehouse.purchaseOrders');
