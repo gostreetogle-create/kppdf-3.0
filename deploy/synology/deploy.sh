@@ -74,7 +74,7 @@ done"
 
 echo ""
 echo "🌱 7. Seed данных (если нужно)..."
-ssh "$USER@$HOST" "docker exec kppdf-backend node dist/seed.js 2>/dev/null && echo '   ✅ Seed complete' || echo '   ⚠️  Seed skipped (already seeded or no seed.ts)'"
+ssh "$USER@$HOST" "docker exec kppdf-backend node dist/backend/src/seed.js 2>/dev/null && echo '   ✅ Seed complete' || echo '   ⚠️  Seed skipped (already seeded or no seed.ts)'"
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"

@@ -1,27 +1,28 @@
 """
-KPPDF 3.0 - Deploy to Synology NAS
+KPPDF 3.0 - Deploy to Synology NAS / Ubuntu server
 
 Usage:
-    python deploy/synology/deploy.py [--password PASSWORD] [--seed]
-
-Examples:
-    python deploy/synology/deploy.py --seed
+    python deploy/synology/deploy.py [--seed]
     python deploy/synology/deploy.py --password YOUR_PASSWORD --seed
-    python deploy/synology/deploy.py --skip-build --seed
+    python deploy/synology/deploy.py --platform ubuntu --seed
+
+Config: deploy/synology/config.env (copy from config.env.example)
 
 Steps:
-    1. Build Angular frontend (npm run build)
-    2. Create archive (backend/ + shared/ + frontend/ + docker-compose.prod.yml)
-    3. Connect to Synology via paramiko
-    4. Upload & extract archive
-    5. Docker build + up
-    6. Health check + seed (optional)
-    7. Verify API + frontend
+    1. Load config.env
+    2. Build Angular frontend (npm run build)
+    3. Create archive (backend/ + shared/ + frontend/ + docker-compose.prod.yml)
+    4. Connect via paramiko
+    5. Upload & extract + .env (JWT secrets)
+    6. Docker build + up
+    7. Health check + seed (optional)
+    8. Verify API + frontend
 """
 
 import argparse
 import base64
 import os
+import secrets
 import shutil
 import subprocess
 import sys
@@ -31,13 +32,82 @@ import time
 from pathlib import Path
 
 
-# -- Config -------------------------------------------------------------
+# -- Platform defaults --------------------------------------------------
 
-HOST = "192.168.1.134"
-USER = "nastiit"
-REMOTE_DIR = "/volume1/docker/kppdf-3.0"
-DOCKER = "/usr/local/bin/docker"
+PLATFORMS = {
+    "ubuntu": {
+        "remote_dir": "/opt/kppdf-3.0",
+        "data_dir": "/var/lib/kppdf",
+        "docker": "docker",
+    },
+    "synology": {
+        "remote_dir": "/volume1/docker/kppdf-3.0",
+        "data_dir": "/volume1/docker/kppdf-data",
+        "docker": "/usr/local/bin/docker",
+    },
+}
+
 ARCHIVE_NAME = "kppdf-deploy.tar.gz"
+CONFIG_FILE = "config.env"
+
+
+# -- Config loader ------------------------------------------------------
+
+def load_config(project_root):
+    """Load deploy/synology/config.env (KEY=VALUE, # comments)."""
+    cfg = {}
+    cfg_path = project_root / "deploy" / "synology" / CONFIG_FILE
+    if not cfg_path.exists():
+        return cfg
+    for line in cfg_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        cfg[key.strip()] = val.strip()
+    return cfg
+
+
+def resolve_settings(args, cfg):
+    """Merge CLI args, config.env, platform defaults."""
+    platform = (args.platform or cfg.get("PLATFORM") or "ubuntu").lower()
+    if platform not in PLATFORMS:
+        fail("Unknown platform: " + platform + ". Use ubuntu or synology.")
+
+    defaults = PLATFORMS[platform]
+    host = args.host or cfg.get("DEPLOY_HOST") or "192.168.1.134"
+    user = args.user or cfg.get("DEPLOY_USER") or "ubuntu"
+    password = args.password or cfg.get("DEPLOY_PASSWORD") or None
+    remote_dir = cfg.get("REMOTE_DIR") or defaults["remote_dir"]
+    data_dir = cfg.get("KPPDF_DATA_DIR") or defaults["data_dir"]
+    docker = cfg.get("DOCKER_CMD") or defaults["docker"]
+    seed = args.seed or cfg.get("SEED", "").lower() in ("true", "1", "yes")
+    cors = cfg.get("CORS_ORIGIN") or "https://sport-set.ru"
+
+    jwt_secret = cfg.get("JWT_SECRET", "")
+    jwt_refresh = cfg.get("JWT_REFRESH_SECRET", "")
+    if not jwt_secret or "CHANGE_ME" in jwt_secret:
+        jwt_secret = secrets.token_hex(32)
+        warn("JWT_SECRET auto-generated — save it in config.env!")
+    if not jwt_refresh or "CHANGE_ME" in jwt_refresh:
+        jwt_refresh = secrets.token_hex(32)
+        warn("JWT_REFRESH_SECRET auto-generated — save it in config.env!")
+
+    return {
+        "platform": platform,
+        "host": host,
+        "user": user,
+        "password": password,
+        "remote_dir": remote_dir,
+        "data_dir": data_dir,
+        "docker": docker,
+        "seed": seed,
+        "cors": cors,
+        "jwt_secret": jwt_secret,
+        "jwt_refresh": jwt_refresh,
+    }
 
 
 # -- Helpers ------------------------------------------------------------
@@ -62,10 +132,11 @@ def fail(msg):
 class RemoteHost:
     """SSH connection via paramiko (supports password & key auth)."""
 
-    def __init__(self, host, user, password=None):
+    def __init__(self, host, user, password=None, docker="docker"):
         self.host = host
         self.user = user
         self.password = password
+        self.docker = docker
         self._ssh = None
 
     def connect(self):
@@ -93,12 +164,11 @@ class RemoteHost:
             self._ssh.close()
 
     def exec(self, command, timeout=30):
-        """Run a shell command and return stdout."""
         try:
             stdin, stdout, stderr = self._ssh.exec_command(
                 command, timeout=timeout)
-            out = stdout.read().decode('utf-8', errors='replace').strip()
-            err = stderr.read().decode('utf-8', errors='replace').strip()
+            out = stdout.read().decode("utf-8", errors="replace").strip()
+            err = stderr.read().decode("utf-8", errors="replace").strip()
             if err and "password" not in err.lower() and "Warning" not in err:
                 return out + "\nERR: " + err
             return out
@@ -106,17 +176,14 @@ class RemoteHost:
             return "ERROR: " + str(e)
 
     def exec_sudo(self, command, timeout=30):
-        """Run a command with sudo (password via stdin)."""
         pwd = self.password or ""
         full = "echo '" + pwd + "' | sudo -S bash -c '" + command.replace("'", "'\\''") + "'"
         return self.exec(full, timeout=timeout)
 
     def upload_file(self, local_path, remote_dir):
-        """Upload a file. Tries SCP, then SFTP, then base64 pipe."""
         filename = os.path.basename(local_path)
         remote_path = remote_dir + "/" + filename
 
-        # Try SCP (fastest)
         try:
             result = subprocess.run(
                 ["scp", "-o", "ConnectTimeout=10", "-o", "StrictHostKeyChecking=no",
@@ -128,7 +195,6 @@ class RemoteHost:
         except Exception as e:
             warn("SCP: " + str(e))
 
-        # Try SFTP
         try:
             sftp = self._ssh.open_sftp()
             sftp.put(local_path, remote_path)
@@ -138,7 +204,6 @@ class RemoteHost:
         except Exception as e:
             warn("SFTP: " + str(e))
 
-        # Base64 pipe (last resort)
         with open(local_path, "rb") as f:
             b64 = base64.b64encode(f.read()).decode()
         chunk_size = 8000
@@ -151,17 +216,36 @@ class RemoteHost:
                   "mv " + remote_path + ".tmp " + remote_path)
         ok("Uploaded via pipe")
 
+    def upload_text(self, content, remote_path):
+        """Upload small text file via SFTP or echo."""
+        try:
+            sftp = self._ssh.open_sftp()
+            with sftp.file(remote_path, "w") as f:
+                f.write(content)
+            sftp.close()
+            ok("Uploaded " + os.path.basename(remote_path))
+            return
+        except Exception as e:
+            warn("SFTP text: " + str(e))
+
+        b64 = base64.b64encode(content.encode()).decode()
+        self.exec("rm -f " + remote_path)
+        chunk_size = 8000
+        for i in range(0, len(b64), chunk_size):
+            chunk = b64[i:i + chunk_size]
+            self._ssh.exec_command("echo -n '" + chunk + "' >> " + remote_path + ".b64", timeout=30)
+        self.exec("base64 -d " + remote_path + ".b64 > " + remote_path + " && rm -f " + remote_path + ".b64")
+        ok("Uploaded " + os.path.basename(remote_path) + " via pipe")
+
     def docker_exec(self, container, cmd, timeout=30):
-        """Run a command inside a Docker container."""
-        full = DOCKER + " exec " + container + " " + cmd
+        full = self.docker + " exec " + container + " " + cmd
         return self.exec(full, timeout=timeout)
 
     def docker_compose(self, remote_dir, action, timeout=300):
-        """Run docker-compose action."""
         docker_cmd = (
-            "export PATH=/usr/local/bin:/sbin:$PATH && "
+            "export PATH=/usr/local/bin:/usr/bin:/sbin:$PATH && "
             "cd " + remote_dir + " && "
-            + DOCKER + " compose -f docker-compose.prod.yml " + action
+            + self.docker + " compose -f docker-compose.prod.yml " + action
         )
         return self.exec_sudo(docker_cmd, timeout=timeout)
 
@@ -169,24 +253,23 @@ class RemoteHost:
 # -- Frontend build -----------------------------------------------------
 
 def build_frontend(project_root):
-    """Build Angular frontend (npm run build)."""
     log("Building Angular frontend...")
     result = subprocess.run(
         ["npm", "run", "build"],
         cwd=str(project_root),
-        capture_output=True, text=True, timeout=180)
+        capture_output=True, text=True, timeout=300,
+        shell=(os.name == "nt"))
     if result.returncode != 0:
-        # Show last lines of error
-        err_lines = result.stderr.strip().split('\n')
-        for line in err_lines[-5:]:
+        err_lines = (result.stderr or result.stdout or "").strip().split("\n")
+        for line in err_lines[-8:]:
             print("   " + line)
         fail("Angular build failed")
     ok("Angular build OK")
-    # Verify dist exists
+
     dist_browser = project_root / "dist" / "kppdf-3.0" / "browser" / "index.html"
     if not dist_browser.exists():
         fail("dist/kppdf-3.0/browser/index.html not found after build")
-    # Copy to frontend/browser for the archive volume mount
+
     frontend_dir = project_root / "frontend" / "browser"
     if frontend_dir.exists():
         shutil.rmtree(str(frontend_dir))
@@ -203,7 +286,6 @@ def build_frontend(project_root):
 # -- Archive creation ---------------------------------------------------
 
 def create_archive(archive_path, project_root):
-    """Create deploy archive with backend/ + shared/ + frontend/ + docker-compose.prod.yml."""
     log("Creating archive...")
     items = ["backend/", "shared/", "frontend/", "docker-compose.prod.yml"]
     exclude = [
@@ -238,30 +320,57 @@ def create_archive(archive_path, project_root):
             else:
                 an = os.path.relpath(item_path, project_root).replace("\\", "/")
                 tar.add(str(item_path), arcname=an)
+        backup_script = project_root / "deploy" / "synology" / "backup.sh"
+        if backup_script.exists():
+            tar.add(str(backup_script), arcname="backup.sh")
     size = os.path.getsize(archive_path)
     ok("Archive: " + str(size // 1024) + " KB")
 
 
-# -- Verification helpers ------------------------------------------------
+def make_env_file(settings):
+    """Generate .env for docker compose on remote host."""
+    return (
+        "JWT_SECRET=" + settings["jwt_secret"] + "\n"
+        "JWT_REFRESH_SECRET=" + settings["jwt_refresh"] + "\n"
+        "CORS_ORIGIN=" + settings["cors"] + "\n"
+        "KPPDF_DATA_DIR=" + settings["data_dir"] + "\n"
+    )
 
-def ensure_mongodb_running(remote):
-    """Ensure kppdf-mongodb container is running."""
-    status = remote.exec(DOCKER + " ps --filter name=kppdf-mongodb --format '{{.Status}}'")
+
+def ensure_data_dirs(remote, settings):
+    """Create persistent data directories on host (outside REMOTE_DIR)."""
+    data_dir = settings["data_dir"]
+    user = settings["user"]
+    log("Ensuring data dirs: " + data_dir)
+    cmd = (
+        "mkdir -p " + data_dir + "/mongodb " + data_dir + "/media " + data_dir + "/backups && "
+        "chown -R 999:999 " + data_dir + "/mongodb && "
+        "chown -R " + user + ":" + user + " " + data_dir + "/media " + data_dir + "/backups"
+    )
+    r = remote.exec_sudo(cmd, timeout=30)
+    ok("Data dirs ready: mongodb/, media/, backups/")
+    if r and "ERR:" in r:
+        warn(r[:150])
+
+
+# -- Verification helpers -----------------------------------------------
+
+def ensure_mongodb_running(remote, remote_dir):
+    status = remote.exec(remote.docker + " ps --filter name=kppdf-mongodb --format '{{.Status}}'")
     if "Up" in status:
         ok("MongoDB running")
         return True
     log("MongoDB not running. Starting...")
-    r = remote.exec(DOCKER + " start kppdf-mongodb")
+    remote.exec(remote.docker + " start kppdf-mongodb")
     time.sleep(3)
-    status = remote.exec(DOCKER + " ps --filter name=kppdf-mongodb --format '{{.Status}}'")
+    status = remote.exec(remote.docker + " ps --filter name=kppdf-mongodb --format '{{.Status}}'")
     if "Up" in status:
         ok("MongoDB started")
         return True
-    # Fall back to docker compose up
     log("Trying docker compose up...")
-    remote.docker_compose(REMOTE_DIR, "up -d mongodb", timeout=60)
+    remote.docker_compose(remote_dir, "up -d mongodb", timeout=60)
     time.sleep(5)
-    status = remote.exec(DOCKER + " ps --filter name=kppdf-mongodb --format '{{.Status}}'")
+    status = remote.exec(remote.docker + " ps --filter name=kppdf-mongodb --format '{{.Status}}'")
     if "Up" in status:
         ok("MongoDB running via compose")
         return True
@@ -269,8 +378,7 @@ def ensure_mongodb_running(remote):
     return False
 
 
-def wait_for_backend(remote, max_wait=60):
-    """Wait until backend health check passes."""
+def wait_for_backend(remote, max_wait=90):
     log("Waiting for backend (up to " + str(max_wait) + "s)...")
     for i in range(max_wait // 5):
         time.sleep(5)
@@ -290,108 +398,114 @@ def wait_for_backend(remote, max_wait=60):
 # -- Main ---------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="Deploy KPPDF to Synology")
-    parser.add_argument("--host", default=HOST)
-    parser.add_argument("--user", default=USER)
+    parser = argparse.ArgumentParser(description="Deploy KPPDF to Synology/Ubuntu")
+    parser.add_argument("--host", default=None)
+    parser.add_argument("--user", default=None)
     parser.add_argument("--password", default=None)
+    parser.add_argument("--platform", choices=["ubuntu", "synology"], default=None)
     parser.add_argument("--seed", action="store_true")
     parser.add_argument("--skip-build", action="store_true")
     args = parser.parse_args()
 
     project_root = Path(__file__).resolve().parent.parent.parent
+    cfg = load_config(project_root)
+    settings = resolve_settings(args, cfg)
     archive_path = os.path.join(tempfile.gettempdir(), ARCHIVE_NAME)
 
     print()
-    print("=== KPPDF 3.0 - Deploy to Synology ===")
+    print("=== KPPDF 3.0 - Deploy (" + settings["platform"] + ") ===")
+    print("  Host: " + settings["host"])
+    print("  App:  " + settings["remote_dir"])
+    print("  Data: " + settings["data_dir"])
     print()
 
-    # Step 1: Verify source
-    print("Step 1/7: Verify source code...")
+    print("Step 1/8: Verify source code...")
     if not (project_root / "backend" / "src").exists():
         fail("backend/src not found!")
     if not (project_root / "shared" / "types").exists():
         fail("shared/types not found!")
-    ok("Source: backend/ + shared/ + docker-compose.prod.yml")
+    ok("Source OK")
 
-    # Step 2: Build frontend
-    print()
-    print("Step 2/7: Build Angular frontend...")
-    build_frontend(project_root)
+    if not args.skip_build:
+        print()
+        print("Step 2/8: Build Angular frontend...")
+        build_frontend(project_root)
+    else:
+        print()
+        print("Step 2/8: Skip frontend build (--skip-build)")
 
-    # Step 3: Create archive
     print()
-    print("Step 3/7: Create archive...")
+    print("Step 3/8: Create archive...")
     create_archive(archive_path, project_root)
 
-    # Step 4: Connect
     print()
-    print("Step 4/7: Connect to Synology...")
-    remote = RemoteHost(args.host, args.user, args.password)
+    print("Step 4/8: Connect...")
+    remote = RemoteHost(
+        settings["host"], settings["user"], settings["password"],
+        docker=settings["docker"])
+    remote.remote_dir = settings["remote_dir"]
     remote.connect()
-    remote.exec("mkdir -p " + REMOTE_DIR)
+    remote.exec("mkdir -p " + settings["remote_dir"])
+    ensure_data_dirs(remote, settings)
 
-    # Step 5: Upload & extract
     print()
-    print("Step 5/7: Upload & extract...")
-    remote.upload_file(archive_path, REMOTE_DIR)
+    print("Step 5/8: Upload & extract...")
+    remote.upload_file(archive_path, settings["remote_dir"])
     os.remove(archive_path)
+
+    env_content = make_env_file(settings)
+    remote.upload_text(env_content, settings["remote_dir"] + "/.env")
+    ok(".env uploaded (JWT secrets)")
+
     r = remote.exec(
-        "cd " + REMOTE_DIR + " && tar xzf " + ARCHIVE_NAME + " && "
+        "cd " + settings["remote_dir"] + " && tar xzf " + ARCHIVE_NAME + " && "
         "rm -f " + ARCHIVE_NAME + " && ls -d */",
         timeout=60)
     ok("Extracted: " + r[:120])
 
-    # Step 6: Docker build & start
     print()
-    print("Step 6/7: Docker build & start...")
+    print("Step 6/8: Docker build & start...")
     if args.skip_build:
-        r = remote.docker_compose(REMOTE_DIR, "up -d", timeout=60)
+        r = remote.docker_compose(settings["remote_dir"], "up -d", timeout=120)
     else:
-        r = remote.docker_compose(REMOTE_DIR,
-                                   "down 2>/dev/null; "
-                                   "build --no-cache backend && "
-                                   "up -d",
-                                   timeout=600)
+        r = remote.docker_compose(
+            settings["remote_dir"],
+            "down 2>/dev/null; build --no-cache backend && up -d",
+            timeout=600)
     ok("Docker: " + (r[:200] if r else "ok"))
 
-    # Wait for backend
     backend_ok = wait_for_backend(remote)
 
     if not backend_ok:
-        if args.seed:
-            warn("Backend not ready. Trying to ensure MongoDB manually...")
-        warn("Skipping API verification")
+        warn("Backend not ready — check logs on server")
         remote.close()
-        return
+        fail("Deploy incomplete")
 
-    # Step 7: Seed (optional)
-    if args.seed:
+    if settings["seed"]:
         print()
-        print("Step 7/7: Seed...")
-        ensure_mongodb_running(remote)
-
-        # Restart backend to reconnect to MongoDB if it was down
-        remote.exec(DOCKER + " restart kppdf-backend", timeout=15)
+        print("Step 7/8: Seed...")
+        ensure_mongodb_running(remote, settings["remote_dir"])
+        remote.exec(remote.docker + " restart kppdf-backend", timeout=15)
         time.sleep(3)
         wait_for_backend(remote)
 
         log("Running seed...")
-        # WORKDIR is /app, dist is at /app/dist/backend/src/seed.js
-        seed_out = remote.docker_exec("kppdf-backend",
-                                       "node dist/backend/src/seed.js", timeout=120)
-        for line in seed_out.split('\n'):
+        seed_out = remote.docker_exec(
+            "kppdf-backend", "node dist/backend/src/seed.js", timeout=120)
+        for line in seed_out.split("\n"):
             if line.strip():
-                safe = line.strip()[:120].encode('ascii', errors='replace').decode('ascii')
+                safe = line.strip()[:120].encode("ascii", errors="replace").decode("ascii")
                 print("    " + safe)
         ok("Seed done")
+    else:
+        print()
+        print("Step 7/8: Seed skipped (use --seed for first deploy)")
 
-    # Verify health
     print()
-    log("Verifying...")
+    print("Step 8/8: Verify...")
     h = remote.exec("curl -sf http://localhost:3000/api/v1/health", timeout=10)
     ok("Health: " + (h[:80] if h else "no response"))
 
-    # Auth check via node inside container (avoids quoting issues on host)
     log("Verifying auth & products...")
     auth_script = (
         "const h=require('http');"
@@ -413,32 +527,26 @@ def main():
         "catch(e){console.log('LOGIN_ERR');process.exit(1)}})});"
         "r.write(d);r.end()"
     )
-    # Write script to temp file inside container to avoid quoting issues
     b64_script = base64.b64encode(auth_script.encode()).decode()
     ver_cmd = (
-        DOCKER + " exec kppdf-backend sh -c "
+        remote.docker + " exec kppdf-backend sh -c "
         "'echo " + b64_script + " | base64 -d > /tmp/verify.js && node /tmp/verify.js'"
     )
     auth_out = remote.exec(ver_cmd, timeout=15)
     if "PRODUCTS:" in auth_out:
-        for line in auth_out.split('\n'):
+        for line in auth_out.split("\n"):
             if line.strip():
-                safe = line.strip().encode('ascii', errors='replace').decode('ascii')
+                safe = line.strip().encode("ascii", errors="replace").decode("ascii")
                 print("     " + safe)
         ok("API verified (auth + products)")
     else:
         warn("Verification: " + (auth_out[:150] if auth_out else "no output"))
 
-    # Verify frontend
     log("Verifying frontend...")
-    front_status = remote.exec("curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/", timeout=10)
-    front_html = remote.exec("curl -s http://localhost:3000/ | head -3", timeout=10)
+    front_status = remote.exec(
+        "curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/", timeout=10)
     if "200" in front_status:
         ok("Frontend HTTP 200 OK")
-        if 'ng-version' in front_html.lower() or 'kppdf' in front_html.lower():
-            ok("Angular SPA detected")
-        else:
-            warn("Frontend responds but not Angular: " + front_html[:80])
     else:
         warn("Frontend: HTTP " + front_status[:10])
 
@@ -447,15 +555,18 @@ def main():
     print()
     print("=== Deploy complete ===")
     print()
-    print("  API:      https://sport-set.ru/api/v1/health")
-    print("  Frontend: https://sport-set.ru")
+    print("  API:      http://" + settings["host"] + ":3000/api/v1/health")
+    print("  Frontend: http://" + settings["host"] + ":3000/")
+    print("  Prod:     " + settings["cors"])
     print("  Auth:     admin / admin123")
     print()
-    print("  SSH access:")
-    print("    ssh " + args.user + "@" + args.host)
-    print("    cd " + REMOTE_DIR)
-    print("    " + DOCKER + " compose -f docker-compose.prod.yml ps|logs|down")
-    print("    " + DOCKER + " compose -f docker-compose.prod.yml logs -f --tail=50")
+    print("  Data:   " + settings["data_dir"] + "/ (mongodb, media, backups)")
+    print()
+    print("  SSH:")
+    print("    ssh " + settings["user"] + "@" + settings["host"])
+    print("    cd " + settings["remote_dir"])
+    print("    " + settings["docker"] + " compose -f docker-compose.prod.yml ps|logs")
+    print("    bash " + settings["remote_dir"] + "/backup.sh")
     print()
 
 

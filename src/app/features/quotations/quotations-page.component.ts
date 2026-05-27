@@ -6,6 +6,7 @@ import {
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { KpCrudPageComponent } from '../../shared/crud/kp-crud-page.component';
@@ -21,6 +22,7 @@ import { CounterpartyOptionsService } from '../../shared/services/counterparty-o
 import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createQuotationsStore } from './quotations.store';
 import { PERMISSIONS } from '../../core/permissions';
+import type { CrudAction } from '../../shared/crud/crud-page.types';
 
 const QUOTATION_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Черновик', value: 'draft' },
@@ -64,6 +66,8 @@ function quotationSeverity(value: unknown): string {
       [permissions]="PERMISSIONS.quotations"
       [severityFn]="quotationSeverity"
       createLabel="Создать КП"
+      createRoute="/quotations/new"
+      [extraRowActions]="rowActions"
     >
       <ng-template #form let-row>
         <div class="form-layout">
@@ -121,6 +125,24 @@ export class QuotationsPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
   readonly quotationSeverity = quotationSeverity;
   readonly statusOptions = QUOTATION_STATUS_OPTIONS;
+
+  private readonly router = inject(Router);
+
+  readonly rowActions: CrudAction<Record<string, unknown>>[] = [
+    {
+      id: 'compose',
+      label: 'Оформить документ',
+      icon: 'pi pi-file-edit',
+      severity: 'info',
+      permission: PERMISSIONS.quotations.edit,
+      handler: (row) => {
+        const id = row['_id'];
+        if (typeof id === 'string' && id) {
+          void this.router.navigate(['/quotations', id]);
+        }
+      },
+    },
+  ];
 
   readonly counterpartyOptions = signal<KpSelectOption[]>([]);
 

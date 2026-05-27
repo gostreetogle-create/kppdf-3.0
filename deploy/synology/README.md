@@ -1,8 +1,50 @@
-# Deploy KPPDF 3.0 on Synology NAS
+# Deploy KPPDF 3.0 on Synology NAS / Ubuntu server
 
-> Production deployment to Synology NAS via Docker.
+> Production deployment via Docker. См. также [RUNBOOK.md](./RUNBOOK.md) для вечернего деплоя.
 
 ## Requirements
+
+- **Сервер:** Ubuntu 22/24 LTS **или** Synology NAS (DSM 7+) с Docker
+- **Dev-машина:** Node.js 22+, Python 3 + `paramiko`
+- **Конфиг:** `deploy/synology/config.env` (из `config.env.example`)
+
+## Quick Deploy (вечер)
+
+> **Полная инструкция:** [INSTALL.md](./INSTALL.md)
+
+```powershell
+# Windows
+copy deploy\synology\config.env.example deploy\synology\config.env
+# Заполнить DEPLOY_HOST, JWT_SECRET, JWT_REFRESH_SECRET
+
+pip install -r deploy/synology/requirements.txt
+.\deploy\synology\deploy-synology.ps1 -Seed
+```
+
+```bash
+# Linux/macOS
+python deploy/synology/deploy.py --seed
+```
+
+## Первый раз: чистый Ubuntu
+
+На сервере:
+```bash
+sudo bash deploy/synology/server-setup-ubuntu.sh
+```
+
+На dev-машине — SSH-ключ + config.env + deploy (см. RUNBOOK.md).
+
+## Платформы
+
+| PLATFORM | REMOTE_DIR | Docker |
+|----------|------------|--------|
+| `ubuntu` (default) | `/opt/kppdf-3.0` | `docker` |
+| `synology` | `/volume1/docker/kppdf-3.0` | `/usr/local/bin/docker` |
+
+Задаётся в `config.env`: `PLATFORM=ubuntu` или `PLATFORM=synology`
+
+## Requirements (legacy Synology-only)
 
 - Synology NAS with SSH access (DSM 7+)
 - Docker installed via Package Center

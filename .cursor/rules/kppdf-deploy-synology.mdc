@@ -1,0 +1,59 @@
+---
+description: Деплой KPPDF на Synology/Ubuntu — триггер «деплой на синологи»
+globs: deploy/synology/**,docker-compose.prod.yml
+alwaysApply: false
+---
+
+# Деплой Synology — протокол оркестратора
+
+> Триггер: **«деплой на синологи»**, **«deploy synology»**, **«задеплой вечером»**
+
+## Документация
+
+- **Полная установка:** [deploy/synology/INSTALL.md](deploy/synology/INSTALL.md)
+- **Краткий чеклист:** [deploy/synology/RUNBOOK.md](deploy/synology/RUNBOOK.md)
+
+## Контекст
+
+- Стек: `docker-compose.prod.yml` (MongoDB + backend + Angular)
+- Скрипт: `deploy/synology/deploy.py`
+- Конфиг: `deploy/synology/config.env`
+
+## Персистентность данных (инвариант)
+
+```
+/opt/kppdf-3.0/           ← REMOTE_DIR, код — перезаписывается при деплое
+/var/lib/kppdf/           ← KPPDF_DATA_DIR — НЕ трогается
+  mongodb/                ← bind-mount MongoDB
+  media/                  ← bind-mount uploads
+  backups/                ← mongodump + media copies
+```
+
+- MongoDB: **Docker + bind-mount**, не native, не named volume
+- `KPPDF_DATA_DIR` **вне** `REMOTE_DIR` — никогда не включать в tar-архив
+- Перед деплоем рекомендовать: `bash backup.sh` на сервере
+
+## Алгоритм
+
+1. `.\deploy\synology\preflight.ps1`
+2. Новый сервер → `server-setup-ubuntu.sh`
+3. `python deploy/synology/deploy.py --seed` (первый раз) или без `--seed` (обновление)
+4. Verify: health, login, `ls /var/lib/kppdf/`
+
+## Платформы
+
+| PLATFORM | REMOTE_DIR | KPPDF_DATA_DIR | DOCKER |
+|----------|------------|----------------|--------|
+| ubuntu | /opt/kppdf-3.0 | /var/lib/kppdf | docker |
+| synology | /volume1/docker/kppdf-3.0 | /volume1/docker/kppdf-data | /usr/local/bin/docker |
+
+## Критичные инварианты
+
+- Архив включает `shared/` — без него tsc падает
+- `.env` на сервере: JWT + `KPPDF_DATA_DIR`
+- Seed: `node dist/backend/src/seed.js`
+- Не коммитить `config.env`
+
+## Troubleshooting
+
+См. INSTALL.md §9. Логи: `docker compose -f docker-compose.prod.yml logs -f`

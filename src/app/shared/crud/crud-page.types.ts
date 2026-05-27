@@ -23,6 +23,6 @@ export interface CrudPermissions {
   /** Permission для просмотра (view) */
   view: string;
   create?: string;
-  update?: string;
+  edit?: string;
   delete?: string;
 }

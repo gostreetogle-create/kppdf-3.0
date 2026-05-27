@@ -158,6 +158,7 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 - 🔴 Хранить секреты или JWT в коде — только `.env`
 - 🔴 Менять shared/types без синхронизации FE и BE
 - 🔴 Игнорировать ESLint-ошибки — `// eslint-disable-next-line` только с обоснованием
+- 🔴 **Удалять или рефакторить `QuotationEditor` (маршрут `/quotations/:id`)** — P0-фича, восстановлена после случайного удаления в `f74863a`. Любые изменения — только с задачей и approval @chief-architect.
 
 ---
 
@@ -201,6 +202,7 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 2. **Путаница UX vs UI** — `@ux-architect` не правит модалки; формы → `@ui-specialist` + `ui-manifest.md`.
 3. **Cursor** — rules в `.cursor/rules/`; сложная роль → прочитать один файл из `.opencode/agents/` (см. router rule). Оркестр auto — только OpenCode.
 4. **QA-цикл** — после UI: `@ui-qa` → `@ui-auditor`; иначе баги вроде «ID вместо имени».
+5. **Случайное удаление QuotationEditor** — ✅ защищено инвариантом в «⛔ Что НЕЛЬЗЯ делать» + P0 в `.opencode/audit/CHECKLIST-BACKLOG.md`.
 
 ### Командный аудит
 

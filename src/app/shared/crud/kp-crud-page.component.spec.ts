@@ -55,7 +55,7 @@ describe('KpCrudPageComponent', () => {
   const testPermissions: CrudPermissions = {
     view: 'test.view',
     create: 'test.create',
-    update: 'test.update',
+    edit: 'test.edit',
     delete: 'test.delete',
   };
 

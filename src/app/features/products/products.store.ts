@@ -15,7 +15,7 @@ export function createProductsStore(
   const notification = inject(NotificationService);
 
   return new CrudStore<IProduct>(api, {
-    basePath: '/products',
+    basePath: '/directories/products',
     defaultLimit: 15,
     defaultSortField: 'createdAt',
     defaultSortOrder: -1,

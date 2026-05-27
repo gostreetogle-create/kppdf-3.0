@@ -39,7 +39,7 @@ function modulePermissions(key: ModuleKey): CrudPermissions {
   return {
     view: `${prefix}.view`,
     create: `${prefix}.create`,
-    update: `${prefix}.edit`,
+    edit: `${prefix}.edit`,
     delete: `${prefix}.delete`,
   };
 }

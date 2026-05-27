@@ -149,7 +149,7 @@ function perms(key: DirKey): CrudPermissions {
   return {
     view: p?.view ?? `admin.${key}.view`,
     create: p?.create,
-    update: p?.edit,
+    edit: p?.edit,
     delete: p?.delete,
   };
 }

@@ -24,7 +24,7 @@ alwaysApply: true
 | EAV, BOM, сложная предметка | .opencode/agents/meta-architect.md |
 | Дизайн-токены SCSS, CSS | .opencode/agents/design-system.md |
 | Code review | .opencode/agents/reviewer.md |
-| Деплой, CI/CD, nginx | .opencode/agents/deploy-specialist.md |
+| Деплой, CI/CD, nginx | `kppdf-deploy-synology.mdc` → deploy/synology/RUNBOOK.md |
 | Сводка аудита | .opencode/agents/chief-architect.md |
 
 ## Протокол работы

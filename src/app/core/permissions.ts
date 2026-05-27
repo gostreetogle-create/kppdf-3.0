@@ -56,6 +56,7 @@ const moduleEntries = {
   'shipping-docs':      { view: 'accounting.shippingDocs.view',        create: 'accounting.shippingDocs.create',        edit: 'accounting.shippingDocs.edit',        delete: 'accounting.shippingDocs.delete' },
   counters:             { view: 'admin.counters.view',                 create: 'admin.counters.create',                 edit: 'admin.counters.edit',                 delete: 'admin.counters.delete' },
   interactions:         { view: 'office.interactions.view',            create: 'office.interactions.create',            edit: 'office.interactions.edit',            delete: 'office.interactions.delete' },
+  'document-templates': { view: 'office.documentTemplates.view',        create: 'office.documentTemplates.create',        edit: 'office.documentTemplates.edit',        delete: 'office.documentTemplates.delete' },
 } satisfies Record<string, PermissionActions>;
 
 // ── Единый PERMISSIONS объект ────────────────────────────────

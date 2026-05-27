@@ -50,3 +50,165 @@
     border-color: var(--kp-danger) !important;
   }
 }
+
+/* PrimeNG p-select / p-multiselect trigger — matches kp-field-control */
+@mixin kp-field-prime-control($root: '.p-select') {
+  #{$root} {
+    width: 100%;
+    background: var(--p-select-background, var(--kp-surface)) !important;
+    border: 1px solid var(--p-select-border-color, var(--kp-border)) !important;
+    border-radius: var(--p-select-border-radius, var(--kp-radius-sm)) !important;
+    box-shadow: var(--p-select-shadow, none) !important;
+    transition:
+      border-color var(--kp-transition-fast, 150ms ease),
+      box-shadow var(--kp-transition-fast, 150ms ease);
+
+    &:not(.p-disabled):hover {
+      border-color: var(--p-select-hover-border-color, var(--kp-border-strong)) !important;
+    }
+
+    &.p-focus,
+    &.p-inputwrapper-focus,
+    &.p-select-open {
+      border-color: var(--p-select-focus-border-color, var(--kp-primary)) !important;
+      box-shadow: var(--p-select-focus-ring-shadow, var(--kp-focus-ring-premium)) !important;
+      outline: none !important;
+    }
+
+    &.p-disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: var(--p-select-disabled-background, var(--kp-bg-soft)) !important;
+    }
+  }
+}
+
+@mixin kp-field-prime-control-multiselect {
+  @include kp-field-prime-control('.p-multiselect');
+
+  .p-multiselect {
+    background: var(--p-multiselect-background, var(--kp-surface)) !important;
+    border-color: var(--p-multiselect-border-color, var(--kp-border)) !important;
+    border-radius: var(--p-multiselect-border-radius, var(--kp-radius-sm)) !important;
+    box-shadow: var(--p-multiselect-shadow, none) !important;
+
+    &:not(.p-disabled):hover {
+      border-color: var(--p-multiselect-hover-border-color, var(--kp-border-strong)) !important;
+    }
+
+    &.p-focus,
+    &.p-inputwrapper-focus {
+      border-color: var(--p-multiselect-focus-border-color, var(--kp-primary)) !important;
+      box-shadow: var(--p-multiselect-focus-ring-shadow, var(--kp-focus-ring-premium)) !important;
+    }
+
+    &.p-disabled {
+      background: var(--p-multiselect-disabled-background, var(--kp-bg-soft)) !important;
+    }
+  }
+}
+
+/* size="small" — same padding as kp-input__control */
+@mixin kp-field-prime-label-sm($label-selector: '.p-select-label') {
+  .p-select-sm #{$label-selector},
+  .p-multiselect-sm .p-multiselect-label {
+    font-size: var(--p-select-sm-font-size, var(--kp-font-size-sm)) !important;
+    padding-block: var(--p-select-sm-padding-y, var(--kp-space-2)) !important;
+    padding-inline: var(--p-select-sm-padding-x, var(--kp-space-3)) !important;
+  }
+
+  .p-multiselect-sm .p-multiselect-label {
+    font-size: var(--p-multiselect-sm-font-size, var(--kp-font-size-sm)) !important;
+    padding-block: var(--p-multiselect-sm-padding-y, var(--kp-space-2)) !important;
+    padding-inline: var(--p-multiselect-sm-padding-x, var(--kp-space-3)) !important;
+  }
+}
+
+/* p-datepicker input — matches kp-input */
+@mixin kp-field-prime-datepicker {
+  .p-datepicker {
+    width: 100%;
+  }
+
+  .p-datepicker .p-inputtext {
+    width: 100%;
+    font-family: inherit;
+    font-size: var(--p-datepicker-input-sm-font-size, var(--kp-font-size-sm));
+    padding: var(--p-datepicker-input-sm-padding-y, var(--kp-space-2))
+      var(--p-datepicker-input-sm-padding-x, var(--kp-space-3));
+    border: 1px solid var(--p-datepicker-input-border-color, var(--kp-border));
+    border-radius: var(--kp-radius-sm);
+    background: var(--p-datepicker-input-background, var(--kp-surface));
+    color: var(--kp-text);
+    box-shadow: none;
+    transition:
+      border-color var(--kp-transition-fast, 150ms ease),
+      box-shadow var(--kp-transition-fast, 150ms ease);
+
+    &:enabled:hover {
+      border-color: var(--p-datepicker-input-hover-border-color, var(--kp-border-strong));
+    }
+
+    &:enabled:focus {
+      outline: none;
+      border-color: var(--p-datepicker-input-focus-border-color, var(--kp-primary));
+      box-shadow: var(--p-datepicker-input-focus-ring-shadow, var(--kp-focus-ring-premium));
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: var(--kp-bg-soft);
+    }
+  }
+
+  .p-datepicker-input-icon-container {
+    color: var(--kp-text-soft);
+  }
+}
+
+/* Overlays append to document body — import via styles.scss */
+@mixin kp-field-prime-overlay {
+  .p-select-overlay,
+  .p-multiselect-overlay {
+    background: var(--p-select-overlay-background, var(--kp-surface)) !important;
+    border: 1px solid var(--p-select-overlay-border-color, var(--kp-border)) !important;
+    border-radius: var(--p-select-overlay-border-radius, var(--kp-radius-md)) !important;
+    box-shadow: var(--p-select-overlay-shadow, var(--kp-shadow-md)) !important;
+  }
+
+  .p-multiselect-overlay {
+    background: var(--p-multiselect-overlay-background, var(--kp-surface)) !important;
+    border-color: var(--p-multiselect-overlay-border-color, var(--kp-border)) !important;
+    border-radius: var(--p-multiselect-overlay-border-radius, var(--kp-radius-md)) !important;
+    box-shadow: var(--p-multiselect-overlay-shadow, var(--kp-shadow-md)) !important;
+  }
+
+  .p-select-option:not(.p-disabled):hover,
+  .p-select-option:not(.p-disabled).p-focus,
+  .p-multiselect-option:not(.p-disabled):hover,
+  .p-multiselect-option:not(.p-disabled).p-focus {
+    background: var(--p-select-option-focus-background, var(--kp-surface-hover)) !important;
+    color: var(--p-select-option-focus-color, var(--kp-text)) !important;
+  }
+
+  .p-multiselect-option:not(.p-disabled):hover,
+  .p-multiselect-option:not(.p-disabled).p-focus {
+    background: var(--p-multiselect-option-focus-background, var(--kp-surface-hover)) !important;
+    color: var(--p-multiselect-option-focus-color, var(--kp-text)) !important;
+  }
+
+  .p-datepicker-panel {
+    background: var(--p-datepicker-panel-background, var(--kp-surface)) !important;
+    border: 1px solid var(--p-datepicker-panel-border-color, var(--kp-border)) !important;
+    border-radius: var(--p-datepicker-panel-border-radius, var(--kp-radius-md)) !important;
+    box-shadow: var(--p-datepicker-panel-shadow, var(--kp-shadow-md)) !important;
+  }
+
+  .p-datepicker-day:not(.p-disabled):not(.p-datepicker-day-selected):hover,
+  .p-datepicker-month:not(.p-disabled):not(.p-datepicker-month-selected):hover,
+  .p-datepicker-year:not(.p-disabled):not(.p-datepicker-year-selected):hover {
+    background: var(--p-datepicker-date-hover-background, var(--kp-surface-hover)) !important;
+    color: var(--kp-text) !important;
+  }
+}

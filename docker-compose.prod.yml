@@ -1,12 +1,13 @@
-# KPPDF 3.0 — Production stack for Synology NAS
+# KPPDF 3.0 — Production stack (Ubuntu / Synology)
 # Запуск: docker compose -f docker-compose.prod.yml up -d
 # Остановка: docker compose -f docker-compose.prod.yml down
 # Логи:    docker compose -f docker-compose.prod.yml logs -f
 #
-# После запуска:
-#   API:       http://192.168.1.134:3000/api/v1/health
-#   Frontend:  http://192.168.1.134:3000 (Angular SPA через backend)
-#   MongoDB:   mongodb://kppdf-mongodb:27017/kppdf30
+# Данные на хосте (KPPDF_DATA_DIR в .env):
+#   mongodb/  — база данных (bind-mount, переживает обновления)
+#   media/    — загруженные файлы (bind-mount)
+#
+# Код приложения — отдельно в REMOTE_DIR (/opt/kppdf-3.0), перезаписывается при деплое.
 
 services:
   mongodb:
@@ -14,9 +15,9 @@ services:
     container_name: kppdf-mongodb
     restart: unless-stopped
     ports:
-      - "127.0.0.1:27017:27017"  # только локально, не наружу
+      - "127.0.0.1:27017:27017"
     volumes:
-      - kppdf_mongodb_data:/data/db
+      - ${KPPDF_DATA_DIR}/mongodb:/data/db
     environment:
       MONGO_INITDB_DATABASE: kppdf30
     healthcheck:
@@ -34,15 +35,17 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend:/app/frontend:ro  # Angular SPA (собранный)
+      - ./frontend:/app/frontend:ro
+      - ${KPPDF_DATA_DIR}/media:/app/uploads
     environment:
       NODE_ENV: production
       MONGO_URI: mongodb://kppdf-mongodb:27017/kppdf30
       JWT_SECRET: "${JWT_SECRET:?JWT_SECRET is required! Set it in .env or shell}"
       JWT_REFRESH_SECRET: "${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required!}"
-      CORS_ORIGIN: "https://sport-set.ru"
+      CORS_ORIGIN: "${CORS_ORIGIN:-https://sport-set.ru}"
       PORT: "3000"
       FRONTEND_PATH: /app/frontend/browser
+      UPLOAD_PATH: /app/uploads
     depends_on:
       mongodb:
         condition: service_healthy
@@ -52,7 +55,3 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-
-volumes:
-  kppdf_mongodb_data:
-    name: kppdf-mongodb-data

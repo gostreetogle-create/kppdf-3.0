@@ -6,6 +6,7 @@ import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
 import { EmptyStateComponent } from './empty-state/empty-state.component';
 import { KpButtonComponent } from './kp-button.component';
+import type { CrudAction } from '../crud/crud-page.types';
 
 export interface KpColumn {
   field: string;
@@ -197,6 +198,20 @@ export interface KpPageEvent {
                         (buttonClick)="deleteRow.emit(row)"
                       />
                     }
+                    @for (action of extraRowActions(); track action.id) {
+                      @if (!action.visible || action.visible(row)) {
+                        <app-kp-button
+                          [icon]="action.icon || 'pi pi-bolt'"
+                          [rounded]="true"
+                          [text]="true"
+                          [severity]="action.severity || 'secondary'"
+                          size="small"
+                          [tooltip]="action.label"
+                          [ariaLabel]="action.label"
+                          (buttonClick)="action.handler(row)"
+                        />
+                      }
+                    }
                   </div>
                 </td>
               }
@@ -247,6 +262,7 @@ export class KpTableComponent {
   readonly showRowActions = input(true);
   readonly canUpdate = input(true);
   readonly canDelete = input(true);
+  readonly extraRowActions = input<CrudAction<Record<string, unknown>>[]>([]);
 
   readonly emptyMessage = input('Нет данных');
   readonly severityFn = input<(value: unknown) => string>(() => 'info');

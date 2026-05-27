@@ -10,6 +10,7 @@ import {
   computed,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
@@ -81,6 +82,7 @@ import type { CrudPermissions, CrudAction } from './crud-page.types';
           [showRowActions]="showRowActions()"
           [canUpdate]="canUpdate()"
           [canDelete]="canDelete()"
+          [extraRowActions]="visibleExtraRowActions()"
           [severityFn]="severityFn()"
           (searchChange)="store().setSearch($event)"
           (pageEvent)="store().handlePageChange($event)"
@@ -94,7 +96,7 @@ import type { CrudPermissions, CrudAction } from './crud-page.types';
                 [label]="createLabel()"
                 icon="pi pi-plus"
                 size="small"
-                (buttonClick)="openCreate()"
+                (buttonClick)="onCreateClick()"
               />
             </ng-template>
           }
@@ -144,6 +146,7 @@ export class KpCrudPageComponent implements OnInit {
   }
 
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
 
@@ -156,6 +159,8 @@ export class KpCrudPageComponent implements OnInit {
   readonly columns = input.required<KpColumn[]>();
   readonly permissions = input<CrudPermissions | null>(null);
   readonly createLabel = input('Создать');
+  /** Если задан — кнопка «Создать» открывает маршрут вместо диалога */
+  readonly createRoute = input<string | null>(null);
   readonly embedded = input(false);
   readonly extraRowActions = input<CrudAction<Record<string, unknown>>[]>([]);
   readonly severityFn = input<(value: unknown) => string>(() => 'info');
@@ -170,7 +175,7 @@ export class KpCrudPageComponent implements OnInit {
 
   readonly showRowActions = computed(() => {
     const perms = this.permissions();
-    return !!(perms?.update || perms?.delete || this.extraRowActions().length > 0);
+    return !!(perms?.edit || perms?.delete || this.extraRowActions().length > 0);
   });
 
   readonly canCreate = computed(() => {
@@ -180,13 +185,28 @@ export class KpCrudPageComponent implements OnInit {
 
   readonly canUpdate = computed(() => {
     const perms = this.permissions();
-    return !perms?.update || this.auth.hasPermission(perms.update);
+    return !perms?.edit || this.auth.hasPermission(perms.edit);
   });
 
   readonly canDelete = computed(() => {
     const perms = this.permissions();
     return !perms?.delete || this.auth.hasPermission(perms.delete);
   });
+
+  readonly visibleExtraRowActions = computed(() =>
+    this.extraRowActions().filter(
+      (action) => !action.permission || this.auth.hasPermission(action.permission),
+    ),
+  );
+
+  onCreateClick(): void {
+    const route = this.createRoute();
+    if (route) {
+      void this.router.navigateByUrl(route);
+      return;
+    }
+    this.openCreate();
+  }
 
   openCreate(): void {
     this.editing.set(false);

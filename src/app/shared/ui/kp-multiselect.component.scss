@@ -16,6 +16,11 @@
   @include field.kp-field-error;
 }
 
-:host ::ng-deep .kp-multiselect__control--error {
-  border-color: var(--kp-danger) !important;
+:host ::ng-deep {
+  @include field.kp-field-prime-control-multiselect;
+  @include field.kp-field-prime-label-sm;
+
+  .kp-multiselect__control--error.p-multiselect {
+    border-color: var(--kp-danger) !important;
+  }
 }

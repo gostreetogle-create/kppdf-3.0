@@ -1,4 +1,6 @@
 import dotenv from 'dotenv';
+import path from 'path';
+
 dotenv.config();
 
 export const config = {
@@ -9,4 +11,5 @@ export const config = {
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   nodeEnv: process.env.NODE_ENV || 'development',
+  uploadPath: process.env.UPLOAD_PATH || path.join(__dirname, '..', '..', 'uploads'),
 };

@@ -37,6 +37,15 @@ export const routes: Routes = [
         loadComponent: () => import('./features/quotations').then(c => c.QuotationsPageComponent),
       },
       {
+        path: 'quotations/:id',
+        loadComponent: () => import('./features/quotations').then(c => c.QuotationEditorComponent),
+      },
+      {
+        path: 'documents/:id',
+        redirectTo: 'quotations/:id',
+        pathMatch: 'full',
+      },
+      {
         path: 'orders',
         loadComponent: () => import('./features/orders').then(c => c.OrdersPageComponent),
       },

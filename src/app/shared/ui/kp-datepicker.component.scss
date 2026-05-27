@@ -16,6 +16,10 @@
   @include field.kp-field-error;
 }
 
-:host ::ng-deep .kp-datepicker__control--error .p-inputtext {
-  border-color: var(--kp-danger) !important;
+:host ::ng-deep {
+  @include field.kp-field-prime-datepicker;
+
+  .kp-datepicker__control--error .p-inputtext {
+    border-color: var(--kp-danger) !important;
+  }
 }

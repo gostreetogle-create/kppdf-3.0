@@ -185,13 +185,67 @@
   --p-inputnumber-padding-x: 0.85rem;
   --p-inputnumber-border-radius: 8px;
 
-  /* Select / Dropdown */
-  --p-select-padding-y: 0.4rem;
-  --p-select-padding-x: 0.85rem;
-  --p-select-border-radius: 8px;
-  --p-select-font-size: 14px;
-  --p-select-sm-font-size: 13px;
-  --p-select-sm-padding-y: 0.3rem;
+  /* Select — surface/border/focus (aligned with kp-input / kp-field-control) */
+  --p-select-background: var(--kp-surface);
+  --p-select-border-color: var(--kp-border);
+  --p-select-hover-border-color: var(--kp-border-strong);
+  --p-select-focus-border-color: var(--kp-primary);
+  --p-select-color: var(--kp-text);
+  --p-select-placeholder-color: var(--kp-text-muted);
+  --p-select-disabled-background: var(--kp-bg-soft);
+  --p-select-shadow: none;
+  --p-select-focus-ring-shadow: var(--kp-focus-ring-premium);
+  --p-select-padding-y: var(--kp-space-2);
+  --p-select-padding-x: var(--kp-space-3);
+  --p-select-border-radius: var(--kp-radius-sm);
+  --p-select-font-size: var(--kp-font-size-body-lg);
+  --p-select-sm-font-size: var(--kp-font-size-sm);
+  --p-select-sm-padding-y: var(--kp-space-2);
+  --p-select-sm-padding-x: var(--kp-space-3);
+  --p-select-overlay-background: var(--kp-surface);
+  --p-select-overlay-border-color: var(--kp-border);
+  --p-select-overlay-border-radius: var(--kp-radius-md);
+  --p-select-overlay-shadow: var(--kp-shadow-md);
+  --p-select-option-focus-background: var(--kp-surface-hover);
+  --p-select-option-focus-color: var(--kp-text);
+
+  /* MultiSelect — same field chrome as select */
+  --p-multiselect-background: var(--p-select-background);
+  --p-multiselect-border-color: var(--p-select-border-color);
+  --p-multiselect-hover-border-color: var(--p-select-hover-border-color);
+  --p-multiselect-focus-border-color: var(--p-select-focus-border-color);
+  --p-multiselect-color: var(--p-select-color);
+  --p-multiselect-placeholder-color: var(--p-select-placeholder-color);
+  --p-multiselect-disabled-background: var(--p-select-disabled-background);
+  --p-multiselect-shadow: var(--p-select-shadow);
+  --p-multiselect-focus-ring-shadow: var(--p-select-focus-ring-shadow);
+  --p-multiselect-padding-y: var(--p-select-padding-y);
+  --p-multiselect-padding-x: var(--p-select-padding-x);
+  --p-multiselect-border-radius: var(--p-select-border-radius);
+  --p-multiselect-sm-font-size: var(--p-select-sm-font-size);
+  --p-multiselect-sm-padding-y: var(--p-select-sm-padding-y);
+  --p-multiselect-sm-padding-x: var(--p-select-sm-padding-x);
+  --p-multiselect-overlay-background: var(--p-select-overlay-background);
+  --p-multiselect-overlay-border-color: var(--p-select-overlay-border-color);
+  --p-multiselect-overlay-border-radius: var(--p-select-overlay-border-radius);
+  --p-multiselect-overlay-shadow: var(--p-select-overlay-shadow);
+  --p-multiselect-option-focus-background: var(--p-select-option-focus-background);
+  --p-multiselect-option-focus-color: var(--p-select-option-focus-color);
+
+  /* DatePicker — input chrome + calendar panel */
+  --p-datepicker-input-background: var(--kp-surface);
+  --p-datepicker-input-border-color: var(--kp-border);
+  --p-datepicker-input-hover-border-color: var(--kp-border-strong);
+  --p-datepicker-input-focus-border-color: var(--kp-primary);
+  --p-datepicker-input-focus-ring-shadow: var(--kp-focus-ring-premium);
+  --p-datepicker-input-sm-font-size: var(--kp-font-size-sm);
+  --p-datepicker-input-sm-padding-y: var(--kp-space-2);
+  --p-datepicker-input-sm-padding-x: var(--kp-space-3);
+  --p-datepicker-panel-background: var(--kp-surface);
+  --p-datepicker-panel-border-color: var(--kp-border);
+  --p-datepicker-panel-border-radius: var(--kp-radius-md);
+  --p-datepicker-panel-shadow: var(--kp-shadow-md);
+  --p-datepicker-date-hover-background: var(--kp-surface-hover);
 
   /* Button */
   --p-button-sm-padding-y: 0.35rem;
@@ -202,9 +256,6 @@
   --p-button-icon-only-height: 30px;
   --p-button-icon-only-sm-width: 28px;
   --p-button-icon-only-sm-height: 28px;
-
-  /* DatePicker */
-  --p-datepicker-border-radius: 10px;
 
   /* Table */
   --p-datatable-header-cell-padding: 0.7rem 1rem;

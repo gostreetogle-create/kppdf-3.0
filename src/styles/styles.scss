@@ -3,6 +3,7 @@
    ============================================================ */
 @use 'tokens' as *;
 @use '../app/shared/styles/form-fields';
+@use '../app/shared/styles/kp-field' as kpField;
 
 /* ── Design Tokens ── */
 :root {
@@ -331,6 +332,9 @@ button { font-family: inherit; cursor: pointer; }
 /* ════════════════════════════════════════════════════════════
    PRIMENG OVERRIDES
    ════════════════════════════════════════════════════════════ */
+
+/* Select / multiselect / datepicker panels (teleport to body) */
+@include kpField.kp-field-prime-overlay;
 
 /* ── Dialog footer (shared via kp-crud-page) ── */
 .kp-crud-dialog__footer {
