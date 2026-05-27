@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { KpCrudPageComponent } from '../../shared/crud/kp-crud-page.component';
 import {
   KpInputComponent,
+  KpInputNumberComponent,
   KpSelectComponent,
   KpTextareaComponent,
   type KpSelectOption,
@@ -46,6 +47,7 @@ function productSeverity(value: unknown): string {
   imports: [
     KpCrudPageComponent,
     KpInputComponent,
+    KpInputNumberComponent,
     KpSelectComponent,
     KpTextareaComponent,
     AttributesEditorComponent,
@@ -103,6 +105,22 @@ function productSeverity(value: unknown): string {
             [value]="row['unit'] || ''"
             (valueChange)="row['unit'] = $event"
           />
+          <app-kp-input-number
+            label="Цена"
+            name="listPrice"
+            placeholder="0"
+            [value]="row['listPrice'] ?? 0"
+            (valueChange)="row['listPrice'] = $event"
+            [min]="0"
+          />
+          <app-kp-input-number
+            label="Остаток"
+            name="stockQty"
+            placeholder="0"
+            [value]="row['stockQty'] ?? 0"
+            (valueChange)="row['stockQty'] = $event"
+            [min]="0"
+          />
           <app-kp-select
             label="Статус"
             name="status"
@@ -138,8 +156,8 @@ export class ProductsPageComponent implements OnInit {
   readonly categoryOptions = signal<KpSelectOption[]>([]);
 
   readonly columns = signal<KpColumn[]>([
+    { field: 'sku', header: 'Артикул', type: 'text', sortable: true, width: '110px' },
     { field: 'name', header: 'Наименование', type: 'text', sortable: true },
-    { field: 'sku', header: 'Артикул', type: 'text', sortable: true },
     {
       field: 'kind',
       header: 'Тип',
@@ -148,8 +166,10 @@ export class ProductsPageComponent implements OnInit {
       width: '110px',
       options: PRODUCT_KIND_OPTIONS,
     },
+    { field: 'unit', header: 'Ед. изм.', type: 'text', sortable: true, width: '90px' },
     { field: 'categoryId', header: 'Категория', type: 'select', sortable: true, options: [] },
-    { field: 'unit', header: 'Ед. изм.', type: 'text', sortable: true, width: '100px' },
+    { field: 'listPrice', header: 'Цена', type: 'number', sortable: true, width: '100px' },
+    { field: 'stockQty', header: 'Остаток', type: 'number', sortable: true, width: '100px' },
     {
       field: 'status',
       header: 'Статус',
@@ -158,7 +178,6 @@ export class ProductsPageComponent implements OnInit {
       width: '110px',
       options: PRODUCT_STATUS_OPTIONS,
     },
-    { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
   ]);
 
   readonly store = createProductsStore(inject(DestroyRef));

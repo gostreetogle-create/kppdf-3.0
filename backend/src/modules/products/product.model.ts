@@ -11,6 +11,8 @@ const productSchema = new Schema<ProductDocument>(
     unit: { type: String, default: 'шт' },
     categoryId: { type: String },
     status: { type: String, enum: ['active', 'draft', 'archived'], default: 'active' },
+    listPrice: { type: Number, default: 0 },
+    stockQty: { type: Number, default: 0 },
     description: { type: String },
     // Технические характеристики (из паспортов изделий)
     height: { type: Number },

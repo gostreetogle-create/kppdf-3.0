@@ -217,6 +217,11 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 - Явно в промпте: `@ui-specialist` / `@ux-architect` — если rule не хватило.
 - Примеры: «Действуй по ui-specialist.md — поправь kp-table на tenders»; «По ux-architect — куда в меню положить EAV».
 
+### QuotationEditor — панель блоков (2026-05-27)
+
+- Документация UX: [src/app/features/quotations/QUOTATION-EDITOR-BLOCKS.md](src/app/features/quotations/QUOTATION-EDITOR-BLOCKS.md)
+- Боковая панель справа от A4; перетаскивание блоков при **открытом** замке в шапке; по умолчанию замок открыт.
+
 ### CRUD: поля-ссылки (`*Id`)
 
 - 🔴 **Запрещено** показывать MongoDB `ObjectId` пользователю в форме и таблице.

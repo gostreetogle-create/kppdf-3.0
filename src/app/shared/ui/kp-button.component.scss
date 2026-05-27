@@ -4,6 +4,7 @@
 }
 
 :host ::ng-deep .p-button {
+  border-radius: var(--kp-button-border-radius) !important;
   transition:
     background var(--kp-transition-base),
     border-color var(--kp-transition-base),

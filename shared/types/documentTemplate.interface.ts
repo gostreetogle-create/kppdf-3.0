@@ -2,17 +2,27 @@ export type DocumentBlockType = 'text' | 'table' | 'header' | 'separator' | 'ima
 
 export type DocType = 'quotation' | 'contract' | 'invoice' | 'shipping' | string;
 
+export type DocumentTextAlign = 'left' | 'center' | 'right';
+
+export interface IDocumentBlockCell {
+  content: string;
+  align?: DocumentTextAlign;
+}
+
 export interface IDocumentBlock {
   _id?: string;
   type: DocumentBlockType;
   order: number;
   title?: string;
   content: string;
+  cells?: IDocumentBlockCell[];
   settings: {
     fontSize?: number;
     fontWeight?: 'normal' | 'bold' | 'semibold';
-    align?: 'left' | 'center' | 'right';
+    align?: DocumentTextAlign;
     color?: string;
+    backgroundColor?: string;
+    borderStyle?: 'none' | 'dashed' | 'solid';
     paddingTop?: number;
     paddingBottom?: number;
     columns?: number;

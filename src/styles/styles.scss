@@ -387,8 +387,11 @@ button { font-family: inherit; cursor: pointer; }
   font-size: var(--kp-font-size-sm) !important;
 }
 
-/* ── Buttons — smooth hover (150ms) ── */
-.p-button {
+/* ── Buttons — minimal radius, smooth hover (150ms) ── */
+.p-button,
+.p-button.p-button-rounded,
+.p-button.p-button-icon-only {
+  border-radius: var(--kp-button-border-radius) !important;
   transition:
     background var(--kp-transition-base),
     border-color var(--kp-transition-base),
@@ -405,11 +408,11 @@ button { font-family: inherit; cursor: pointer; }
 
 .p-button.p-button-sm { gap: 5px; }
 
-/* Icon buttons (edit/delete rows) */
+/* Icon buttons (edit/delete rows) — square, not circular */
 .p-button.p-button-rounded.p-button-text {
   width: 32px;
   height: 32px;
-  border-radius: 8px !important;
+  border-radius: var(--kp-button-border-radius) !important;
 }
 
 .p-button.p-button-rounded.p-button-text:hover {
@@ -419,6 +422,15 @@ button { font-family: inherit; cursor: pointer; }
 .p-button.p-button-rounded.p-button-text.p-button-danger:hover {
   background: var(--kp-danger-soft) !important;
   color: var(--kp-danger) !important;
+}
+
+/* Paginator controls */
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-last,
+.p-paginator .p-paginator-page {
+  border-radius: var(--kp-button-border-radius) !important;
 }
 
 /* ── Dialog backdrop ── */

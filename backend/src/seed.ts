@@ -60,31 +60,32 @@ async function seed(): Promise<void> {
   // 2. ТОВАРЫ (часто используемые)
   // ================================================================
   await ProductModel.deleteMany({});
-  const products = await ProductModel.insertMany([
-    { name: 'Лист стальной 3мм 1250x2500', sku: 'LST-001', kind: 'ITEM', unit: 'м²', categoryId: categories[0]._id.toString(), status: 'active', description: 'Сталь 3мм, размер 1250x2500мм', isActive: true },
-    { name: 'Лист стальной 5мм 1250x2500', sku: 'LST-002', kind: 'ITEM', unit: 'м²', categoryId: categories[0]._id.toString(), status: 'active', isActive: true },
-    { name: 'Лист нерж. 2мм 1000x2000', sku: 'LST-003', kind: 'ITEM', unit: 'м²', categoryId: categories[8]._id.toString(), status: 'active', isActive: true },
-    { name: 'Труба профильная 40x20x2', sku: 'TRB-001', kind: 'ITEM', unit: 'м.п.', categoryId: categories[9]._id.toString(), status: 'active', isActive: true },
-    { name: 'Труба профильная 60x30x2', sku: 'TRB-002', kind: 'ITEM', unit: 'м.п.', categoryId: categories[9]._id.toString(), status: 'active', isActive: true },
-    { name: 'Уголок 50x50x5', sku: 'UGL-001', kind: 'ITEM', unit: 'м.п.', categoryId: categories[0]._id.toString(), status: 'active', isActive: true },
-    { name: 'Болт М8x30 оцинк.', sku: 'BRT-001', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true },
-    { name: 'Болт М10x40 оцинк.', sku: 'BRT-002', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true },
-    { name: 'Гайка М8 оцинк.', sku: 'BRT-003', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true },
-    { name: 'Гайка М10 оцинк.', sku: 'BRT-004', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true },
-    { name: 'Шайба М8 оцинк.', sku: 'BRT-005', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true },
-    { name: 'Шайба М10 оцинк.', sku: 'BRT-006', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true },
-    { name: 'Контроллер Arduino Mega', sku: 'ELC-001', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', description: 'ATmega2560', isActive: true },
-    { name: 'Датчик температуры DS18B20', sku: 'ELC-002', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', isActive: true },
-    { name: 'Датчик влажности DHT22', sku: 'ELC-003', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'draft', isActive: true },
-    { name: 'Кабель USB Type-C 2м', sku: 'ELC-004', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', isActive: true },
-    { name: 'Плата расширения 8-канальная', sku: 'ELC-005', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', isActive: true },
-    { name: 'Электроды МР-3 3мм', sku: 'RSX-001', kind: 'ITEM', unit: 'кг', categoryId: categories[3]._id.toString(), status: 'active', isActive: true },
-    { name: 'Краска аэрозольная чёрная 520мл', sku: 'RSX-002', kind: 'ITEM', unit: 'шт', categoryId: categories[3]._id.toString(), status: 'active', isActive: true },
-    { name: 'Шлифкруг 125мм P80', sku: 'RSX-003', kind: 'ITEM', unit: 'шт', categoryId: categories[3]._id.toString(), status: 'active', isActive: true },
-    { name: 'Сварка аргонодуговая (работа)', sku: 'SRV-001', kind: 'WORK', unit: 'ч', categoryId: categories[5]._id.toString(), status: 'active', isActive: true },
-    { name: 'Фрезерная обработка ЧПУ (работа)', sku: 'SRV-002', kind: 'WORK', unit: 'ч', categoryId: categories[5]._id.toString(), status: 'active', isActive: true },
-    { name: '3D-печать прототипа PLA', sku: 'SRV-003', kind: 'SERVICE', unit: 'шт', categoryId: categories[5]._id.toString(), status: 'active', isActive: true },
-  ]);
+  const productSeedRows = [
+    { name: 'Лист стальной 3мм 1250x2500', sku: 'LST-001', kind: 'ITEM', unit: 'м²', categoryId: categories[0]._id.toString(), status: 'active', description: 'Сталь 3мм, размер 1250x2500мм', isActive: true, listPrice: 4200, stockQty: 85 },
+    { name: 'Лист стальной 5мм 1250x2500', sku: 'LST-002', kind: 'ITEM', unit: 'м²', categoryId: categories[0]._id.toString(), status: 'active', isActive: true, listPrice: 5800, stockQty: 42 },
+    { name: 'Лист нерж. 2мм 1000x2000', sku: 'LST-003', kind: 'ITEM', unit: 'м²', categoryId: categories[8]._id.toString(), status: 'active', isActive: true, listPrice: 12500, stockQty: 18 },
+    { name: 'Труба профильная 40x20x2', sku: 'TRB-001', kind: 'ITEM', unit: 'м.п.', categoryId: categories[9]._id.toString(), status: 'active', isActive: true, listPrice: 890, stockQty: 120 },
+    { name: 'Труба профильная 60x30x2', sku: 'TRB-002', kind: 'ITEM', unit: 'м.п.', categoryId: categories[9]._id.toString(), status: 'active', isActive: true, listPrice: 1150, stockQty: 95 },
+    { name: 'Уголок 50x50x5', sku: 'UGL-001', kind: 'ITEM', unit: 'м.п.', categoryId: categories[0]._id.toString(), status: 'active', isActive: true, listPrice: 720, stockQty: 200 },
+    { name: 'Болт М8x30 оцинк.', sku: 'BRT-001', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true, listPrice: 12, stockQty: 5000 },
+    { name: 'Болт М10x40 оцинк.', sku: 'BRT-002', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true, listPrice: 18, stockQty: 3200 },
+    { name: 'Гайка М8 оцинк.', sku: 'BRT-003', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true, listPrice: 8, stockQty: 4800 },
+    { name: 'Гайка М10 оцинк.', sku: 'BRT-004', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true, listPrice: 11, stockQty: 2900 },
+    { name: 'Шайба М8 оцинк.', sku: 'BRT-005', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true, listPrice: 5, stockQty: 6000 },
+    { name: 'Шайба М10 оцинк.', sku: 'BRT-006', kind: 'ITEM', unit: 'шт', categoryId: categories[1]._id.toString(), status: 'active', isActive: true, listPrice: 6, stockQty: 4100 },
+    { name: 'Контроллер Arduino Mega', sku: 'ELC-001', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', description: 'ATmega2560', isActive: true, listPrice: 4500, stockQty: 24 },
+    { name: 'Датчик температуры DS18B20', sku: 'ELC-002', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', isActive: true, listPrice: 350, stockQty: 150 },
+    { name: 'Датчик влажности DHT22', sku: 'ELC-003', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'draft', isActive: true, listPrice: 420, stockQty: 0 },
+    { name: 'Кабель USB Type-C 2м', sku: 'ELC-004', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', isActive: true, listPrice: 280, stockQty: 88 },
+    { name: 'Плата расширения 8-канальная', sku: 'ELC-005', kind: 'ITEM', unit: 'шт', categoryId: categories[2]._id.toString(), status: 'active', isActive: true, listPrice: 1200, stockQty: 35 },
+    { name: 'Электроды МР-3 3мм', sku: 'RSX-001', kind: 'ITEM', unit: 'кг', categoryId: categories[3]._id.toString(), status: 'active', isActive: true, listPrice: 650, stockQty: 45 },
+    { name: 'Краска аэрозольная чёрная 520мл', sku: 'RSX-002', kind: 'ITEM', unit: 'шт', categoryId: categories[3]._id.toString(), status: 'active', isActive: true, listPrice: 390, stockQty: 72 },
+    { name: 'Шлифкруг 125мм P80', sku: 'RSX-003', kind: 'ITEM', unit: 'шт', categoryId: categories[3]._id.toString(), status: 'active', isActive: true, listPrice: 145, stockQty: 110 },
+    { name: 'Сварка аргонодуговая (работа)', sku: 'SRV-001', kind: 'WORK', unit: 'ч', categoryId: categories[5]._id.toString(), status: 'active', isActive: true, listPrice: 2500, stockQty: 0 },
+    { name: 'Фрезерная обработка ЧПУ (работа)', sku: 'SRV-002', kind: 'WORK', unit: 'ч', categoryId: categories[5]._id.toString(), status: 'active', isActive: true, listPrice: 3200, stockQty: 0 },
+    { name: '3D-печать прототипа PLA', sku: 'SRV-003', kind: 'SERVICE', unit: 'шт', categoryId: categories[5]._id.toString(), status: 'active', isActive: true, listPrice: 8500, stockQty: 0 },
+  ];
+  const products = await ProductModel.insertMany(productSeedRows);
   console.log(`  ✅ Товары (часто используемые): ${products.length}`);
 
   // ================================================================

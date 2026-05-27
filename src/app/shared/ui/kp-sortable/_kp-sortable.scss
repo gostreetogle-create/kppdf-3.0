@@ -1,0 +1,36 @@
+.kp-sortable-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.kp-sortable-item {
+  &.cdk-drag-preview {
+    box-shadow: var(--kp-shadow-lg);
+    opacity: 0.95;
+    background: var(--kp-surface);
+    border-radius: var(--kp-radius-sm);
+  }
+
+  &.cdk-drag-placeholder {
+    opacity: 0.35;
+    border: 1px dashed var(--kp-primary);
+    border-radius: var(--kp-radius-sm);
+    min-height: 24px;
+  }
+
+  &.cdk-drag-animating {
+    transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.kp-sortable-handle {
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.cdk-drop-list-dragging .kp-sortable-item:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}

@@ -7,7 +7,7 @@ async function main() {
 
   // 1. Start a SINGLE in-memory MongoDB
   const mongod = await MongoMemoryServer.create({
-    instance: { dbName: 'kppdf-3.0' },
+    instance: { dbName: 'kppdf30' },
   });
   const uri = mongod.getUri();
 
@@ -55,7 +55,7 @@ async function main() {
   const cleanup = async () => {
     console.log('\nShutting down...');
     server.kill();
-    try { fs.unlinkSync(uriFile); } catch {}
+    try { fs.unlinkSync(uriFile); } catch { /* file may already be removed */ }
     await mongod.stop();
     process.exit(0);
   };
@@ -63,7 +63,7 @@ async function main() {
   process.on('SIGINT', cleanup);
   process.on('SIGTERM', cleanup);
   server.on('close', async () => {
-    try { fs.unlinkSync(uriFile); } catch {}
+    try { fs.unlinkSync(uriFile); } catch { /* file may already be removed */ }
     await mongod.stop();
   });
 }

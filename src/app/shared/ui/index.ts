@@ -22,3 +22,18 @@ export { KpStatGridComponent } from './kp-stat-grid/kp-stat-grid.component';
 export type { KpStatItem, KpStatSection } from './kp-stat-grid/kp-stat-grid.component';
 export { KpTableComponent } from './kp-table.component';
 export type { KpColumn, KpSortEvent, KpPageEvent } from './kp-table.component';
+export {
+  KpSortableListDirective,
+  KpSortableItemDirective,
+  KpSortableHandleDirective,
+  moveSortableItems,
+} from './kp-sortable';
+export type { KpSortableDropEvent } from './kp-sortable';
+export { KpSplitTextCardComponent } from './kp-split-text-card/kp-split-text-card.component';
+export {
+  KpProductPickerComponent,
+  KpProductPickerService,
+  PRODUCT_KIND_OPTIONS,
+  PRODUCT_KIND_LABELS,
+} from './kp-product-picker';
+export type { ProductPickerFilters } from './kp-product-picker';

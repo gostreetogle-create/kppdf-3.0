@@ -9,6 +9,10 @@ export interface IProduct {
   categoryId?: string;
   status: 'active' | 'draft' | 'archived';
   isActive?: boolean;
+  /** Справочная цена для подстановки в документы */
+  listPrice?: number;
+  /** Остаток (денормализация; sync из StockMovement — backlog) */
+  stockQty?: number;
   description?: string;
   // Технические поля (из паспортов изделий)
   height?: number;

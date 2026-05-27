@@ -3,6 +3,14 @@ import type { IDocumentTemplate } from '../../../../shared/types/documentTemplat
 
 export type DocumentTemplateDocument = IDocumentTemplate & Document;
 
+const documentBlockCellSchema = new Schema(
+  {
+    content: { type: String, default: '' },
+    align: { type: String, enum: ['left', 'center', 'right'], default: 'center' },
+  },
+  { _id: false },
+);
+
 const documentBlockSchema = new Schema(
   {
     type: {
@@ -13,6 +21,7 @@ const documentBlockSchema = new Schema(
     order: { type: Number, required: true },
     title: { type: String },
     content: { type: String, default: '' },
+    cells: { type: [documentBlockCellSchema], default: undefined },
     settings: {
       fontSize: { type: Number, default: 11 },
       fontWeight: { type: String, enum: ['normal', 'bold', 'semibold'], default: 'normal' },

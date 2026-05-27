@@ -46,7 +46,7 @@
 :host ::ng-deep .mod-dept__btn {
   padding: 0.3rem 0.7rem !important;
   font-size: $font-sm !important;
-  border-radius: $radius-sm !important;
+  border-radius: $radius-button !important;
   font-weight: 500 !important;
 }
 
@@ -143,14 +143,14 @@
     font-size: $font-sm;
 
     .p-paginator-pages .p-paginator-page {
-      min-width: 30px; height: 30px; border-radius: $radius-sm;
+      min-width: 30px; height: 30px; border-radius: $radius-button;
       font-weight: 400; color: var(--kp-text-secondary); transition: all var(--kp-transition-fast); margin: 0 1px;
       &:hover { background: var(--kp-primary-muted); color: var(--kp-primary); }
       &.p-highlight { background: var(--kp-primary); color: var(--kp-text-on-primary); font-weight: 600; }
     }
 
     .p-paginator-first, .p-paginator-prev, .p-paginator-next, .p-paginator-last {
-      min-width: 30px; height: 30px; border-radius: $radius-sm; color: var(--kp-text-soft); transition: all var(--kp-transition-fast);
+      min-width: 30px; height: 30px; border-radius: $radius-button; color: var(--kp-text-soft); transition: all var(--kp-transition-fast);
       &:hover { background: var(--kp-primary-muted); color: var(--kp-primary); }
       &.p-disabled { opacity: 0.3; }
     }

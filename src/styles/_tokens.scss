@@ -79,6 +79,9 @@
   --kp-radius-3xl: 24px;
   --kp-radius-full: 9999px;
 
+  /* Buttons — almost square */
+  --kp-button-border-radius: 2px;
+
   /* ── Spacing (4px grid) ── */
   --kp-space-1: 4px;
   --kp-space-2: 8px;
@@ -251,7 +254,7 @@
   --p-button-sm-padding-y: 0.35rem;
   --p-button-sm-padding-x: 0.85rem;
   --p-button-sm-font-size: 13px;
-  --p-button-border-radius: 8px;
+  --p-button-border-radius: var(--kp-button-border-radius);
   --p-button-icon-only-width: 30px;
   --p-button-icon-only-height: 30px;
   --p-button-icon-only-sm-width: 28px;
@@ -347,6 +350,7 @@ $radius-sm: var(--kp-radius-sm);
 $radius-md: var(--kp-radius-md);
 $radius-lg: var(--kp-radius-lg);
 $radius-xl: var(--kp-radius-xl);
+$radius-button: var(--kp-button-border-radius);
 
 $shadow-sm: var(--kp-shadow-sm);
 $shadow-md: var(--kp-shadow-md);
