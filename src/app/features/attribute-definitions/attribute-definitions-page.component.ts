@@ -10,9 +10,10 @@ import {
 import { createAttributeDefinitionsStore } from './attribute-definitions.store';
 import { PERMISSIONS } from '../../core/permissions';
 
-const ENTITY_TYPE_OPTIONS: KpSelectOption[] = [  { label: 'Товар', value: 'Product' },
-  { label: 'Запрос', value: 'Tender' },
-  { label: 'Заказ', value: 'Order' },
+const ENTITY_TYPE_OPTIONS: KpSelectOption[] = [
+  { label: 'Товар', value: 'product' },
+  { label: 'Запрос', value: 'tender' },
+  { label: 'Заказ', value: 'order' },
 ];
 
 const ATTRIBUTE_TYPE_OPTIONS: KpSelectOption[] = [
@@ -55,7 +56,7 @@ const YES_NO: KpSelectOption[] = [
           <app-kp-select
             label="Тип сущности"
             name="entityType"
-            [value]="row['entityType'] || 'Product'"
+            [value]="row['entityType'] || 'product'"
             (valueChange)="row['entityType'] = $event"
             [options]="entityTypeOptions"
             [required]="true"

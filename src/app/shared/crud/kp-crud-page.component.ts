@@ -96,7 +96,7 @@ import type { CrudPermissions, CrudAction } from './crud-page.types';
       @if (formTemplate) {
         <ng-container
           [ngTemplateOutlet]="formTemplate"
-          [ngTemplateOutletContext]="{ $implicit: editRow(), row: editRow() }"
+          [ngTemplateOutletContext]="{ $implicit: editRow(), row: editRow(), id: editingId() }"
         />
       } @else {
         <p class="kp-crud-dialog__empty">Форма не задана. Используйте &lt;ng-template #form&gt;.</p>
@@ -142,7 +142,7 @@ export class KpCrudPageComponent implements OnInit {
   readonly extraRowActions = input<CrudAction<Record<string, unknown>>[]>([]);
   readonly severityFn = input<(value: unknown) => string>(() => 'info');
 
-  @ContentChild('form') formTemplate: TemplateRef<{ $implicit: Record<string, unknown>; row: Record<string, unknown> }> | null = null;
+  @ContentChild('form') formTemplate: TemplateRef<{ $implicit: Record<string, unknown>; row: Record<string, unknown>; id: string | null }> | null = null;
 
   readonly dialogVisible = model(false);
   readonly editing = signal(false);

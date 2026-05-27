@@ -8,6 +8,7 @@ import {
   type KpSelectOption,
   type KpColumn,
 } from '../../shared/ui';
+import { AttributesEditorComponent } from '../attributes/attributes-editor.component';
 import { createProductsStore } from './products.store';
 import { PERMISSIONS } from '../../core/permissions';
 
@@ -32,6 +33,7 @@ function productSeverity(value: unknown): string {
     KpInputComponent,
     KpSelectComponent,
     KpTextareaComponent,
+    AttributesEditorComponent,
   ],
   template: `
     <app-kp-crud-page
@@ -43,8 +45,9 @@ function productSeverity(value: unknown): string {
       [permissions]="PERMISSIONS.products"
       [severityFn]="productSeverity"
       createLabel="Создать товар"
+      dialogWidth="680px"
     >
-      <ng-template #form let-row>
+      <ng-template #form let-row let-id="id">
         <div class="form-layout">
           <app-kp-input
             label="Наименование"
@@ -86,6 +89,11 @@ function productSeverity(value: unknown): string {
             [value]="row['description'] || ''"
             (valueChange)="row['description'] = $event"
           />
+          @if (id) {
+            <app-attributes-editor entityType="product" [entityId]="id" />
+          } @else {
+            <p class="form-hint">Дополнительные характеристики будут доступны после сохранения товара.</p>
+          }
         </div>
       </ng-template>
     </app-kp-crud-page>

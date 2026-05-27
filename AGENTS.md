@@ -206,7 +206,7 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 
 - Процесс: [.opencode/audit/TEAM-WORKFLOW.md](.opencode/audit/TEAM-WORKFLOW.md)
 - Сводка: `@chief-architect` ← отчёты в `.opencode/audit/reports/`
-- **Последний аудит:** 2026-05-27 → [отчёт](.opencode/audit/reports/2026-05-27.md)
+- **Последний аудит:** 2026-05-27 (финал) → [отчёт](.opencode/audit/reports/2026-05-27.md)
 
 ### Cursor (кратко)
 
