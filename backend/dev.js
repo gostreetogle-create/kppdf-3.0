@@ -1,3 +1,4 @@
+/* eslint-disable */
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -13,7 +14,7 @@ async function main() {
   // 1. MongoDB Memory Server
   console.log('  [1/3] Starting MongoDB in-memory...');
   const mongod = await MongoMemoryServer.create({
-    instance: { dbName: 'kppdf-3.0' },
+    instance: { dbName: 'kppdf30' },
   });
   const uri = mongod.getUri();
   const env = { ...process.env, MONGO_URI: uri };
