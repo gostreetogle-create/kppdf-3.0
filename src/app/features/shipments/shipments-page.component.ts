@@ -63,7 +63,14 @@ function shipmentSeverity(value: unknown): string {
     >
       <ng-template #form let-row>
         <div class="form-layout">
-          <app-kp-input label="Номер" name="number" [value]="row['number'] || ''" (valueChange)="row['number'] = $event" />
+          <app-kp-input
+            label="Номер"
+            name="number"
+            placeholder="Например, ОТ-001"
+            [value]="row['number'] || ''"
+            (valueChange)="row['number'] = $event"
+            [required]="true"
+          />
           <app-kp-select
             label="Заказ"
             name="orderId"
@@ -73,17 +80,43 @@ function shipmentSeverity(value: unknown): string {
             [options]="orderOptions()"
             [required]="true"
           />
-          <app-kp-datepicker label="Дата" name="date" [value]="row['date'] || ''" (valueChange)="row['date'] = $event" />
+          <app-kp-datepicker
+            label="Дата"
+            name="date"
+            [value]="row['date'] || ''"
+            (valueChange)="row['date'] = $event"
+          />
           <app-kp-select
             label="Статус"
             name="statusId"
+            placeholder="Выберите статус"
             [value]="row['statusId'] || 'preparing'"
             (valueChange)="row['statusId'] = $event"
             [options]="statusOptions"
+            [required]="true"
           />
-          <app-kp-input label="Получатель" name="recipient" [value]="row['recipient'] || ''" (valueChange)="row['recipient'] = $event" />
-          <app-kp-textarea label="Адрес доставки" name="address" [value]="row['address'] || ''" (valueChange)="row['address'] = $event" [rows]="2" />
-          <app-kp-input label="Данные водителя" name="driverInfo" [value]="row['driverInfo'] || ''" (valueChange)="row['driverInfo'] = $event" />
+          <app-kp-input
+            label="Получатель"
+            name="recipient"
+            placeholder="ФИО или организация"
+            [value]="row['recipient'] || ''"
+            (valueChange)="row['recipient'] = $event"
+          />
+          <app-kp-textarea
+            label="Адрес доставки"
+            name="address"
+            placeholder="Полный адрес доставки"
+            [value]="row['address'] || ''"
+            (valueChange)="row['address'] = $event"
+            [rows]="2"
+          />
+          <app-kp-input
+            label="Данные водителя"
+            name="driverInfo"
+            placeholder="ФИО, телефон, автомобиль"
+            [value]="row['driverInfo'] || ''"
+            (valueChange)="row['driverInfo'] = $event"
+          />
         </div>
       </ng-template>
     </app-kp-crud-page>

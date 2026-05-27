@@ -168,6 +168,24 @@ button { font-family: inherit; cursor: pointer; }
 
 @media (max-width: 768px) {
   :root { --kp-touch-target: 44px; }
+
+  .layout__nav-item,
+  .p-button:not(.p-button-rounded):not(.p-button-icon-only) {
+    min-height: var(--kp-touch-target);
+  }
+}
+
+@media (max-width: 640px) {
+  .p-dialog-footer,
+  .kp-crud-dialog__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .p-dialog-footer .p-button,
+  .kp-crud-dialog__footer .p-button {
+    width: 100%;
+  }
 }
 
 [data-density='compact'] {
@@ -302,9 +320,27 @@ button { font-family: inherit; cursor: pointer; }
   to { transform: rotate(360deg); }
 }
 
+.kp-fade-in {
+  animation: kp-fade-in var(--kp-transition-base) ease-out;
+}
+
+.kp-spin {
+  animation: kp-spin 0.7s linear infinite;
+}
+
 /* ════════════════════════════════════════════════════════════
    PRIMENG OVERRIDES
    ════════════════════════════════════════════════════════════ */
+
+/* ── Dialog footer (shared via kp-crud-page) ── */
+.kp-crud-dialog__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--kp-space-2, 0.5rem);
+  width: 100%;
+}
 
 /* ── Table container (rounded + shadow) ── */
 .p-datatable {
@@ -312,6 +348,11 @@ button { font-family: inherit; cursor: pointer; }
   overflow: hidden;
   box-shadow: var(--kp-shadow-sm);
   border: 1px solid var(--kp-border);
+}
+
+.p-datatable-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Table header */
@@ -334,18 +375,28 @@ button { font-family: inherit; cursor: pointer; }
   background: var(--kp-primary-soft) !important;
 }
 
-/* p-tag inside tables — pill style */
-.p-datatable-tbody .p-tag {
-  border-radius: 9999px !important;
+/* p-tag — pill style (tables + forms) */
+.p-tag {
+  border-radius: var(--kp-radius-full) !important;
   padding: 3px 10px !important;
-  font-weight: 500 !important;
+  font-weight: var(--kp-font-weight-medium) !important;
+  font-size: var(--kp-font-size-sm) !important;
 }
 
-/* ── Buttons — smooth, no aggressive transforms ── */
+/* ── Buttons — smooth hover (150ms) ── */
 .p-button {
-  transition: background var(--kp-transition-fast), border-color var(--kp-transition-fast), box-shadow var(--kp-transition-fast);
+  transition:
+    background var(--kp-transition-base),
+    border-color var(--kp-transition-base),
+    color var(--kp-transition-base),
+    box-shadow var(--kp-transition-base);
   gap: 6px;
   font-weight: 500;
+}
+
+.p-button:focus-visible {
+  outline: none;
+  box-shadow: var(--kp-focus-ring);
 }
 
 .p-button.p-button-sm { gap: 5px; }
@@ -393,21 +444,6 @@ button { font-family: inherit; cursor: pointer; }
   display: flex;
   justify-content: flex-end;
   gap: var(--kp-space-2, 0.5rem);
-}
-
-.kp-crud-dialog__footer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--kp-space-2, 0.5rem);
-  width: 100%;
-}
-
-.kp-crud-dialog__empty {
-  margin: 0;
-  font-size: var(--kp-font-size-sm, 0.875rem);
-  color: var(--kp-text-secondary);
 }
 
 /* ── Confirm dialog ── */

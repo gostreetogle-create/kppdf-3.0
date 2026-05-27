@@ -32,12 +32,7 @@ import { TooltipModule } from 'primeng/tooltip';
       />
     </span>
   `,
-  styles: `
-    .kp-button-host {
-      display: inline-flex;
-      vertical-align: middle;
-    }
-  `,
+  styleUrl: './kp-button.component.scss',
 })
 export class KpButtonComponent {
   readonly type = input<'button' | 'submit' | 'reset'>('button');

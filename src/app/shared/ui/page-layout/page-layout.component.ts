@@ -10,6 +10,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       <ng-content></ng-content>
     </div>
   `,
+  styleUrl: './page-layout.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PageLayoutComponent {

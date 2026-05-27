@@ -39,6 +39,7 @@
   gap: var(--kp-space-2);
 }
 
+.empty-state__icon,
 :host ::ng-deep [empty-icon] {
   font-size: 2rem;
   color: var(--kp-text-muted);

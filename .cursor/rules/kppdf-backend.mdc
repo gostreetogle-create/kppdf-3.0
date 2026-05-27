@@ -6,7 +6,11 @@ alwaysApply: false
 
 # Backend (кратко)
 
-- CRUD: `createCrudRouter` + `permPrefix` из `core/permissions`.
-- Ответы: `ApiResponse<T>`, пагинация списков.
-- Типы FE/BE: `shared/types/`, синхронно с моделями.
-- Роли: `backend-specialist.md`, `api-specialist.md`, `auth-specialist.md` в `.opencode/agents/`.
+- CRUD: `createCrudRouter` + `permPrefix` из `core/permissions`
+- Ответы: `ApiResponse<T>`, пагинация всех списков (page, limit, total)
+- Типы FE/BE: `shared/types/`, синхронно с Mongoose-моделями
+- 26 модулей: 8 справочников + 18 бизнес-модулей
+- Auth: JWT (access 15m + refresh 7d) + bcrypt + RBAC
+- Роли-агенты: backend-specialist.md, api-specialist.md, auth-specialist.md в .opencode/agents/
+
+---

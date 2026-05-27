@@ -146,7 +146,7 @@
       min-width: 30px; height: 30px; border-radius: $radius-sm;
       font-weight: 400; color: var(--kp-text-secondary); transition: all var(--kp-transition-fast); margin: 0 1px;
       &:hover { background: var(--kp-primary-muted); color: var(--kp-primary); }
-      &.p-highlight { background: var(--kp-primary); color: #fff; font-weight: 600; }
+      &.p-highlight { background: var(--kp-primary); color: var(--kp-text-on-primary); font-weight: 600; }
     }
 
     .p-paginator-first, .p-paginator-prev, .p-paginator-next, .p-paginator-last {

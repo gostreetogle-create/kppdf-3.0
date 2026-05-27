@@ -139,7 +139,7 @@
 }
 
 :host ::ng-deep .kp-table__datatable .p-datatable-tbody > tr.p-row-odd {
-  background: var(--kp-bg-soft, #f8fafc);
+  background: var(--kp-bg-soft);
 }
 
 :host ::ng-deep .kp-table__datatable .p-datatable-tbody > tr:hover {
@@ -170,4 +170,31 @@
   overflow: hidden;
   white-space: normal;
   line-height: 1.45;
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kp-space-1, 0.25rem);
+}
+
+@media (max-width: 768px) {
+  .kp-table__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .kp-table__toolbar-right {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .kp-table__search {
+    flex: 1;
+    min-width: 0;
+  }
+
+  :host ::ng-deep .kp-table__datatable .p-datatable-table {
+    min-width: 640px;
+  }
 }

@@ -38,6 +38,7 @@ import type { ColumnDef, ColumnRef } from './modules.config';
           <app-kp-input
             [label]="col.header"
             [name]="col.field"
+            [placeholder]="textPlaceholder(col)"
             [value]="toStr(row()[col.field])"
             (valueChange)="row()[col.field] = $event"
             [required]="col.required || false"
@@ -47,6 +48,7 @@ import type { ColumnDef, ColumnRef } from './modules.config';
           <app-kp-input-number
             [label]="col.header"
             [name]="col.field"
+            [placeholder]="numberPlaceholder(col)"
             [value]="toNum(row()[col.field])"
             (valueChange)="row()[col.field] = $event"
             [required]="col.required || false"
@@ -55,6 +57,7 @@ import type { ColumnDef, ColumnRef } from './modules.config';
           <app-kp-textarea
             [label]="col.header"
             [name]="col.field"
+            [placeholder]="textPlaceholder(col)"
             [value]="toStr(row()[col.field])"
             (valueChange)="row()[col.field] = $event"
             [required]="col.required || false"
@@ -63,6 +66,7 @@ import type { ColumnDef, ColumnRef } from './modules.config';
           <app-kp-select
             [label]="col.header"
             [name]="col.field"
+            [placeholder]="selectPlaceholder(col)"
             [value]="toStr(row()[col.field])"
             (valueChange)="row()[col.field] = $event"
             [options]="col.options"
@@ -72,6 +76,7 @@ import type { ColumnDef, ColumnRef } from './modules.config';
           <app-kp-select
             [label]="col.header"
             [name]="col.field"
+            placeholder="Выберите"
             [value]="toStr(row()[col.field])"
             (valueChange)="row()[col.field] = $event === 'true'"
             [options]="booleanSelectOptions"
@@ -123,10 +128,22 @@ export class ModuleDynamicFormComponent {
   }
 
   refPlaceholder(col: ColumnDef): string {
-    if (!col.ref) return '';
+    if (!col.ref) return 'Выберите...';
     if (!this.refOptionsReady()) return 'Загрузка справочника…';
     const opts = this.refOptions()[col.ref];
     if (!opts?.length) return 'Нет записей в справочнике';
+    return `Выберите ${col.header.toLowerCase()}`;
+  }
+
+  textPlaceholder(col: ColumnDef): string {
+    return `Введите ${col.header.toLowerCase()}`;
+  }
+
+  numberPlaceholder(_col: ColumnDef): string {
+    return `0`;
+  }
+
+  selectPlaceholder(col: ColumnDef): string {
     return `Выберите ${col.header.toLowerCase()}`;
   }
 }

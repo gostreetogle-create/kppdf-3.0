@@ -25,10 +25,14 @@ import { DatePickerModule } from 'primeng/datepicker';
         [showIcon]="true"
         iconDisplay="input"
         class="kp-datepicker__control w-full"
+        [styleClass]="error() ? 'kp-datepicker__control--error' : ''"
         size="small"
+        [attr.aria-label]="inputAriaLabel() || null"
+        [attr.aria-invalid]="error() ? true : null"
+        [attr.aria-describedby]="error() ? errorId() : null"
       />
       @if (error()) {
-        <span class="kp-datepicker__error">{{ error() }}</span>
+        <span [id]="errorId()" class="kp-datepicker__error" role="alert">{{ error() }}</span>
       }
     </div>
   `,
@@ -43,6 +47,10 @@ export class KpDatepickerComponent {
   readonly readonly = input(false);
   readonly disabled = input(false);
   readonly error = input<string>('');
+  readonly ariaLabel = input<string>('');
+
+  readonly errorId = computed(() => (this.name() ? `${this.name()}-error` : 'kp-datepicker-error'));
+  readonly inputAriaLabel = computed(() => this.ariaLabel() || this.label() || '');
 
   readonly dateValue = computed(() => {
     const v = this.value();

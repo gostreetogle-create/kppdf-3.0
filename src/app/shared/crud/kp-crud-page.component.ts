@@ -11,7 +11,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 import { PageLayoutComponent } from '../ui/page-layout/page-layout.component';
 import { KpTableComponent } from '../ui/kp-table.component';
@@ -56,6 +56,20 @@ import type { CrudPermissions, CrudAction } from './crud-page.types';
     }
 
     <ng-template #tableBlock>
+      @if (store().error() && !store().loading()) {
+        <div class="kp-crud-page__error" role="alert">
+          <i class="pi pi-exclamation-triangle kp-crud-page__error-icon" aria-hidden="true"></i>
+          <span class="kp-crud-page__error-text">{{ store().error() }}</span>
+          <app-kp-button
+            label="Повторить"
+            icon="pi pi-refresh"
+            size="small"
+            severity="secondary"
+            [outlined]="true"
+            (buttonClick)="retryLoad()"
+          />
+        </div>
+      }
       <div class="kp-crud-page__table">
         <app-kp-table
           [columns]="columns()"
@@ -79,6 +93,7 @@ import type { CrudPermissions, CrudAction } from './crud-page.types';
               <app-kp-button
                 [label]="createLabel()"
                 icon="pi pi-plus"
+                size="small"
                 (buttonClick)="openCreate()"
               />
             </ng-template>
@@ -105,12 +120,14 @@ import type { CrudPermissions, CrudAction } from './crud-page.types';
         <app-kp-button
           label="Отмена"
           severity="secondary"
+          size="small"
           [outlined]="true"
           (buttonClick)="closeDialog()"
           [disabled]="store().saving()"
         />
         <app-kp-button
           label="Сохранить"
+          size="small"
           (buttonClick)="save()"
           [loading]="store().saving()"
         />
@@ -128,6 +145,7 @@ export class KpCrudPageComponent implements OnInit {
 
   private readonly auth = inject(AuthService);
   private readonly confirmationService = inject(ConfirmationService);
+  private readonly messageService = inject(MessageService);
 
   readonly title = input.required<string>();
   /** Подпись сущности в родительном падеже для заголовка диалога, напр. «коммерческого предложения». */
@@ -225,16 +243,36 @@ export class KpCrudPageComponent implements OnInit {
     return mode === 'create' ? `Создание: ${title}` : `Редактирование: ${title}`;
   }
 
+  retryLoad(): void {
+    this.store().load();
+  }
+
   async save(): Promise<void> {
     const row = this.editRow();
     let result;
-    if (this.editing() && this.editingId()) {
-      result = await this.store().update(this.editingId()!, row);
-    } else {
-      result = await this.store().create(row);
-    }
-    if (result !== null) {
-      this.closeDialog();
+    try {
+      if (this.editing() && this.editingId()) {
+        result = await this.store().update(this.editingId()!, row);
+      } else {
+        result = await this.store().create(row);
+      }
+      if (result !== null) {
+        this.closeDialog();
+      } else {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Ошибка сохранения',
+          detail: 'Не удалось сохранить запись. Попробуйте ещё раз.',
+          life: 4000,
+        });
+      }
+    } catch (err) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Ошибка',
+        detail: err instanceof Error ? err.message : 'Произошла непредвиденная ошибка',
+        life: 5000,
+      });
     }
   }
 }

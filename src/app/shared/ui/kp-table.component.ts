@@ -87,6 +87,7 @@ export interface KpPageEvent {
         <p-table
           [value]="data()"
           [stripedRows]="true"
+          [resizableColumns]="true"
           [paginator]="paginator()"
           [rows]="limit()"
           [totalRecords]="total()"
@@ -105,6 +106,7 @@ export interface KpPageEvent {
             <tr>
               @for (col of columns(); track col.field || $index) {
                 <th
+                  pResizableColumn
                   [style.width]="col.width"
                   [pSortableColumn]="col.sortable !== false ? col.field : undefined"
                 >
@@ -205,9 +207,10 @@ export interface KpPageEvent {
               <td [attr.colspan]="columns().length + (showRowActions() ? 1 : 0)">
                 <app-empty-state
                   [compact]="true"
+                  title="Нет данных"
                   [description]="emptyMessage()"
                 >
-                  <i empty-icon class="pi pi-inbox"></i>
+                  <i empty-icon class="pi pi-inbox" aria-hidden="true"></i>
                 </app-empty-state>
               </td>
             </tr>
@@ -230,7 +233,7 @@ export class KpTableComponent {
   readonly paginator = input(true);
   readonly page = model(1);
   readonly limit = model(15);
-  readonly rowsPerPageOptions = input<number[]>([10, 15, 25, 50]);
+  readonly rowsPerPageOptions = input<number[]>([10, 25, 50]);
   readonly sortField = model<string>('createdAt');
   readonly sortOrder = model<-1 | 1>(-1);
 

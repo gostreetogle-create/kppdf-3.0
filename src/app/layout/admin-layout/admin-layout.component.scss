@@ -1,4 +1,4 @@
-/* ===== Admin Layout — Sidebar (Modern · Slate #1E293B) ===== */
+/* ===== Admin Layout — Sidebar (Modern · Slate) ===== */
 
 :host {
   display: flex;
@@ -10,6 +10,21 @@
   display: flex;
   width: 100%;
 
+  &__mobile-header {
+    display: none;
+  }
+
+  &__overlay {
+    display: none;
+  }
+
+  &__mobile-title {
+    font-size: var(--kp-font-size-h3);
+    font-weight: var(--kp-font-weight-semibold);
+    color: var(--kp-text);
+    letter-spacing: -0.02em;
+  }
+
   &__sidebar {
     width: var(--kp-layout-sidebar-width);
     background: var(--kp-sidebar-bg);
@@ -20,8 +35,8 @@
     top: 0;
     left: 0;
     height: 100vh;
-    z-index: 100;
-    transition: width 0.15s ease;
+    z-index: var(--kp-z-sticky);
+    transition: transform var(--kp-transition-base), width var(--kp-transition-base);
     border-right: 1px solid var(--kp-sidebar-border);
   }
 
@@ -35,8 +50,8 @@
     &-icon {
       width: 32px;
       height: 32px;
-      background: linear-gradient(135deg, var(--kp-primary), #1d4ed8);
-      color: #fff;
+      background: linear-gradient(135deg, var(--kp-primary), var(--kp-primary-hover));
+      color: var(--kp-text-on-primary);
       border-radius: var(--kp-radius-md);
       display: flex;
       align-items: center;
@@ -48,7 +63,7 @@
     }
 
     &-text {
-      color: #f1f5f9;
+      color: var(--kp-bg-soft);
       font-weight: 600;
       font-size: 16px;
       letter-spacing: -0.3px;
@@ -63,7 +78,6 @@
     flex: 1;
     overflow-y: auto;
 
-    /* Скрываем скроллбар в sidebar */
     scrollbar-width: thin;
     &::-webkit-scrollbar { width: 3px; }
     &::-webkit-scrollbar-thumb {
@@ -100,6 +114,10 @@
     transition: background var(--kp-transition-base), color var(--kp-transition-base);
     cursor: pointer;
     position: relative;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
 
     i {
       width: 20px;
@@ -112,14 +130,14 @@
 
     &:hover {
       background: var(--kp-sidebar-hover);
-      color: #e2e8f0;
+      color: var(--kp-bg-muted);
 
-      i { color: #94a3b8; }
+      i { color: var(--kp-text-muted); }
     }
 
     &--active {
       background: rgba(37, 99, 235, 0.15) !important;
-      color: #60a5fa !important;
+      color: var(--kp-primary) !important;
       font-weight: 500;
 
       &::before {
@@ -130,11 +148,11 @@
         transform: translateY(-50%);
         width: 3px;
         height: 20px;
-        background: var(--kp-primary);
+        background: var(--kp-sidebar-active);
         border-radius: 0 2px 2px 0;
       }
 
-      i { color: #60a5fa !important; }
+      i { color: var(--kp-primary) !important; }
     }
   }
 
@@ -157,11 +175,11 @@
       width: 36px;
       height: 36px;
       border-radius: var(--kp-radius-md);
-      background: linear-gradient(135deg, var(--kp-primary), #1d4ed8);
+      background: linear-gradient(135deg, var(--kp-primary), var(--kp-primary-hover));
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
+      color: var(--kp-text-on-primary);
       font-weight: 600;
       font-size: 14px;
       flex-shrink: 0;
@@ -178,7 +196,7 @@
   &__user-name {
     font-size: 13px;
     font-weight: 500;
-    color: #e2e8f0;
+    color: var(--kp-bg-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -202,7 +220,7 @@
 
       &:hover {
         background: rgba(239, 68, 68, 0.12);
-        color: #f87171;
+        color: var(--kp-danger);
         transform: none !important;
       }
 
@@ -218,5 +236,55 @@
     overflow-y: auto;
     min-width: 0;
     background: var(--kp-bg);
+  }
+}
+
+@media (max-width: 768px) {
+  .layout {
+    &__mobile-header {
+      display: flex;
+      align-items: center;
+      gap: var(--kp-space-2);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      padding: 0 var(--kp-space-3);
+      background: var(--kp-surface);
+      border-bottom: 1px solid var(--kp-border);
+      z-index: calc(var(--kp-z-sticky) + 1);
+    }
+
+    &__overlay {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: calc(var(--kp-z-sticky) - 1);
+      background: rgba(15, 23, 42, 0.45);
+      border: none;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    &__sidebar {
+      transform: translateX(-100%);
+
+      &--open {
+        transform: translateX(0);
+        z-index: var(--kp-z-sticky);
+      }
+    }
+
+    &__nav-item {
+      min-height: var(--kp-touch-target);
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    &__main {
+      margin-left: 0;
+      padding-top: 52px;
+    }
   }
 }

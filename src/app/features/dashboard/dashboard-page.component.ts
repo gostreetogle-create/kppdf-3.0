@@ -1,6 +1,14 @@
 import { Component, inject, OnInit, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { KpStatGridComponent, type KpStatSection } from '../../shared/ui';
+import { MessageService } from 'primeng/api';
+import {
+  KpStatGridComponent,
+  KpToastComponent,
+  KpButtonComponent,
+  EmptyStateComponent,
+  PageLayoutComponent,
+  type KpStatSection,
+} from '../../shared/ui';
 import { DashboardService, type DashboardStats, type DashboardStatItem } from '../../core/dashboard.service';
 
 const DEPT_GROUPS: { id: string; label: string; icon: string }[] = [
@@ -52,32 +60,59 @@ const DEPT_STAT_KEYS: Record<string, (keyof DashboardStats)[]> = {
   selector: 'app-dashboard-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KpStatGridComponent],
+  imports: [KpStatGridComponent, KpToastComponent, KpButtonComponent, EmptyStateComponent, PageLayoutComponent],
   template: `
-    <div class="page">
-      <div class="page__header">
+    <app-page-layout>
+      <div page-header class="page__header">
         <h1>Дашборд</h1>
-        @if (!loading()) {
+        @if (!loading() && !loadError()) {
           <span class="page__subtitle">
             Всего записей: <strong>{{ totalRecords() }}</strong>
           </span>
         }
       </div>
 
-      <app-kp-stat-grid [sections]="sections()" [loading]="loading()" />
-    </div>
+      @if (loadError()) {
+        <app-empty-state
+          title="Не удалось загрузить данные"
+          description="Проверьте подключение к серверу и попробуйте снова."
+          icon="pi-exclamation-triangle"
+        >
+          <div empty-actions>
+            <app-kp-button
+              label="Повторить"
+              icon="pi pi-refresh"
+              size="small"
+              (buttonClick)="loadStats()"
+            />
+          </div>
+        </app-empty-state>
+      } @else {
+        <app-kp-stat-grid [sections]="sections()" [loading]="loading()" />
+      }
+    </app-page-layout>
+    <app-kp-toast position="top-right" />
   `,
   styleUrl: './dashboard-page.component.scss',
 })
 export class DashboardPageComponent implements OnInit {
   private readonly dashboard = inject(DashboardService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly messageService = inject(MessageService);
 
   readonly loading = signal(true);
+  readonly loadError = signal(false);
   readonly totalRecords = signal(0);
   readonly sections = signal<KpStatSection[]>([]);
 
   ngOnInit(): void {
+    this.loadStats();
+  }
+
+  loadStats(): void {
+    this.loading.set(true);
+    this.loadError.set(false);
+
     this.dashboard
       .getStats()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -102,8 +137,18 @@ export class DashboardPageComponent implements OnInit {
           });
           this.sections.set(groups);
           this.loading.set(false);
+          this.loadError.set(false);
         },
-        error: () => this.loading.set(false),
+        error: () => {
+          this.loading.set(false);
+          this.loadError.set(true);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Не удалось загрузить дашборд',
+            detail: 'Проверьте подключение и обновите страницу.',
+            life: 5000,
+          });
+        },
       });
   }
 }

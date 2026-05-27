@@ -69,8 +69,10 @@ function orderSeverity(value: unknown): string {
           <app-kp-input
             label="Номер"
             name="number"
+            placeholder="Например, ЗК-001"
             [value]="row['number'] || ''"
             (valueChange)="row['number'] = $event"
+            [required]="true"
           />
           <app-kp-select
             label="Контрагент"
@@ -84,7 +86,7 @@ function orderSeverity(value: unknown): string {
           <app-kp-select
             label="КП основание"
             name="quotationId"
-            placeholder="Не выбрано"
+            placeholder="Выберите КП"
             [value]="row['quotationId'] || ''"
             (valueChange)="row['quotationId'] = $event"
             [options]="quotationOptions()"
@@ -104,13 +106,16 @@ function orderSeverity(value: unknown): string {
           <app-kp-select
             label="Статус"
             name="statusId"
+            placeholder="Выберите статус"
             [value]="row['statusId'] || 'draft'"
             (valueChange)="row['statusId'] = $event"
             [options]="statusOptions"
+            [required]="true"
           />
           <app-kp-textarea
             label="Примечание"
             name="notes"
+            placeholder="Комментарий к заказу"
             [value]="row['notes'] || ''"
             (valueChange)="row['notes'] = $event"
           />

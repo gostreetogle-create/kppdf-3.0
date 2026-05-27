@@ -1,0 +1,49 @@
+.kp-breadcrumbs {
+  padding: var(--kp-space-3) var(--kp-space-6) 0;
+  max-width: 100%;
+
+  :host-context(.layout__main) & {
+    padding-left: var(--kp-space-6);
+    padding-right: var(--kp-space-6);
+  }
+}
+
+:host ::ng-deep .kp-breadcrumbs__trail.p-breadcrumb {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: var(--kp-font-size-sm, 0.875rem);
+
+  .p-breadcrumb-list {
+    flex-wrap: wrap;
+    gap: var(--kp-space-1);
+  }
+
+  .p-menuitem-link {
+    color: var(--kp-text-secondary);
+    transition: color var(--kp-transition-base);
+
+    &:hover {
+      color: var(--kp-primary);
+    }
+  }
+
+  .p-menuitem-text {
+    color: inherit;
+  }
+
+  .p-breadcrumb-chevron {
+    color: var(--kp-text-muted);
+  }
+
+  li:last-child .p-menuitem-text {
+    color: var(--kp-text);
+    font-weight: var(--kp-font-weight-medium, 500);
+  }
+}
+
+@media (max-width: 768px) {
+  .kp-breadcrumbs {
+    padding: var(--kp-space-2) var(--kp-space-4) 0;
+  }
+}

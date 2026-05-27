@@ -1,4 +1,4 @@
-import { Component, input, model, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, model, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PasswordModule } from 'primeng/password';
 
@@ -23,11 +23,19 @@ import { PasswordModule } from 'primeng/password';
         [disabled]="disabled()"
         [toggleMask]="toggleMask()"
         [feedback]="feedback()"
+        weakLabel="Слабый"
+        mediumLabel="Средний"
+        strongLabel="Надёжный"
+        promptLabel="Введите пароль"
         class="kp-password__control w-full"
+        [inputStyleClass]="error() ? 'kp-password__control--error' : ''"
         size="small"
+        [attr.aria-label]="inputAriaLabel() || null"
+        [attr.aria-invalid]="error() ? true : null"
+        [attr.aria-describedby]="error() ? errorId() : null"
       />
       @if (error()) {
-        <span class="kp-password__error">{{ error() }}</span>
+        <span [id]="errorId()" class="kp-password__error" role="alert">{{ error() }}</span>
       }
     </div>
   `,
@@ -43,4 +51,8 @@ export class KpPasswordComponent {
   readonly error = input<string>('');
   readonly toggleMask = input(true);
   readonly feedback = input(false);
+  readonly ariaLabel = input<string>('');
+
+  readonly errorId = computed(() => (this.name() ? `${this.name()}-error` : 'kp-password-error'));
+  readonly inputAriaLabel = computed(() => this.ariaLabel() || this.label() || '');
 }

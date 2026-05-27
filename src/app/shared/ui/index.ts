@@ -10,11 +10,14 @@ export { KpInputNumberComponent } from './kp-input-number.component';
 export { KpDatepickerComponent } from './kp-datepicker.component';
 export { KpCheckboxComponent } from './kp-checkbox.component';
 export { KpMultiselectComponent } from './kp-multiselect.component';
+/** Обёртка label + control + error для кастомных полей (не используется в стандартных CRUD-формах). */
 export { KpFormFieldComponent } from './kp-form-field.component';
 export { KpDialogComponent } from './kp-dialog.component';
 export { KpToastComponent } from './kp-toast.component';
 export { KpConfirmDialogComponent } from './kp-confirm-dialog.component';
 export { KpCardComponent } from './kp-card.component';
+export { KpBreadcrumbsComponent } from './kp-breadcrumbs.component';
+export type { KpBreadcrumbItem } from './kp-breadcrumbs.component';
 export { KpStatGridComponent } from './kp-stat-grid/kp-stat-grid.component';
 export type { KpStatItem, KpStatSection } from './kp-stat-grid/kp-stat-grid.component';
 export { KpTableComponent } from './kp-table.component';

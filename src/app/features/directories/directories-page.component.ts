@@ -1,14 +1,30 @@
-import { Component, inject, signal, computed, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  DestroyRef,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { PERMISSIONS } from '../../core/permissions';
 import { AuthService } from '../../core/auth.service';
 import type { KpColumn } from '../../shared/ui/kp-table.component';
 import type { CrudPermissions } from '../../shared/crud/crud-page.types';
+import { CategoryOptionsService } from '../../shared/services/category-options.service';
 
 // UI
 import { PageLayoutComponent } from '../../shared/ui/page-layout/page-layout.component';
 import { KpCrudPageComponent } from '../../shared/crud/kp-crud-page.component';
-import { KpInputComponent, KpSelectComponent, KpButtonComponent, type KpSelectOption } from '../../shared/ui';
+import {
+  KpInputComponent,
+  KpSelectComponent,
+  KpInputNumberComponent,
+  KpButtonComponent,
+  type KpSelectOption,
+} from '../../shared/ui';
 
 // Store
 import { createDirStores, type DirStores } from './directories.store';
@@ -25,7 +41,53 @@ type DirKey = keyof DirStores;
 
 const DIR_GROUPS: DirGroup[] = [
   { id: 'office', label: 'Офис', icon: 'pi pi-building', keys: ['counterparties'] },
-  { id: 'admin',  label: 'Администрирование', icon: 'pi pi-shield', keys: ['categories', 'users', 'roles', 'statuses', 'workTypes', 'settings'] },
+  {
+    id: 'admin',
+    label: 'Администрирование',
+    icon: 'pi pi-shield',
+    keys: ['categories', 'users', 'roles', 'statuses', 'workTypes', 'settings'],
+  },
+];
+
+// ── Shared select/tag options ──────────────────────────────────
+const YES_NO_OPTIONS: KpSelectOption[] = [
+  { label: 'Да', value: 'true' },
+  { label: 'Нет', value: 'false' },
+];
+
+const LEGAL_FORM_OPTIONS: KpSelectOption[] = [
+  { label: 'ООО', value: 'ООО' },
+  { label: 'ИП', value: 'ИП' },
+  { label: 'АО', value: 'АО' },
+  { label: 'ПАО', value: 'ПАО' },
+  { label: 'Физлицо', value: 'Физлицо' },
+  { label: 'Другое', value: 'Другое' },
+];
+
+const USER_ROLE_OPTIONS: KpSelectOption[] = [
+  { label: 'Администратор', value: 'admin' },
+  { label: 'Менеджер', value: 'manager' },
+  { label: 'Наблюдатель', value: 'viewer' },
+];
+
+const COUNTERPARTY_ROLE_OPTIONS: KpSelectOption[] = [
+  { label: 'Клиент', value: 'client' },
+  { label: 'Поставщик', value: 'supplier' },
+  { label: 'Компания', value: 'company' },
+];
+
+const ENTITY_TYPE_OPTIONS: KpSelectOption[] = [
+  { label: 'Заказ', value: 'ORDER' },
+  { label: 'Позиция заказа', value: 'ORDER_ITEM' },
+  { label: 'Задача', value: 'WORK_TASK' },
+  { label: 'Заявка', value: 'MATERIAL_REQUEST' },
+];
+
+const WORK_SECTION_OPTIONS: KpSelectOption[] = [
+  { label: 'Материалы', value: 'materials' },
+  { label: 'Работа', value: 'work' },
+  { label: 'Задача', value: 'task' },
+  { label: 'Чертеж', value: 'drawing' },
 ];
 
 // ── Quick-add presets ──────────────────────────────────────────
@@ -36,18 +98,18 @@ interface QuickPreset {
 
 const QUICK_PRESETS: Partial<Record<DirKey, QuickPreset[]>> = {
   counterparties: [
-    { label: '+ Поставщик',     value: { name: 'Новый поставщик', legalForm: 'ООО', roles: ['supplier'], isActive: true } },
-    { label: '+ Клиент',        value: { name: 'Новый клиент', legalForm: 'ООО', roles: ['client'], isActive: true } },
+    { label: 'Поставщик', value: { name: 'Новый поставщик', legalForm: 'ООО', roles: ['supplier'], isActive: true } },
+    { label: 'Клиент', value: { name: 'Новый клиент', legalForm: 'ООО', roles: ['client'], isActive: true } },
   ],
   statuses: [
-    { label: '+ Черновик',      value: { statusId: 'draft', label: 'Черновик', color: '#6b7280', entityType: 'ORDER', isInitial: true } },
-    { label: '+ В работе',      value: { statusId: 'in_progress', label: 'В работе', color: '#f59e0b', entityType: 'ORDER' } },
-    { label: '+ Выполнен',      value: { statusId: 'completed', label: 'Выполнен', color: '#10b981', entityType: 'ORDER', isFinal: true } },
+    { label: 'Черновик', value: { statusId: 'draft', label: 'Черновик', color: '#6b7280', entityType: 'ORDER', isInitial: true } },
+    { label: 'В работе', value: { statusId: 'in_progress', label: 'В работе', color: '#f59e0b', entityType: 'ORDER' } },
+    { label: 'Выполнен', value: { statusId: 'completed', label: 'Выполнен', color: '#10b981', entityType: 'ORDER', isFinal: true } },
   ],
   workTypes: [
-    { label: '+ Сварка',        value: { name: 'Сварка', section: 'work', isActive: true } },
-    { label: '+ Резка',         value: { name: 'Резка металла', section: 'work', isActive: true } },
-    { label: '+ Чертеж',        value: { name: 'Разработка чертежа', section: 'drawing', isActive: true } },
+    { label: 'Сварка', value: { name: 'Сварка', section: 'work', isActive: true } },
+    { label: 'Резка', value: { name: 'Резка металла', section: 'work', isActive: true } },
+    { label: 'Чертеж', value: { name: 'Разработка чертежа', section: 'drawing', isActive: true } },
   ],
 };
 
@@ -60,6 +122,23 @@ function dirSeverity(value: unknown): string {
     admin: 'info',
     manager: 'warn',
     viewer: 'secondary',
+    ООО: 'info',
+    ИП: 'success',
+    АО: 'warn',
+    ПАО: 'warn',
+    Физлицо: 'secondary',
+    Другое: 'secondary',
+    ORDER: 'info',
+    ORDER_ITEM: 'secondary',
+    WORK_TASK: 'warn',
+    MATERIAL_REQUEST: 'success',
+    materials: 'info',
+    work: 'warn',
+    task: 'success',
+    drawing: 'secondary',
+    client: 'info',
+    supplier: 'success',
+    company: 'warn',
   };
   return map[String(value)] || 'info';
 }
@@ -87,75 +166,111 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
     label: 'Категории',
     icon: 'pi pi-sitemap',
     columns: [
-      { field: 'name',       header: 'Название',      type: 'text', sortable: true },
-      { field: 'parentId',   header: 'Родитель',      type: 'text' },
-      { field: 'sortOrder',  header: 'Порядок',       type: 'number', sortable: true, width: '90px' },
-      { field: 'isActive',   header: 'Активна',       type: 'boolean', sortable: true, width: '90px' },
-      { field: 'createdAt',  header: 'Создан',        type: 'date', sortable: true, width: '120px' },
+      { field: 'name', header: 'Название', type: 'text', sortable: true },
+      { field: 'parentId', header: 'Родитель', type: 'select', options: [] },
+      { field: 'sortOrder', header: 'Порядок', type: 'number', sortable: true, width: '90px' },
+      { field: 'isActive', header: 'Активна', type: 'boolean', sortable: true, width: '90px' },
+      { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
     ],
   },
   counterparties: {
     label: 'Контрагенты',
     icon: 'pi pi-users',
     columns: [
-      { field: 'name',       header: 'Наименование',  type: 'text', sortable: true },
-      { field: 'inn',        header: 'ИНН',           type: 'text', width: '130px' },
-      { field: 'legalForm',  header: 'Форма',         type: 'tag',  sortable: true, width: '80px' },
-      { field: 'phone',      header: 'Телефон',       type: 'text', width: '130px' },
-      { field: 'email',      header: 'Email',         type: 'text' },
-      { field: 'createdAt',  header: 'Создан',        type: 'date', sortable: true, width: '120px' },
+      { field: 'name', header: 'Наименование', type: 'text', sortable: true },
+      { field: 'inn', header: 'ИНН', type: 'text', width: '130px' },
+      { field: 'kpp', header: 'КПП', type: 'text', width: '110px' },
+      {
+        field: 'legalForm',
+        header: 'Форма',
+        type: 'tag',
+        sortable: true,
+        width: '90px',
+        options: LEGAL_FORM_OPTIONS,
+      },
+      { field: 'phone', header: 'Телефон', type: 'text', width: '130px' },
+      { field: 'email', header: 'Email', type: 'text' },
+      { field: 'isActive', header: 'Активен', type: 'boolean', sortable: true, width: '90px' },
+      { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
     ],
   },
   users: {
     label: 'Пользователи',
     icon: 'pi pi-user',
     columns: [
-      { field: 'username',     header: 'Логин',    type: 'text', sortable: true },
-      { field: 'displayName',  header: 'Имя',      type: 'text' },
-      { field: 'email',        header: 'Email',    type: 'text' },
-      { field: 'role',         header: 'Роль',     type: 'tag', sortable: true, width: '110px' },
-      { field: 'createdAt',    header: 'Создан',   type: 'date', sortable: true, width: '120px' },
+      { field: 'username', header: 'Логин', type: 'text', sortable: true },
+      { field: 'displayName', header: 'Имя', type: 'text' },
+      { field: 'email', header: 'Email', type: 'text' },
+      {
+        field: 'role',
+        header: 'Роль',
+        type: 'tag',
+        sortable: true,
+        width: '130px',
+        options: USER_ROLE_OPTIONS,
+      },
+      { field: 'isActive', header: 'Активен', type: 'boolean', sortable: true, width: '90px' },
+      { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
     ],
   },
   roles: {
     label: 'Роли',
     icon: 'pi pi-shield',
     columns: [
-      { field: 'name',        header: 'Код',        type: 'text', sortable: true, width: '110px' },
-      { field: 'label',       header: 'Название',   type: 'tag',  sortable: true },
-      { field: 'description', header: 'Описание',   type: 'text' },
-      { field: 'isSystem',    header: 'Системная',  type: 'boolean', sortable: true, width: '100px' },
-      { field: 'createdAt',   header: 'Создан',     type: 'date', sortable: true, width: '120px' },
+      { field: 'name', header: 'Код', type: 'text', sortable: true, width: '110px' },
+      { field: 'label', header: 'Название', type: 'text', sortable: true },
+      { field: 'description', header: 'Описание', type: 'text' },
+      { field: 'isSystem', header: 'Системная', type: 'boolean', sortable: true, width: '100px' },
+      { field: 'sortOrder', header: 'Порядок', type: 'number', sortable: true, width: '90px' },
+      { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
     ],
   },
   statuses: {
     label: 'Статусы',
     icon: 'pi pi-tag',
     columns: [
-      { field: 'statusId',   header: 'Код',         type: 'text', sortable: true, width: '120px' },
-      { field: 'label',      header: 'Название',    type: 'text' },
-      { field: 'entityType', header: 'Сущность',    type: 'tag',  sortable: true, width: '120px' },
-      { field: 'color',      header: 'Цвет',        type: 'text', width: '80px' },
-      { field: 'createdAt',  header: 'Создан',      type: 'date', sortable: true, width: '120px' },
+      { field: 'statusId', header: 'Код', type: 'text', sortable: true, width: '120px' },
+      { field: 'label', header: 'Название', type: 'text' },
+      {
+        field: 'entityType',
+        header: 'Сущность',
+        type: 'tag',
+        sortable: true,
+        width: '140px',
+        options: ENTITY_TYPE_OPTIONS,
+      },
+      { field: 'color', header: 'Цвет', type: 'text', width: '80px' },
+      { field: 'isInitial', header: 'Начальный', type: 'boolean', width: '100px' },
+      { field: 'isFinal', header: 'Финальный', type: 'boolean', width: '100px' },
+      { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
     ],
   },
   workTypes: {
     label: 'Типы работ',
     icon: 'pi pi-wrench',
     columns: [
-      { field: 'name',       header: 'Название',    type: 'text', sortable: true },
-      { field: 'section',    header: 'Раздел',      type: 'tag',  sortable: true, width: '120px' },
-      { field: 'createdAt',  header: 'Создан',      type: 'date', sortable: true, width: '120px' },
+      { field: 'name', header: 'Название', type: 'text', sortable: true },
+      {
+        field: 'section',
+        header: 'Раздел',
+        type: 'tag',
+        sortable: true,
+        width: '120px',
+        options: WORK_SECTION_OPTIONS,
+      },
+      { field: 'isActive', header: 'Активен', type: 'boolean', sortable: true, width: '90px' },
+      { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
     ],
   },
   settings: {
     label: 'Настройки',
     icon: 'pi pi-cog',
     columns: [
-      { field: 'key',         header: 'Ключ',        type: 'text', sortable: true },
-      { field: 'value',       header: 'Значение',    type: 'text' },
-      { field: 'description', header: 'Описание',    type: 'text' },
-      { field: 'createdAt',   header: 'Создан',      type: 'date', sortable: true, width: '120px' },
+      { field: 'key', header: 'Ключ', type: 'text', sortable: true },
+      { field: 'value', header: 'Значение', type: 'text' },
+      { field: 'group', header: 'Группа', type: 'text', width: '120px' },
+      { field: 'description', header: 'Описание', type: 'text' },
+      { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
     ],
   },
 };
@@ -169,6 +284,7 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
     KpCrudPageComponent,
     KpInputComponent,
     KpSelectComponent,
+    KpInputNumberComponent,
     KpButtonComponent,
   ],
   template: `
@@ -178,7 +294,6 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
         <p class="page__subtitle">Часто используемые данные — редактируйте, добавляйте, управляйте</p>
       </div>
 
-      <!-- Department-grouped tab navigation -->
       @for (group of visibleGroups(); track group.id) {
         <div class="dir-dept">
           <div class="dir-dept__header">
@@ -192,6 +307,7 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
                   [label]="DIR_DISPLAYS[key].label"
                   [icon]="DIR_DISPLAYS[key].icon"
                   severity="secondary"
+                  size="small"
                   [text]="activeKey() !== key"
                   [styleClass]="'dir-dept__btn' + (activeKey() === key ? ' dir-dept__btn--active' : '')"
                   (buttonClick)="selectDir(key)"
@@ -202,14 +318,15 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
         </div>
       }
 
-      <!-- Quick-add presets -->
       @if (currentPresets().length > 0) {
         <div class="quick-access">
           <span class="quick-access__label">Быстрое добавление:</span>
           @for (preset of currentPresets(); track preset.label) {
             <app-kp-button
               [label]="preset.label"
+              icon="pi pi-plus"
               severity="secondary"
+              size="small"
               [text]="true"
               styleClass="quick-access__chip"
               (buttonClick)="createPreset(preset.value)"
@@ -218,7 +335,6 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
         </div>
       }
 
-      <!-- Active CRUD page per directory type -->
       @switch (activeKey()) {
         @case ('categories') {
           <app-kp-crud-page
@@ -227,20 +343,41 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
             entityLabel="категории"
             description="Группировка товаров и материалов"
             [store]="stores.categories"
-            [columns]="DIR_DISPLAYS.categories.columns"
+            [columns]="categoryColumns()"
             [permissions]="DIR_PERMS.categories"
             [severityFn]="severityFn"
             createLabel="Создать категорию"
           >
             <ng-template #form let-row>
               <div class="form-layout">
-                <app-kp-input label="Название"        name="name"      [value]="row['name'] || ''"              (valueChange)="row['name'] = $event" [required]="true" />
-                <app-kp-input label="Родитель (ID)"   name="parentId"  [value]="row['parentId'] || ''"          (valueChange)="row['parentId'] = $event" />
-                <app-kp-input label="Порядок сортировки" name="sortOrder" [value]="(row['sortOrder'] ?? '')"    (valueChange)="row['sortOrder'] = ($event === '' ? 0 : +$event)" />
+                <app-kp-input
+                  label="Название"
+                  name="name"
+                  placeholder="Введите название категории"
+                  [value]="row['name'] || ''"
+                  (valueChange)="row['name'] = $event"
+                  [required]="true"
+                />
+                <app-kp-select
+                  label="Родительская категория"
+                  name="parentId"
+                  placeholder="Выберите родителя (необязательно)"
+                  [value]="row['parentId'] || ''"
+                  (valueChange)="row['parentId'] = $event || null"
+                  [options]="categoryOptions()"
+                />
+                <app-kp-input-number
+                  label="Порядок сортировки"
+                  name="sortOrder"
+                  placeholder="0"
+                  [value]="row['sortOrder'] ?? 0"
+                  (valueChange)="row['sortOrder'] = $event ?? 0"
+                />
                 <app-kp-select
                   label="Активна"
                   name="isActive"
-                  [value]="toStr(row['isActive'] ?? true)"
+                  placeholder="Выберите"
+                  [value]="boolToStr(row['isActive'] ?? true)"
                   (valueChange)="row['isActive'] = $event === 'true'"
                   [options]="yesNoOptions"
                 />
@@ -263,17 +400,66 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           >
             <ng-template #form let-row>
               <div class="form-layout">
-                <app-kp-input label="Наименование"      name="name"      [value]="row['name'] || ''"    (valueChange)="row['name'] = $event"   [required]="true" />
-                <app-kp-input label="ИНН"               name="inn"       [value]="row['inn'] || ''"     (valueChange)="row['inn'] = $event" />
+                <app-kp-input
+                  label="Наименование"
+                  name="name"
+                  placeholder="Полное наименование организации"
+                  [value]="row['name'] || ''"
+                  (valueChange)="row['name'] = $event"
+                  [required]="true"
+                />
+                <app-kp-input
+                  label="ИНН"
+                  name="inn"
+                  placeholder="10 или 12 цифр"
+                  [value]="row['inn'] || ''"
+                  (valueChange)="row['inn'] = $event"
+                />
+                <app-kp-input
+                  label="КПП"
+                  name="kpp"
+                  placeholder="9 цифр"
+                  [value]="row['kpp'] || ''"
+                  (valueChange)="row['kpp'] = $event"
+                />
                 <app-kp-select
                   label="Правовая форма"
                   name="legalForm"
+                  placeholder="Выберите форму"
                   [value]="row['legalForm'] || 'ООО'"
                   (valueChange)="row['legalForm'] = $event"
                   [options]="legalFormOptions"
                 />
-                <app-kp-input label="Телефон"  name="phone" [value]="row['phone'] || ''"  (valueChange)="row['phone'] = $event" />
-                <app-kp-input label="Email"    name="email" [value]="row['email'] || ''"  (valueChange)="row['email'] = $event" />
+                <app-kp-select
+                  label="Роль"
+                  name="roles"
+                  placeholder="Выберите роль"
+                  [value]="primaryRole(row['roles'])"
+                  (valueChange)="row['roles'] = [$event]"
+                  [options]="counterpartyRoleOptions"
+                />
+                <app-kp-input
+                  label="Телефон"
+                  name="phone"
+                  placeholder="+7 (___) ___-__-__"
+                  [value]="row['phone'] || ''"
+                  (valueChange)="row['phone'] = $event"
+                />
+                <app-kp-input
+                  label="Email"
+                  name="email"
+                  placeholder="example@company.ru"
+                  [value]="row['email'] || ''"
+                  (valueChange)="row['email'] = $event"
+                />
+                <app-kp-select
+                  label="Активен"
+                  name="isActive"
+                  placeholder="Выберите"
+                  [value]="boolToStr(row['isActive'] ?? true)"
+                  (valueChange)="row['isActive'] = $event === 'true'"
+                  [options]="yesNoOptions"
+                />
               </div>
             </ng-template>
           </app-kp-crud-page>
@@ -293,15 +479,43 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           >
             <ng-template #form let-row>
               <div class="form-layout">
-                <app-kp-input label="Логин"       name="username"     [value]="row['username'] || ''"        (valueChange)="row['username'] = $event"     [required]="true" />
-                <app-kp-input label="Отображаемое имя" name="displayName" [value]="row['displayName'] || ''" (valueChange)="row['displayName'] = $event" />
-                <app-kp-input label="Email"       name="email"        [value]="row['email'] || ''"           (valueChange)="row['email'] = $event" />
+                <app-kp-input
+                  label="Логин"
+                  name="username"
+                  placeholder="Введите логин"
+                  [value]="row['username'] || ''"
+                  (valueChange)="row['username'] = $event"
+                  [required]="true"
+                />
+                <app-kp-input
+                  label="Отображаемое имя"
+                  name="displayName"
+                  placeholder="Имя для отображения"
+                  [value]="row['displayName'] || ''"
+                  (valueChange)="row['displayName'] = $event"
+                />
+                <app-kp-input
+                  label="Email"
+                  name="email"
+                  placeholder="user@company.ru"
+                  [value]="row['email'] || ''"
+                  (valueChange)="row['email'] = $event"
+                />
                 <app-kp-select
                   label="Роль"
                   name="role"
+                  placeholder="Выберите роль"
                   [value]="row['role'] || 'viewer'"
                   (valueChange)="row['role'] = $event"
                   [options]="roleOptions"
+                />
+                <app-kp-select
+                  label="Активен"
+                  name="isActive"
+                  placeholder="Выберите"
+                  [value]="boolToStr(row['isActive'] ?? true)"
+                  (valueChange)="row['isActive'] = $event === 'true'"
+                  [options]="yesNoOptions"
                 />
               </div>
             </ng-template>
@@ -322,13 +536,40 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           >
             <ng-template #form let-row>
               <div class="form-layout">
-                <app-kp-input label="Код роли"      name="name"        [value]="row['name'] || ''"       (valueChange)="row['name'] = $event"      [required]="true" />
-                <app-kp-input label="Название"      name="label"       [value]="row['label'] || ''"      (valueChange)="row['label'] = $event" />
-                <app-kp-input label="Описание"      name="description" [value]="row['description'] || ''" (valueChange)="row['description'] = $event" />
+                <app-kp-input
+                  label="Код роли"
+                  name="name"
+                  placeholder="Например, manager"
+                  [value]="row['name'] || ''"
+                  (valueChange)="row['name'] = $event"
+                  [required]="true"
+                />
+                <app-kp-input
+                  label="Название"
+                  name="label"
+                  placeholder="Отображаемое название"
+                  [value]="row['label'] || ''"
+                  (valueChange)="row['label'] = $event"
+                />
+                <app-kp-input
+                  label="Описание"
+                  name="description"
+                  placeholder="Краткое описание роли"
+                  [value]="row['description'] || ''"
+                  (valueChange)="row['description'] = $event"
+                />
+                <app-kp-input-number
+                  label="Порядок"
+                  name="sortOrder"
+                  placeholder="0"
+                  [value]="row['sortOrder'] ?? 0"
+                  (valueChange)="row['sortOrder'] = $event ?? 0"
+                />
                 <app-kp-select
                   label="Системная"
                   name="isSystem"
-                  [value]="toStr(row['isSystem'] ?? false)"
+                  placeholder="Выберите"
+                  [value]="boolToStr(row['isSystem'] ?? false)"
                   (valueChange)="row['isSystem'] = $event === 'true'"
                   [options]="yesNoOptions"
                 />
@@ -351,16 +592,59 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           >
             <ng-template #form let-row>
               <div class="form-layout">
-                <app-kp-input label="Код статуса" name="statusId" [value]="row['statusId'] || ''"       (valueChange)="row['statusId'] = $event"  [required]="true" />
-                <app-kp-input label="Название"     name="label"   [value]="row['label'] || ''"          (valueChange)="row['label'] = $event" />
+                <app-kp-input
+                  label="Код статуса"
+                  name="statusId"
+                  placeholder="Например, draft"
+                  [value]="row['statusId'] || ''"
+                  (valueChange)="row['statusId'] = $event"
+                  [required]="true"
+                />
+                <app-kp-input
+                  label="Название"
+                  name="label"
+                  placeholder="Отображаемое название"
+                  [value]="row['label'] || ''"
+                  (valueChange)="row['label'] = $event"
+                />
                 <app-kp-select
                   label="Сущность"
                   name="entityType"
+                  placeholder="Выберите тип сущности"
                   [value]="row['entityType'] || 'ORDER'"
                   (valueChange)="row['entityType'] = $event"
                   [options]="entityTypeOptions"
                 />
-                <app-kp-input label="Цвет (hex)" name="color" [value]="row['color'] || '#6b7280'" (valueChange)="row['color'] = $event" />
+                <app-kp-input
+                  label="Цвет (hex)"
+                  name="color"
+                  placeholder="#6b7280"
+                  [value]="row['color'] || '#6b7280'"
+                  (valueChange)="row['color'] = $event"
+                />
+                <app-kp-input-number
+                  label="Порядок"
+                  name="sortOrder"
+                  placeholder="0"
+                  [value]="row['sortOrder'] ?? 0"
+                  (valueChange)="row['sortOrder'] = $event ?? 0"
+                />
+                <app-kp-select
+                  label="Начальный статус"
+                  name="isInitial"
+                  placeholder="Выберите"
+                  [value]="boolToStr(row['isInitial'] ?? false)"
+                  (valueChange)="row['isInitial'] = $event === 'true'"
+                  [options]="yesNoOptions"
+                />
+                <app-kp-select
+                  label="Финальный статус"
+                  name="isFinal"
+                  placeholder="Выберите"
+                  [value]="boolToStr(row['isFinal'] ?? false)"
+                  (valueChange)="row['isFinal'] = $event === 'true'"
+                  [options]="yesNoOptions"
+                />
               </div>
             </ng-template>
           </app-kp-crud-page>
@@ -380,13 +664,36 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           >
             <ng-template #form let-row>
               <div class="form-layout">
-                <app-kp-input label="Название" name="name" [value]="row['name'] || ''" (valueChange)="row['name'] = $event" [required]="true" />
+                <app-kp-input
+                  label="Название"
+                  name="name"
+                  placeholder="Введите название"
+                  [value]="row['name'] || ''"
+                  (valueChange)="row['name'] = $event"
+                  [required]="true"
+                />
                 <app-kp-select
                   label="Раздел"
                   name="section"
+                  placeholder="Выберите раздел"
                   [value]="row['section'] || 'work'"
                   (valueChange)="row['section'] = $event"
                   [options]="workSectionOptions"
+                />
+                <app-kp-input
+                  label="Описание"
+                  name="description"
+                  placeholder="Краткое описание"
+                  [value]="row['description'] || ''"
+                  (valueChange)="row['description'] = $event"
+                />
+                <app-kp-select
+                  label="Активен"
+                  name="isActive"
+                  placeholder="Выберите"
+                  [value]="boolToStr(row['isActive'] ?? true)"
+                  (valueChange)="row['isActive'] = $event === 'true'"
+                  [options]="yesNoOptions"
                 />
               </div>
             </ng-template>
@@ -407,24 +714,53 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           >
             <ng-template #form let-row>
               <div class="form-layout">
-                <app-kp-input label="Ключ"         name="key"          [value]="row['key'] || ''"          (valueChange)="row['key'] = $event"          [required]="true" />
-                <app-kp-input label="Значение"     name="value"        [value]="row['value'] || ''"         (valueChange)="row['value'] = $event" />
-                <app-kp-input label="Описание"     name="description"  [value]="row['description'] || ''"   (valueChange)="row['description'] = $event" />
+                <app-kp-input
+                  label="Ключ"
+                  name="key"
+                  placeholder="Например, app.timezone"
+                  [value]="row['key'] || ''"
+                  (valueChange)="row['key'] = $event"
+                  [required]="true"
+                />
+                <app-kp-input
+                  label="Значение"
+                  name="value"
+                  placeholder="Значение параметра"
+                  [value]="row['value'] || ''"
+                  (valueChange)="row['value'] = $event"
+                />
+                <app-kp-input
+                  label="Группа"
+                  name="group"
+                  placeholder="Например, general"
+                  [value]="row['group'] || ''"
+                  (valueChange)="row['group'] = $event"
+                />
+                <app-kp-input
+                  label="Описание"
+                  name="description"
+                  placeholder="Назначение настройки"
+                  [value]="row['description'] || ''"
+                  (valueChange)="row['description'] = $event"
+                />
               </div>
             </ng-template>
           </app-kp-crud-page>
         }
 
         @default {
-          <div class="p-4 text-center text-secondary">Выберите справочник</div>
+          <div class="dir-empty">Выберите справочник</div>
         }
       }
     </app-page-layout>
   `,
   styleUrl: './directories-page.component.scss',
 })
-export class DirectoriesPageComponent {
+export class DirectoriesPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly auth = inject(AuthService);
+  private readonly categoryOptionsService = inject(CategoryOptionsService);
+
   readonly stores = createDirStores(this.destroyRef);
   readonly DIR_PERMS = (() => {
     const map = {} as Record<DirKey, CrudPermissions>;
@@ -436,56 +772,40 @@ export class DirectoriesPageComponent {
   readonly DIR_DISPLAYS = DIR_DISPLAYS;
   readonly severityFn = dirSeverity;
 
-  readonly yesNoOptions: KpSelectOption[] = [
-    { label: 'Да', value: 'true' },
-    { label: 'Нет', value: 'false' },
-  ];
+  readonly yesNoOptions = YES_NO_OPTIONS;
+  readonly legalFormOptions = LEGAL_FORM_OPTIONS;
+  readonly roleOptions = USER_ROLE_OPTIONS;
+  readonly counterpartyRoleOptions = COUNTERPARTY_ROLE_OPTIONS;
+  readonly entityTypeOptions = ENTITY_TYPE_OPTIONS;
+  readonly workSectionOptions = WORK_SECTION_OPTIONS;
 
-  readonly legalFormOptions: KpSelectOption[] = [
-    { label: 'ООО', value: 'ООО' },
-    { label: 'ИП', value: 'ИП' },
-    { label: 'АО', value: 'АО' },
-    { label: 'Физлицо', value: 'Физлицо' },
-  ];
+  readonly categoryOptions = signal<KpSelectOption[]>([]);
 
-  readonly roleOptions: KpSelectOption[] = [
-    { label: 'Администратор', value: 'admin' },
-    { label: 'Менеджер', value: 'manager' },
-    { label: 'Наблюдатель', value: 'viewer' },
-  ];
-
-  readonly entityTypeOptions: KpSelectOption[] = [
-    { label: 'Заказ', value: 'ORDER' },
-    { label: 'Позиция заказа', value: 'ORDER_ITEM' },
-    { label: 'Задача', value: 'WORK_TASK' },
-    { label: 'Заявка', value: 'MATERIAL_REQUEST' },
-  ];
-
-  readonly workSectionOptions: KpSelectOption[] = [
-    { label: 'Материалы', value: 'materials' },
-    { label: 'Работа', value: 'work' },
-    { label: 'Задача', value: 'task' },
-    { label: 'Чертеж', value: 'drawing' },
-  ];
-
-  private readonly auth = inject(AuthService);
+  readonly categoryColumns = computed(() =>
+    DIR_DISPLAYS.categories.columns.map((col) =>
+      col.field === 'parentId'
+        ? { ...col, type: 'select' as const, options: this.categoryOptions() }
+        : col,
+    ),
+  );
 
   readonly activeKey = signal<DirKey>('counterparties');
 
-  /** Filter groups to only those containing at least one visible directory */
-  readonly visibleGroups = computed(() => {
-    return DIR_GROUPS
-      .map((g) => ({
-        ...g,
-        keys: g.keys.filter((k) => this.canView(k)),
-      }))
-      .filter((g) => g.keys.length > 0);
-  });
+  readonly visibleGroups = computed(() =>
+    DIR_GROUPS.map((g) => ({
+      ...g,
+      keys: g.keys.filter((k) => this.canView(k)),
+    })).filter((g) => g.keys.length > 0),
+  );
 
-  /** Quick-add presets for the active directory */
-  readonly currentPresets = computed(() => {
-    return QUICK_PRESETS[this.activeKey()] ?? [];
-  });
+  readonly currentPresets = computed(() => QUICK_PRESETS[this.activeKey()] ?? []);
+
+  ngOnInit(): void {
+    this.categoryOptionsService
+      .load()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((options) => this.categoryOptions.set(options));
+  }
 
   canView(key: DirKey): boolean {
     const p = this.DIR_PERMS[key];
@@ -497,11 +817,17 @@ export class DirectoriesPageComponent {
   }
 
   createPreset(value: Record<string, unknown>): void {
-    const store = this.stores[this.activeKey()];
-    store.create(value);
+    this.stores[this.activeKey()].create(value);
   }
 
-  toStr(value: unknown): string {
-    return String(value ?? '');
+  boolToStr(value: unknown): string {
+    return value === true || value === 'true' ? 'true' : 'false';
+  }
+
+  primaryRole(roles: unknown): string {
+    if (Array.isArray(roles) && roles.length > 0) {
+      return String(roles[0]);
+    }
+    return 'client';
   }
 }

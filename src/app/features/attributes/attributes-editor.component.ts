@@ -5,8 +5,10 @@ import {
   OnChanges,
   SimpleChanges,
   inject,
+  DestroyRef,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../core/api.service';
 import { NotificationService } from '../../core/notification.service';
@@ -59,6 +61,7 @@ export class AttributesEditorComponent implements OnInit, OnChanges {
 
   private readonly api = inject(ApiService);
   private readonly notification = inject(NotificationService);
+  private readonly destroyRef = inject(DestroyRef);
 
   attributes: AttributeField[] = [];
   loading = false;
@@ -110,6 +113,7 @@ export class AttributesEditorComponent implements OnInit, OnChanges {
     this.error = '';
     this.api
       .get<AttributeField[]>(`/attributes/values/${this.entityType}/${this.entityId}`)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
           this.attributes = res.data ?? [];
@@ -134,6 +138,7 @@ export class AttributesEditorComponent implements OnInit, OnChanges {
 
     this.api
       .putPayload(`/attributes/values/${this.entityType}/${this.entityId}`, { values })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.notification.success('Характеристики сохранены');

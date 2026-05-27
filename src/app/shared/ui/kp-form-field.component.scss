@@ -1,6 +1,10 @@
 @use '../styles/kp-field' as field;
 
 .kp-form-field {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto minmax(0, auto) auto;
+  gap: var(--kp-space-1);
   @include field.kp-field-root;
 }
 
@@ -12,8 +16,12 @@
   @include field.kp-field-required;
 }
 
+.kp-form-field__control {
+  min-width: 0;
+}
+
 .kp-form-field__hint {
-  font-size: var(--kp-font-size-caption, 0.75rem);
+  font-size: var(--kp-font-size-caption);
   color: var(--kp-text-muted);
 }
 

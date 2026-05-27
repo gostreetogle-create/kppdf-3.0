@@ -12,7 +12,11 @@
   @include field.kp-field-required;
 }
 
-.kp-input__control.kp-input--has-error {
+.kp-input__control {
+  @include field.kp-field-control;
+}
+
+.kp-input__control--error {
   border-color: var(--kp-danger) !important;
 }
 
@@ -20,12 +24,7 @@
   @include field.kp-field-error;
 }
 
-.kp-input--small {
-  font-size: var(--kp-font-size-sm, 0.875rem);
-  padding: var(--kp-space-2, 0.375rem) var(--kp-space-3, 0.75rem);
-}
-
-.kp-input--large {
+.kp-input__control--large {
   font-size: var(--kp-font-size-body, 1rem);
   padding: var(--kp-space-3, 0.625rem) var(--kp-space-4, 1rem);
 }

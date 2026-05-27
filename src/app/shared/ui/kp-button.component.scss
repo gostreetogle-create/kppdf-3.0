@@ -1,0 +1,17 @@
+:host {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+:host ::ng-deep .p-button {
+  transition:
+    background var(--kp-transition-base),
+    border-color var(--kp-transition-base),
+    color var(--kp-transition-base),
+    box-shadow var(--kp-transition-base);
+}
+
+:host ::ng-deep .p-button:focus-visible {
+  outline: none;
+  box-shadow: var(--kp-focus-ring);
+}

@@ -1,4 +1,4 @@
-import { Component, input, model, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, model, computed, ChangeDetectionStrategy, afterNextRender, ElementRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 
@@ -25,19 +25,23 @@ import { InputTextModule } from 'primeng/inputtext';
         [readonly]="readonly()"
         [disabled]="disabled()"
         [attr.required]="required() ? '' : null"
-        [class.kp-input--has-error]="!!error()"
-        [class.kp-input--small]="size() === 'small'"
-        [class.kp-input--large]="size() === 'large'"
+        [class.kp-input__control--error]="!!error()"
+        [class.kp-input__control--large]="size() === 'large'"
         class="kp-input__control w-full"
+        [attr.aria-label]="inputAriaLabel() || null"
+        [attr.aria-invalid]="error() ? true : null"
+        [attr.aria-describedby]="error() ? errorId() : null"
       />
       @if (error()) {
-        <span class="kp-input__error">{{ error() }}</span>
+        <span [id]="errorId()" class="kp-input__error" role="alert">{{ error() }}</span>
       }
     </div>
   `,
   styleUrl: './kp-input.component.scss',
 })
 export class KpInputComponent {
+  private readonly inputEl = inject(ElementRef<HTMLInputElement>);
+
   readonly label = input<string>('');
   readonly name = input<string>('');
   readonly value = model<string>('');
@@ -48,4 +52,17 @@ export class KpInputComponent {
   readonly disabled = input(false);
   readonly error = input<string>('');
   readonly size = input<'small' | 'large'>('small');
+  readonly ariaLabel = input<string>('');
+  readonly autofocus = input(false);
+
+  readonly errorId = computed(() => (this.name() ? `${this.name()}-error` : 'kp-input-error'));
+  readonly inputAriaLabel = computed(() => this.ariaLabel() || this.label() || '');
+
+  constructor() {
+    afterNextRender(() => {
+      if (this.autofocus()) {
+        this.inputEl.nativeElement.querySelector('input')?.focus();
+      }
+    });
+  }
 }

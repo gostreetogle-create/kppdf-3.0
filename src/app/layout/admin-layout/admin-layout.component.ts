@@ -1,6 +1,6 @@
-import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { KpButtonComponent } from '../../shared/ui';
+import { KpButtonComponent, KpBreadcrumbsComponent } from '../../shared/ui';
 import { AuthService } from '../../core/auth.service';
 import { PERMISSIONS } from '../../core/permissions';
 
@@ -21,11 +21,32 @@ interface MenuGroup {
   selector: 'app-admin-layout',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, KpButtonComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, KpButtonComponent, KpBreadcrumbsComponent],
   styleUrl: './admin-layout.component.scss',
   template: `
-    <div class="layout">
-      <aside class="layout__sidebar">
+    <div class="layout" [class.layout--sidebar-open]="sidebarOpen()">
+      @if (sidebarOpen()) {
+        <button
+          type="button"
+          class="layout__overlay"
+          aria-label="Закрыть меню"
+          (click)="closeSidebar()"
+        ></button>
+      }
+
+      <header class="layout__mobile-header">
+        <app-kp-button
+          icon="pi pi-bars"
+          severity="secondary"
+          [text]="true"
+          size="small"
+          ariaLabel="Открыть меню"
+          (buttonClick)="toggleSidebar()"
+        />
+        <span class="layout__mobile-title">KPPDF 3.0</span>
+      </header>
+
+      <aside class="layout__sidebar" [class.layout__sidebar--open]="sidebarOpen()">
         <div class="layout__logo">
           <span class="layout__logo-icon">K</span>
           <span class="layout__logo-text">KPPDF 3.0</span>
@@ -38,6 +59,7 @@ interface MenuGroup {
               [routerLink]="item.route"
               routerLinkActive="layout__nav-item--active"
               [routerLinkActiveOptions]="{exact: true}"
+              (click)="closeSidebar()"
             >
               <i [class]="item.icon" aria-hidden="true"></i>
               <span>{{ item.label }}</span>
@@ -52,6 +74,7 @@ interface MenuGroup {
                 [routerLink]="item.route"
                 routerLinkActive="layout__nav-item--active"
                 [routerLinkActiveOptions]="{exact: item.route === '/dashboard'}"
+                (click)="closeSidebar()"
               >
                 <i [class]="item.icon" aria-hidden="true"></i>
                 <span>{{ item.label }}</span>
@@ -81,7 +104,9 @@ interface MenuGroup {
           }
         </div>
       </aside>
+
       <main class="layout__main" aria-label="Содержимое страницы">
+        <app-kp-breadcrumbs />
         <router-outlet />
       </main>
     </div>
@@ -90,32 +115,54 @@ interface MenuGroup {
 export class AdminLayoutComponent {
   private readonly auth = inject(AuthService);
 
+  readonly sidebarOpen = signal(false);
+
   readonly topItems: FlatMenuItem[] = [
-    { label: 'Дашборд', icon: 'pi pi-home', route: '/dashboard', alwaysShow: true },
+    { label: 'Главная', icon: 'pi pi-home', route: '/dashboard', alwaysShow: true },
   ];
 
   readonly menuGroups: MenuGroup[] = [
     {
-      label: 'Коммерция',
+      label: 'Продажи',
       items: [
         { label: 'Документы', icon: 'pi pi-folder-open', route: '/documents', alwaysShow: true },
-        { label: 'Запросы', icon: 'pi pi-inbox', route: '/tenders', requiresAny: [PERMISSIONS.tenders.view] },
-        { label: 'КП', icon: 'pi pi-file-edit', route: '/quotations', requiresAny: [PERMISSIONS.quotations.view] },
+        { label: 'Тендеры', icon: 'pi pi-inbox', route: '/tenders', requiresAny: [PERMISSIONS.tenders.view] },
+        {
+          label: 'Ком. предложения',
+          icon: 'pi pi-file-edit',
+          route: '/quotations',
+          requiresAny: [PERMISSIONS.quotations.view],
+        },
         { label: 'Заказы', icon: 'pi pi-shopping-cart', route: '/orders', requiresAny: [PERMISSIONS.orders.view] },
       ],
     },
     {
       label: 'Производство',
       items: [
-        { label: 'Бизнес-процессы', icon: 'pi pi-cubes', route: '/modules', alwaysShow: true },
-        { label: 'Паспорта', icon: 'pi pi-id-card', route: '/product-passports', requiresAny: [PERMISSIONS['product-passports'].view] },
-        { label: 'Наряды', icon: 'pi pi-wrench', route: '/work-orders', requiresAny: [PERMISSIONS['work-orders'].view] },
+        { label: 'Модули', icon: 'pi pi-cubes', route: '/modules', alwaysShow: true },
+        {
+          label: 'Паспорта изделий',
+          icon: 'pi pi-id-card',
+          route: '/product-passports',
+          requiresAny: [PERMISSIONS['product-passports'].view],
+        },
+        {
+          label: 'Производственные наряды',
+          icon: 'pi pi-wrench',
+          route: '/work-orders',
+          requiresAny: [PERMISSIONS['work-orders'].view],
+        },
       ],
     },
     {
       label: 'Склад',
       items: [
-        { label: 'Заказы пост.', icon: 'pi pi-truck', route: '/purchase-orders', requiresAny: [PERMISSIONS['purchase-orders'].view] },
+        {
+          label: 'Закупки',
+          icon: 'pi pi-truck',
+          route: '/purchase-orders',
+          requiresAny: [PERMISSIONS['purchase-orders'].view],
+        },
         { label: 'Отгрузки', icon: 'pi pi-send', route: '/shipments', requiresAny: [PERMISSIONS.shipments.view] },
       ],
     },
@@ -123,8 +170,18 @@ export class AdminLayoutComponent {
       label: 'Справочники',
       items: [
         { label: 'Товары', icon: 'pi pi-box', route: '/products', requiresAny: [PERMISSIONS.products.view] },
-        { label: 'Справочники', icon: 'pi pi-book', route: '/directories', requiresAny: ['admin.*', PERMISSIONS.counterparties.view] },
-        { label: 'Атрибуты EAV', icon: 'pi pi-sliders-h', route: '/attribute-definitions', requiresAny: [PERMISSIONS.attributes.view] },
+        {
+          label: 'НСИ',
+          icon: 'pi pi-book',
+          route: '/directories',
+          requiresAny: ['admin.*', PERMISSIONS.counterparties.view],
+        },
+        {
+          label: 'Атрибуты',
+          icon: 'pi pi-sliders-h',
+          route: '/attribute-definitions',
+          requiresAny: [PERMISSIONS.attributes.view],
+        },
       ],
     },
   ];
@@ -157,6 +214,14 @@ export class AdminLayoutComponent {
     purchaser: 'Снабженец',
     viewer: 'Наблюдатель',
   };
+
+  toggleSidebar(): void {
+    this.sidebarOpen.update((open) => !open);
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen.set(false);
+  }
 
   getRoleLabel(role: string): string {
     return this.roleLabels[role] || role;

@@ -1,4 +1,5 @@
-import { Component, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, ChangeDetectorRef, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -45,20 +46,26 @@ import { KpInputComponent, KpPasswordComponent, KpButtonComponent, KpToastCompon
               label="Логин"
               name="username"
               [value]="username"
-              (valueChange)="username = $event"
-              placeholder="admin"
+              (valueChange)="onUsernameChange($event)"
+              placeholder="Введите логин"
               [disabled]="loading"
+              [autofocus]="true"
+              [error]="usernameError()"
             />
             <app-kp-password
               label="Пароль"
               name="password"
               [value]="password"
-              (valueChange)="password = $event"
+              (valueChange)="onPasswordChange($event)"
+              placeholder="Введите пароль"
+              [toggleMask]="true"
               [disabled]="loading"
+              [error]="passwordError()"
             />
             <app-kp-button
               type="submit"
-              label="Войти в систему"
+              label="Войти"
+              size="small"
               [loading]="loading"
               styleClass="auth__submit-btn w-full"
               (buttonClick)="doLogin()"
@@ -72,7 +79,7 @@ import { KpInputComponent, KpPasswordComponent, KpButtonComponent, KpToastCompon
         </div>
       </div>
     </div>
-    <app-kp-toast position="top-center" />
+    <app-kp-toast position="top-right" />
   `,
   styleUrl: './login-page.component.scss',
 })
@@ -81,27 +88,56 @@ export class LoginPageComponent {
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   username = 'admin';
   password = 'admin123';
   loading = false;
 
+  readonly usernameError = signal('');
+  readonly passwordError = signal('');
+
+  onUsernameChange(value: string): void {
+    this.username = value;
+    this.usernameError.set('');
+  }
+
+  onPasswordChange(value: string): void {
+    this.password = value;
+    this.passwordError.set('');
+  }
+
   doLogin(): void {
     if (this.loading) return;
 
-    if (!this.username || !this.password) {
+    this.usernameError.set('');
+    this.passwordError.set('');
+
+    if (!this.username.trim()) {
+      this.usernameError.set('Введите логин');
+    }
+    if (!this.password) {
+      this.passwordError.set('Введите пароль');
+    }
+    if (this.usernameError() || this.passwordError()) {
       this.messageService.add({ severity: 'warn', summary: 'Заполните поля', life: 3000 });
+      this.cdr.markForCheck();
       return;
     }
 
     this.loading = true;
     this.cdr.markForCheck();
-    this.auth.login({ username: this.username, password: this.password }).subscribe({
+    this.auth
+      .login({ username: this.username, password: this.password })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => {
         void this.router.navigate(['/dashboard']);
       },
       error: (err: { error?: { error?: string } }) => {
         this.loading = false;
+        this.usernameError.set('Проверьте логин');
+        this.passwordError.set('Проверьте пароль');
         this.cdr.markForCheck();
         const msg = err.error?.error || 'Ошибка входа';
         this.messageService.add({ severity: 'error', summary: msg, life: 4000 });

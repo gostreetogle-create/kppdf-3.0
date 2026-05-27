@@ -1,5 +1,7 @@
-import { Component, input, model, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, model, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
+import { Select } from 'primeng/select';
 
 export interface KpSelectOption {
   label: string;
@@ -10,7 +12,7 @@ export interface KpSelectOption {
   selector: 'app-kp-select',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, Select],
   template: `
     <div class="kp-select">
       @if (label(); as lbl) {
@@ -19,22 +21,20 @@ export interface KpSelectOption {
           @if (required()) { <span class="kp-select__required">*</span> }
         </label>
       }
-      <select
-        [id]="name()"
-        class="kp-select__control"
-        [class.kp-select__control--error]="!!error()"
-        [ngModel]="value()"
-        (ngModelChange)="value.set($event)"
+      <p-select
+        [inputId]="name()"
+        [options]="options()"
+        [(ngModel)]="value"
+        [placeholder]="placeholder()"
         [disabled]="disabled() || loading()"
-        [attr.required]="required() ? '' : null"
-      >
-        @if (placeholder()) {
-          <option value="" disabled [selected]="!value()">{{ placeholder() }}</option>
-        }
-        @for (opt of options(); track opt.value) {
-          <option [value]="opt.value">{{ opt.label }}</option>
-        }
-      </select>
+        [showClear]="!required()"
+        [loading]="loading()"
+        [attr.aria-label]="inputAriaLabel() || null"
+        optionLabel="label"
+        optionValue="value"
+        size="small"
+        [styleClass]="controlClass()"
+      />
       @if (error()) {
         <span class="kp-select__error">{{ error() }}</span>
       }
@@ -45,11 +45,22 @@ export interface KpSelectOption {
 export class KpSelectComponent {
   readonly label = input<string>('');
   readonly name = input<string>('');
-  readonly value = model<string | number | boolean>('');
+  readonly value = model<string | number | boolean | null>(null);
   readonly options = input<KpSelectOption[]>([]);
-  readonly placeholder = input<string>('');
+  readonly placeholder = input<string>('Выберите...');
   readonly required = input(false);
   readonly disabled = input(false);
   readonly loading = input(false);
   readonly error = input<string>('');
+  readonly ariaLabel = input<string>('');
+
+  readonly inputAriaLabel = computed(() => this.ariaLabel() || this.label() || '');
+
+  readonly controlClass = computed(() => {
+    const classes = ['kp-select__control', 'w-full'];
+    if (this.error()) {
+      classes.push('kp-select__control--error');
+    }
+    return classes.join(' ');
+  });
 }

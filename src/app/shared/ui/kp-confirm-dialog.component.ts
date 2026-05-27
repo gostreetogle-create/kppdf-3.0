@@ -6,6 +6,14 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ConfirmDialogModule],
-  template: `<p-confirmDialog />`,
+  template: `
+    <p-confirmDialog
+      icon="pi pi-exclamation-triangle"
+      acceptButtonStyleClass="p-button-danger"
+      rejectButtonStyleClass="p-button-secondary p-button-outlined"
+      acceptLabel="Подтвердить"
+      rejectLabel="Отмена"
+    />
+  `,
 })
 export class KpConfirmDialogComponent {}

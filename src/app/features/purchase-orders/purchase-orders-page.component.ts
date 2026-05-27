@@ -28,6 +28,7 @@ const PO_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Подтверждён поставщиком', value: 'confirmed_by_supplier' },
   { label: 'Частично получен', value: 'partially_received' },
   { label: 'Выполнен', value: 'completed' },
+  { label: 'Отменён', value: 'cancelled' },
 ];
 
 function poSeverity(value: unknown): string {
@@ -56,7 +57,7 @@ function poSeverity(value: unknown): string {
   template: `
     <app-kp-crud-page
       title="Заказы поставщикам"
-      entityLabel="заказа поставщику"
+      entityLabel="закупки"
       description="Закупки у поставщиков"
       [store]="store"
       [columns]="columns()"
@@ -66,7 +67,14 @@ function poSeverity(value: unknown): string {
     >
       <ng-template #form let-row>
         <div class="form-layout">
-          <app-kp-input label="Номер" name="number" [value]="row['number'] || ''" (valueChange)="row['number'] = $event" />
+          <app-kp-input
+            label="Номер"
+            name="number"
+            placeholder="Например, ЗП-001"
+            [value]="row['number'] || ''"
+            (valueChange)="row['number'] = $event"
+            [required]="true"
+          />
           <app-kp-select
             label="Поставщик"
             name="supplierId"
@@ -76,16 +84,34 @@ function poSeverity(value: unknown): string {
             [options]="supplierOptions()"
             [required]="true"
           />
-          <app-kp-datepicker label="Дата заказа" name="orderDate" [value]="row['orderDate'] || ''" (valueChange)="row['orderDate'] = $event" />
-          <app-kp-datepicker label="Дата поставки" name="deliveryDate" [value]="row['deliveryDate'] || ''" (valueChange)="row['deliveryDate'] = $event" />
+          <app-kp-datepicker
+            label="Дата заказа"
+            name="orderDate"
+            [value]="row['orderDate'] || ''"
+            (valueChange)="row['orderDate'] = $event"
+          />
+          <app-kp-datepicker
+            label="Дата поставки"
+            name="deliveryDate"
+            [value]="row['deliveryDate'] || ''"
+            (valueChange)="row['deliveryDate'] = $event"
+          />
           <app-kp-select
             label="Статус"
             name="statusId"
+            placeholder="Выберите статус"
             [value]="row['statusId'] || 'new'"
             (valueChange)="row['statusId'] = $event"
             [options]="statusOptions"
+            [required]="true"
           />
-          <app-kp-textarea label="Примечание" name="notes" [value]="row['notes'] || ''" (valueChange)="row['notes'] = $event" />
+          <app-kp-textarea
+            label="Примечание"
+            name="notes"
+            placeholder="Комментарий к закупке"
+            [value]="row['notes'] || ''"
+            (valueChange)="row['notes'] = $event"
+          />
         </div>
       </ng-template>
     </app-kp-crud-page>

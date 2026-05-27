@@ -1,4 +1,5 @@
-import { Component, inject, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, DestroyRef, ChangeDetectionStrategy, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { KpCrudPageComponent } from '../../shared/crud/kp-crud-page.component';
 import {
@@ -9,8 +10,22 @@ import {
   type KpColumn,
 } from '../../shared/ui';
 import { AttributesEditorComponent } from '../attributes/attributes-editor.component';
+import { CategoryOptionsService } from '../../shared/services/category-options.service';
+import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createProductsStore } from './products.store';
 import { PERMISSIONS } from '../../core/permissions';
+
+const PRODUCT_KIND_OPTIONS: KpSelectOption[] = [
+  { label: 'Товар', value: 'ITEM' },
+  { label: 'Услуга', value: 'SERVICE' },
+  { label: 'Работа', value: 'WORK' },
+];
+
+const PRODUCT_STATUS_OPTIONS: KpSelectOption[] = [
+  { label: 'Активен', value: 'active' },
+  { label: 'Черновик', value: 'draft' },
+  { label: 'Архив', value: 'archived' },
+];
 
 function productSeverity(value: unknown): string {
   const map: Record<string, string> = {
@@ -41,7 +56,7 @@ function productSeverity(value: unknown): string {
       entityLabel="товара"
       description="Справочник товаров, услуг и работ"
       [store]="store"
-      [columns]="columns"
+      [columns]="columns()"
       [permissions]="PERMISSIONS.products"
       [severityFn]="productSeverity"
       createLabel="Создать товар"
@@ -52,6 +67,7 @@ function productSeverity(value: unknown): string {
           <app-kp-input
             label="Наименование"
             name="name"
+            placeholder="Введите наименование"
             [value]="row['name'] || ''"
             (valueChange)="row['name'] = $event"
             [required]="true"
@@ -59,33 +75,47 @@ function productSeverity(value: unknown): string {
           <app-kp-input
             label="Артикул"
             name="sku"
+            placeholder="Например, PRD-001"
             [value]="row['sku'] || ''"
             (valueChange)="row['sku'] = $event"
           />
           <app-kp-select
             label="Тип"
             name="kind"
+            placeholder="Выберите тип"
             [value]="row['kind'] || 'ITEM'"
             (valueChange)="row['kind'] = $event"
             [options]="kindOptions"
             [required]="true"
           />
+          <app-kp-select
+            label="Категория"
+            name="categoryId"
+            placeholder="Выберите категорию"
+            [value]="row['categoryId'] || ''"
+            (valueChange)="row['categoryId'] = $event"
+            [options]="categoryOptions()"
+          />
           <app-kp-input
             label="Единица измерения"
             name="unit"
+            placeholder="шт, м, кг…"
             [value]="row['unit'] || ''"
             (valueChange)="row['unit'] = $event"
           />
           <app-kp-select
             label="Статус"
             name="status"
+            placeholder="Выберите статус"
             [value]="row['status'] || 'active'"
             (valueChange)="row['status'] = $event"
             [options]="statusOptions"
+            [required]="true"
           />
           <app-kp-textarea
             label="Описание"
             name="description"
+            placeholder="Краткое описание товара"
             [value]="row['description'] || ''"
             (valueChange)="row['description'] = $event"
           />
@@ -99,30 +129,50 @@ function productSeverity(value: unknown): string {
     </app-kp-crud-page>
   `,
 })
-export class ProductsPageComponent {
+export class ProductsPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
   readonly productSeverity = productSeverity;
+  readonly kindOptions = PRODUCT_KIND_OPTIONS;
+  readonly statusOptions = PRODUCT_STATUS_OPTIONS;
 
-  readonly kindOptions: KpSelectOption[] = [
-    { label: 'Товар', value: 'ITEM' },
-    { label: 'Услуга', value: 'SERVICE' },
-    { label: 'Работа', value: 'WORK' },
-  ];
+  readonly categoryOptions = signal<KpSelectOption[]>([]);
 
-  readonly statusOptions: KpSelectOption[] = [
-    { label: 'Активен', value: 'active' },
-    { label: 'Черновик', value: 'draft' },
-    { label: 'Архив', value: 'archived' },
-  ];
-
-  readonly columns: KpColumn[] = [
+  readonly columns = signal<KpColumn[]>([
     { field: 'name', header: 'Наименование', type: 'text', sortable: true },
     { field: 'sku', header: 'Артикул', type: 'text', sortable: true },
-    { field: 'kind', header: 'Тип', type: 'tag', sortable: true },
+    {
+      field: 'kind',
+      header: 'Тип',
+      type: 'tag',
+      sortable: true,
+      width: '110px',
+      options: PRODUCT_KIND_OPTIONS,
+    },
+    { field: 'categoryId', header: 'Категория', type: 'select', sortable: true, options: [] },
     { field: 'unit', header: 'Ед. изм.', type: 'text', sortable: true, width: '100px' },
-    { field: 'status', header: 'Статус', type: 'tag', sortable: true, width: '110px' },
+    {
+      field: 'status',
+      header: 'Статус',
+      type: 'tag',
+      sortable: true,
+      width: '110px',
+      options: PRODUCT_STATUS_OPTIONS,
+    },
     { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
-  ];
+  ]);
 
   readonly store = createProductsStore(inject(DestroyRef));
+
+  private readonly categoryOptionsService = inject(CategoryOptionsService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  ngOnInit(): void {
+    this.categoryOptionsService
+      .load()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((options) => {
+        this.categoryOptions.set(options);
+        patchCrudColumnOptions(this.columns, 'categoryId', options);
+      });
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, input, model, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, model, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TextareaModule } from 'primeng/textarea';
 
@@ -27,9 +27,14 @@ import { TextareaModule } from 'primeng/textarea';
         [readonly]="readonly()"
         [disabled]="disabled()"
         [attr.required]="required() ? '' : null"
+        [autoResize]="autoResize()"
+        [class.kp-textarea__control--large]="size() === 'large'"
+        [attr.aria-label]="inputAriaLabel() || null"
+        [attr.aria-invalid]="error() ? true : null"
+        [attr.aria-describedby]="error() ? errorId() : null"
       ></textarea>
       @if (error()) {
-        <span class="kp-textarea__error">{{ error() }}</span>
+        <span [id]="errorId()" class="kp-textarea__error" role="alert">{{ error() }}</span>
       }
     </div>
   `,
@@ -45,4 +50,10 @@ export class KpTextareaComponent {
   readonly readonly = input(false);
   readonly disabled = input(false);
   readonly error = input<string>('');
+  readonly autoResize = input(true);
+  readonly size = input<'small' | 'large'>('small');
+  readonly ariaLabel = input<string>('');
+
+  readonly errorId = computed(() => (this.name() ? `${this.name()}-error` : 'kp-textarea-error'));
+  readonly inputAriaLabel = computed(() => this.ariaLabel() || this.label() || '');
 }

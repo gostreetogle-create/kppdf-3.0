@@ -86,7 +86,7 @@ function modulePermissions(key: ModuleKey): CrudPermissions {
           [columns]="tableColumns()"
           [permissions]="activePermissions()"
           [severityFn]="severityFn"
-          createLabel="Добавить"
+          [createLabel]="createLabel(mod.key)"
         >
           <ng-template #form let-row>
             <app-module-dynamic-form
@@ -188,6 +188,25 @@ export class ModulesPageComponent implements OnInit {
 
   entityLabel(key: ModuleKey): string {
     return MODULE_ENTITY_LABEL[key];
+  }
+
+  createLabel(key: ModuleKey): string {
+    const labels: Partial<Record<ModuleKey, string>> = {
+      boms: 'Создать BOM',
+      operations: 'Создать операцию',
+      'tech-processes': 'Создать техпроцесс',
+      'purchase-requests': 'Создать заявку',
+      warehouses: 'Создать склад',
+      'stock-movements': 'Создать движение',
+      reservations: 'Создать резерв',
+      'work-order-operations': 'Создать операцию наряда',
+      'cost-calculations': 'Создать калькуляцию',
+      'actual-costs': 'Добавить затраты',
+      'shipping-docs': 'Создать документ',
+      counters: 'Создать счётчик',
+      interactions: 'Добавить запись',
+    };
+    return labels[key] ?? 'Создать';
   }
 
   selectModule(key: ModuleKey): void {

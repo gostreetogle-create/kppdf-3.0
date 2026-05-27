@@ -31,6 +31,11 @@ const WORK_ORDER_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Отменён', value: 'cancelled' },
 ];
 
+const YES_NO_OPTIONS: KpSelectOption[] = [
+  { label: 'Да', value: 'true' },
+  { label: 'Нет', value: 'false' },
+];
+
 function workOrderSeverity(value: unknown): string {
   const map: Record<string, string> = {
     pending: 'secondary',
@@ -39,6 +44,8 @@ function workOrderSeverity(value: unknown): string {
     cancelled: 'danger',
     new: 'info',
     on_hold: 'secondary',
+    true: 'success',
+    false: 'secondary',
   };
   return map[String(value)] || 'info';
 }
@@ -57,18 +64,25 @@ function workOrderSeverity(value: unknown): string {
   ],
   template: `
     <app-kp-crud-page
-      title="Производственные наряды"
-      entityLabel="производственного наряда"
-      description="Наряды на производство"
+      title="Производственные заказы"
+      entityLabel="производственного заказа"
+      description="Заказы на производство"
       [store]="store"
       [columns]="columns()"
       [permissions]="PERMISSIONS['work-orders']"
       [severityFn]="workOrderSeverity"
-      createLabel="Создать наряд"
+      createLabel="Создать заказ"
     >
       <ng-template #form let-row>
         <div class="form-layout">
-          <app-kp-input label="Номер" name="number" [value]="row['number'] || ''" (valueChange)="row['number'] = $event" />
+          <app-kp-input
+            label="Номер"
+            name="number"
+            placeholder="Например, ПЗ-001"
+            [value]="row['number'] || ''"
+            (valueChange)="row['number'] = $event"
+            [required]="true"
+          />
           <app-kp-select
             label="Заказ"
             name="orderId"
@@ -87,18 +101,56 @@ function workOrderSeverity(value: unknown): string {
             [options]="productOptions()"
             [required]="true"
           />
-          <app-kp-input-number label="Количество" name="qty" [value]="row['qty'] ?? null" (valueChange)="row['qty'] = $event" />
+          <app-kp-input-number
+            label="Количество"
+            name="qty"
+            placeholder="1"
+            [value]="row['qty'] ?? null"
+            (valueChange)="row['qty'] = $event"
+            [required]="true"
+          />
           <app-kp-select
             label="Статус"
             name="statusId"
+            placeholder="Выберите статус"
             [value]="row['statusId'] || 'pending'"
             (valueChange)="row['statusId'] = $event"
             [options]="statusOptions"
           />
-          <app-kp-datepicker label="Начало" name="startDate" [value]="row['startDate'] || ''" (valueChange)="row['startDate'] = $event" />
-          <app-kp-datepicker label="Окончание" name="endDate" [value]="row['endDate'] || ''" (valueChange)="row['endDate'] = $event" />
-          <app-kp-input label="Ответственный" name="assignedTo" [value]="row['assignedTo'] || ''" (valueChange)="row['assignedTo'] = $event" />
-          <app-kp-textarea label="Примечание" name="notes" [value]="row['notes'] || ''" (valueChange)="row['notes'] = $event" />
+          <app-kp-datepicker
+            label="Начало"
+            name="startDate"
+            [value]="row['startDate'] || ''"
+            (valueChange)="row['startDate'] = $event"
+          />
+          <app-kp-datepicker
+            label="Окончание"
+            name="endDate"
+            [value]="row['endDate'] || ''"
+            (valueChange)="row['endDate'] = $event"
+          />
+          <app-kp-input
+            label="Ответственный"
+            name="assignedTo"
+            placeholder="ФИО исполнителя"
+            [value]="row['assignedTo'] || ''"
+            (valueChange)="row['assignedTo'] = $event"
+          />
+          <app-kp-textarea
+            label="Примечание"
+            name="notes"
+            placeholder="Дополнительная информация"
+            [value]="row['notes'] || ''"
+            (valueChange)="row['notes'] = $event"
+          />
+          <app-kp-select
+            label="Активен"
+            name="isActive"
+            placeholder="Выберите"
+            [value]="boolToStr(row['isActive'] ?? true)"
+            (valueChange)="row['isActive'] = $event === 'true'"
+            [options]="yesNoOptions"
+          />
         </div>
       </ng-template>
     </app-kp-crud-page>
@@ -108,6 +160,7 @@ export class WorkOrdersPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
   readonly workOrderSeverity = workOrderSeverity;
   readonly statusOptions = WORK_ORDER_STATUS_OPTIONS;
+  readonly yesNoOptions = YES_NO_OPTIONS;
 
   readonly orderOptions = signal<KpSelectOption[]>([]);
   readonly productOptions = signal<KpSelectOption[]>([]);
@@ -125,6 +178,7 @@ export class WorkOrdersPageComponent implements OnInit {
       width: '130px',
       options: WORK_ORDER_STATUS_OPTIONS,
     },
+    { field: 'isActive', header: 'Активен', type: 'boolean', sortable: true, width: '90px' },
     { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
   ]);
 
@@ -150,5 +204,9 @@ export class WorkOrdersPageComponent implements OnInit {
         this.productOptions.set(options);
         patchCrudColumnOptions(this.columns, 'productId', options);
       });
+  }
+
+  boolToStr(value: unknown): string {
+    return value === true || value === 'true' ? 'true' : 'false';
   }
 }

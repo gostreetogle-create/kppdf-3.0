@@ -3,7 +3,7 @@
 # В development-режиме проект использует MongoMemoryServer (in-memory).
 #
 # Запуск: docker compose up -d
-# URI:    mongodb://localhost:27017/kppdf-3.0
+# URI:    mongodb://localhost:27017/kppdf30
 
 services:
   mongodb:
@@ -15,7 +15,7 @@ services:
     volumes:
       - mongodb_data:/data/db
     environment:
-      MONGO_INITDB_DATABASE: kppdf-3.0
+      MONGO_INITDB_DATABASE: kppdf30
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh --quiet
       interval: 10s

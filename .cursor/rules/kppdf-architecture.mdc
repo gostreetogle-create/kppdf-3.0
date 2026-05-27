@@ -1,6 +1,7 @@
 ---
 description: Слои FE, импорты, запреты (KPPDF)
-alwaysApply: true
+globs: src/app/**
+alwaysApply: false
 ---
 
 # Архитектура FE
@@ -9,13 +10,23 @@ alwaysApply: true
 
 | Слой | Импорт |
 |------|--------|
-| core | только externals |
+| core | только externals (@angular, rxjs) |
 | shared | core + externals |
-| features | core, shared + externals; не layout; не другие features |
+| features | core, shared + externals; НЕ layout; НЕ другие features |
 | layout | всё выше |
 
-Запреты: `primeng/*` в features/core (только `shared/ui/kp-*`); `http` в компонентах; inline-стили; constructor DI; `any`; raw `<button>`/`<input>`/`<table>`.
+Запреты:
+- 🔴 `primeng/*` в features/core (только `shared/ui/kp-*`)
+- 🔴 `http.get()` в компонентах — только через сервисы
+- 🔴 inline-стили — только SCSS
+- 🔴 constructor DI — только `inject()`
+- 🔴 `any` — только `unknown` + type guard
+- 🔴 raw `<button>`/`<input>`/`<table>` — только PrimeNG или kp-обёртки
+- 🔴 NgModules — только Standalone
+- 🔴 `subscribe()` без DestroyRef
 
 CRUD: `kp-crud-page` + `CrudStore`; `*Id` → `*OptionsService`, не ObjectId в UI.
 
-Полные инварианты: [AGENTS.md](AGENTS.md). Детали: [.opencode/rules/architecture-layers.md](.opencode/rules/architecture-layers.md).
+Полные инварианты: AGENTS.md. Детали слоёв: .opencode/rules/architecture-layers.md.
+
+---

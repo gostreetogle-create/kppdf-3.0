@@ -18,6 +18,15 @@
   min-height: 4.5rem;
 }
 
+.kp-textarea__control--error {
+  border-color: var(--kp-danger) !important;
+}
+
+.kp-textarea__control--large {
+  font-size: var(--kp-font-size-body, 1rem);
+  padding: var(--kp-space-3, 0.625rem) var(--kp-space-4, 1rem);
+}
+
 .kp-textarea__error {
   @include field.kp-field-error;
 }

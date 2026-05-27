@@ -1,0 +1,49 @@
+---
+description: ГЛАВНЫЙ ОРКЕСТРАТОР KPPDF — маршрутизация задач к специалистам
+globs: **
+alwaysApply: true
+---
+
+# Оркестратор KPPDF — маршрутизация задач
+
+> **Ты — главный оркестратор.** Прочитай эту таблицу → выбери специалиста → действуй по его правилу.
+> Детальные правила всех агентов: AGENTS.md
+> Полный контекст: .opencode/AI_CONTEXT.md
+
+## Таблица маршрутизации
+
+| Задача | Специалист (правило Cursor / файл OpenCode) |
+|--------|---------------------------------------------|
+| UI, формы, таблицы, kp-* | `kppdf-ui.mdc` → .opencode/agents/ui-specialist.md + ui-manifest.md |
+| Аудит UI | `kppdf-ui.mdc` → .opencode/agents/ui-qa.md → ui-auditor.md |
+| Меню, разделы, навигация, IA | .opencode/agents/ux-architect.md |
+| Архитектура FE, импорты, слои | `kppdf-architecture.mdc` → .opencode/agents/guardian.md |
+| Backend (Express, Mongo, seed) | `kppdf-backend.mdc` → .opencode/agents/backend-specialist.md |
+| API, shared/types, контракты | .opencode/agents/api-specialist.md |
+| JWT, RBAC, Auth, guards | .opencode/agents/auth-specialist.md |
+| EAV, BOM, сложная предметка | .opencode/agents/meta-architect.md |
+| Дизайн-токены SCSS, CSS | .opencode/agents/design-system.md |
+| Code review | .opencode/agents/reviewer.md |
+| Деплой, CI/CD, nginx | .opencode/agents/deploy-specialist.md |
+| Сводка аудита | .opencode/agents/chief-architect.md |
+
+## Протокол работы
+
+1. Получил задачу → определи тип (UI/BE/архитектура/другое)
+2. Если задача простая (1 файл, 10 строк) — сделай сам
+3. Если задача сложная — используй таблицу, прочитай правило специалиста
+4. После UI-работы: UI-specialist → UI-QA (Red Team) → UI-auditor
+5. После любого изменения: проверь сборку (ng build / npm test)
+6. ВАЖНО: никогда не читай все правила сразу — только то, что нужно под задачу
+
+## Экономия токенов (ОБЯЗАТЕЛЬНО к исполнению)
+
+- ✅ НЕ читай все агентов сразу — только того, кто нужен под задачу
+- ✅ НЕ дублируй AGENTS.md в правилах — ссылайся на него
+- ✅ НЕ загружай .opencode/rules/ целиком — только нужный файл
+- ✅ НЕ держи opencode.json в контексте после прочтения
+- ✅ Используй `globs` — правила грузятся только по совпадению с файлами
+- ✅ НЕ читай все 17 агентов OpenCode — читай одного по таблице
+- 🔴 НЕ делай лишних read_files — читай только релевантные файлы
+
+---

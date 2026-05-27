@@ -10,3 +10,9 @@
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--kp-space-4, 1rem);
 }
+
+@media (max-width: 640px) {
+  .form-layout--grid {
+    grid-template-columns: 1fr;
+  }
+}

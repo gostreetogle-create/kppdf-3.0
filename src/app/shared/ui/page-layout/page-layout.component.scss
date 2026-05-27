@@ -1,0 +1,11 @@
+:host {
+  display: block;
+}
+
+.page {
+  padding: var(--kp-layout-page-padding-y) var(--kp-layout-page-padding-x);
+  max-width: var(--kp-layout-page-max);
+  margin: 0 auto;
+  width: 100%;
+  animation: kp-fade-in var(--kp-transition-base) ease-out;
+}

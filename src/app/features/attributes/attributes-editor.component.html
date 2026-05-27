@@ -84,6 +84,7 @@
       <app-kp-button
         label="Сохранить"
         icon="pi pi-check"
+        size="small"
         [loading]="saving"
         [disabled]="saving"
         (buttonClick)="save()"
@@ -92,6 +93,8 @@
         label="Сбросить"
         icon="pi pi-refresh"
         severity="secondary"
+        size="small"
+        [outlined]="true"
         [disabled]="saving"
         (buttonClick)="load()"
       />

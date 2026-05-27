@@ -1,19 +1,21 @@
+@use '../styles/kp-field' as field;
+
 .kp-multiselect {
-  display: flex;
-  flex-direction: column;
-  gap: var(--kp-space-1, 0.25rem);
+  @include field.kp-field-root;
 }
 
 .kp-multiselect__label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--kp-text);
+  @include field.kp-field-label;
 }
 
 .kp-multiselect__required {
-  color: var(--kp-danger, #ef4444);
+  @include field.kp-field-required;
 }
 
-.kp-multiselect__control {
-  width: 100%;
+.kp-multiselect__error {
+  @include field.kp-field-error;
+}
+
+:host ::ng-deep .kp-multiselect__control--error {
+  border-color: var(--kp-danger) !important;
 }

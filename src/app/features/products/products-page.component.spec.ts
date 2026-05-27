@@ -49,18 +49,27 @@ describe('ProductsPageComponent', () => {
   //  Columns
   // ================================================================
   it('should define product columns', () => {
-    expect(component.columns.length).toBeGreaterThan(0);
-    const fields = component.columns.map((c) => c.field);
+    expect(component.columns().length).toBeGreaterThan(0);
+    const fields = component.columns().map((c) => c.field);
     expect(fields).toContain('name');
     expect(fields).toContain('sku');
     expect(fields).toContain('kind');
+    expect(fields).toContain('categoryId');
     expect(fields).toContain('unit');
     expect(fields).toContain('status');
   });
 
   it('should have sortable columns', () => {
-    const sortable = component.columns.filter((c) => c.sortable !== false);
-    expect(sortable.length).toBe(component.columns.length);
+    const cols = component.columns();
+    const sortable = cols.filter((c) => c.sortable !== false);
+    expect(sortable.length).toBe(cols.length);
+  });
+
+  it('should expose Russian labels for kind and status tags', () => {
+    const kindCol = component.columns().find((c) => c.field === 'kind');
+    const statusCol = component.columns().find((c) => c.field === 'status');
+    expect(kindCol?.options?.some((o) => o.label === 'Товар')).toBeTrue();
+    expect(statusCol?.options?.some((o) => o.label === 'Активен')).toBeTrue();
   });
 
   // ================================================================

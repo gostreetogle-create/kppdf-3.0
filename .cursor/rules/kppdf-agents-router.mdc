@@ -1,27 +1,20 @@
 ---
-description: Какую роль OpenCode читать под задачу (Cursor)
-alwaysApply: true
+description: Быстрая ссылка на маршрут агентов (см. kppdf-orchestrator)
+globs: **
+alwaysApply: false
 ---
 
 # Маршрут агентов
 
-Перед нетривиальной задачей прочитай **один** файл роли (не все):
+Полная таблица маршрутизации → kppdf-orchestrator.mdc
 
-| Задача | Файл |
-|--------|------|
-| UI, формы, таблицы, kp-* | `.opencode/agents/ui-specialist.md` + `.opencode/rules/ui-manifest.md` |
-| Аудит UI перед сдачей | `.opencode/agents/ui-qa.md` → `.opencode/agents/ui-auditor.md` |
-| Меню, разделы, IA, RBAC nav | `.opencode/agents/ux-architect.md` |
-| Импорты, boundaries | `.opencode/agents/guardian.md` |
-| Express, Mongo, seed | `.opencode/agents/backend-specialist.md` |
-| shared/types, API | `.opencode/agents/api-specialist.md` |
-| JWT, RBAC | `.opencode/agents/auth-specialist.md` |
-| EAV, BOM | `.opencode/agents/meta-architect.md` |
-| Токены SCSS | `.opencode/agents/design-system.md` |
-| Review | `.opencode/agents/reviewer.md` |
-| Деплой | `.opencode/agents/deploy-specialist.md` |
-| Сводка аудита | `.opencode/agents/chief-architect.md` + `.opencode/audit/reports/` |
+Кратко:
+- UI → ui-specialist.md → ui-qa → ui-auditor
+- Backend → backend-specialist.md
+- Архитектура → guardian.md
+- Остальное → см. kppdf-orchestrator.mdc
 
-Эталон UI: `.opencode/golden-samples.ts`. Контекст: `.opencode/AI_CONTEXT.md`.
+Эталон UI: .opencode/golden-samples.ts
+Контекст: .opencode/AI_CONTEXT.md
 
-OpenCode — оркестр в `opencode.json`. Cursor — `.cursor/rules/` + `@роль` в промпте при необходимости.
+---

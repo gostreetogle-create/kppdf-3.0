@@ -1,279 +1,341 @@
 <#
 .SYNOPSIS
-  KPPDF 3.0 - One-command launcher for Windows
-.DESCRIPTION
-  1. Kills processes on specified ports (default: 3000 backend, 4200 frontend)
-  2. Optionally starts Docker MongoDB (skip with -SkipDocker)
-  3. Starts backend (Express + MongoDB) in background
-  4. Starts frontend (Angular) in a separate terminal window
-  5. Opens browser at http://localhost:4200
+  KPPDF 3.0 — локальный запуск одной командой (Windows).
 
-  Режимы работы с MongoDB:
-    -SkipDocker (no arg)    -> MongoMemoryServer (built-in, no Docker needed)
-    without -SkipDocker      -> MongoDB in Docker + tsx watch
-.PARAMETER Ports
-  Ports to free. Default: @(3000, 4200).
-.PARAMETER SkipDocker
-  If set, skip Docker. Use MongoMemoryServer (built-in in-memory MongoDB).
-  Default: Docker starts (MongoDB in container).
 .EXAMPLE
   .\start.ps1
-  Launch with Docker MongoDB + cleanup ports 3000 and 4200.
+  Docker MongoDB + backend + frontend + браузер.
 
+.EXAMPLE
   .\start.ps1 -SkipDocker
-  Launch with MongoMemoryServer (no Docker).
+  In-memory MongoDB (без Docker).
 
-  .\start.ps1 -Ports @(3000, 4200, 9229) -SkipDocker
-  Clean three ports + MongoMemoryServer.
+.EXAMPLE
+  .\start.ps1 -Reseed
+  Принудительно пересоздать тестовые данные.
 #>
 
 param(
-  [int[]]$Ports = @(3000, 4200),
-  [switch]$SkipDocker
+  [switch]$SkipDocker,
+  [switch]$Reseed
 )
 
-# IMPORTANT: Do NOT set $ErrorActionPreference = 'Stop'
-# It breaks Write-Host after 2>&1 redirection in PowerShell 5.1
 $ErrorActionPreference = 'Continue'
 
-# ──────────────────────────────────────────────────────────────
-# Helper: ensure npm dependencies are installed
-# ──────────────────────────────────────────────────────────────
-function Ensure-Dependencies {
-  param([string]$Dir, [string]$Label)
+$Root = $PSScriptRoot
+$BackendDir = Join-Path $Root 'backend'
+$MongoDb = 'kppdf30'
+$MongoUri = "mongodb://localhost:27017/$MongoDb"
+$HealthUrl = 'http://localhost:3000/api/v1/health'
+$FrontUrl = 'http://localhost:4200'
 
-  $nodeModules = Join-Path $Dir "node_modules"
-  $pkgLock = Join-Path $Dir "package-lock.json"
+# ── Helpers ───────────────────────────────────────────────────
 
-  if (-not (Test-Path $nodeModules)) {
-    Write-Host "  >> ${Label}: node_modules not found. Running npm install..." -ForegroundColor Yellow
-    Push-Location $Dir
-    try {
-      $null = npm install --legacy-peer-deps 2> $null
-      if ($LASTEXITCODE -ne 0) {
-        Write-Host "     npm install failed for ${Label}. Trying without --legacy-peer-deps..." -ForegroundColor Yellow
-        $null = npm install 2> $null
-      }
-      if ($LASTEXITCODE -eq 0) {
-        Write-Host "     ${Label} dependencies installed." -ForegroundColor Green
-      } else {
-        Write-Host "     WARNING: npm install for ${Label} had issues." -ForegroundColor Red
-      }
-    } finally {
-      Pop-Location
-    }
-  } else {
-    Write-Host "  >> ${Label}: node_modules found." -ForegroundColor Green
+function Write-Step([string]$Text) {
+  Write-Host $Text -ForegroundColor Gray
+}
+
+function Test-HttpOk([string]$Url) {
+  try {
+    $r = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
+    return ($r.StatusCode -eq 200)
+  } catch {
+    return $false
   }
 }
 
-# ──────────────────────────────────────────────────────────────
-# Helper: kill process on a port
-# ──────────────────────────────────────────────────────────────
-function Stop-ProcessesOnPort {
-  param([int]$Port)
-
-  Write-Host "  >> Checking port $Port..."
-
-  $pids = @()
-
-  # Method 1: Get-NetTCPConnection (native PS, may need admin)
+function Test-TcpOpen([int]$Port, [int]$TimeoutMs = 300) {
+  $client = $null
   try {
-    $connections = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
-    if ($connections) {
-      $pids = $connections | Select-Object -ExpandProperty OwningProcess -Unique
-    }
+    $client = [System.Net.Sockets.TcpClient]::new()
+    $task = $client.ConnectAsync('127.0.0.1', $Port)
+    if (-not $task.Wait($TimeoutMs)) { return $false }
+    return $client.Connected
   } catch {
-    # fall through
+    return $false
+  } finally {
+    if ($client) { $client.Dispose() }
+  }
+}
+
+function Get-PortPids([int]$Port) {
+  $pids = @()
+  try {
+    $pids += Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue |
+      Select-Object -ExpandProperty OwningProcess -Unique
+  } catch { }
+
+  if ($pids.Count -eq 0) {
+    $pids += netstat -ano | Select-String ":$Port\s" | ForEach-Object {
+      ($_.ToString() -split '\s+')[-1]
+    } | Where-Object { $_ -match '^\d+$' } | ForEach-Object { [int]$_ }
   }
 
-  # Method 2: netstat (works without admin)
-  if ($pids.Count -eq 0) {
-    $netstat = netstat -ano | Select-String ":$Port"
-    if ($netstat) {
-      $pids = $netstat | ForEach-Object {
-        ($_.ToString() -split '\s+')[-1]
-      } | Where-Object { $_ -match '^\d+$' } | ForEach-Object { [int]$_ } | Select-Object -Unique
-    }
-  }
+  return ($pids | Select-Object -Unique)
+}
 
+function Stop-Port([int]$Port) {
+  $pids = Get-PortPids -Port $Port
   if ($pids.Count -eq 0) {
-    Write-Host "     Port $Port is free." -ForegroundColor Green
+    Write-Host "  :$Port free" -ForegroundColor Green
     return
   }
 
   foreach ($procId in $pids) {
     if ($procId -eq $PID) { continue }
-    try {
-      $proc = Get-Process -Id $procId -ErrorAction SilentlyContinue
-      if ($proc) {
-        Write-Host "     Stopping $($proc.ProcessName) (PID $procId) on port $Port..." -ForegroundColor Yellow
-        Stop-Process -Id $procId -Force -ErrorAction Stop
-        Write-Host "     PID $procId stopped." -ForegroundColor Green
-        Start-Sleep -Milliseconds 300
-      }
-    } catch {
-      Write-Host "     Could not stop PID ${procId}: $($_.Exception.Message)" -ForegroundColor Red
+    $proc = Get-Process -Id $procId -ErrorAction SilentlyContinue
+    if ($proc) {
+      Write-Host "  :$Port stop $($proc.ProcessName) (PID $procId)" -ForegroundColor Yellow
+      Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
     }
   }
 }
 
-# ──────────────────────────────────────────────────────────────
-# Helper: wait for HTTP endpoint to respond 200
-# ──────────────────────────────────────────────────────────────
-function Wait-ForEndpoint {
-  param(
-    [string]$Url,
-    [string]$Label,
-    [int]$TimeoutSeconds = 60
-  )
+function Wait-Http([string]$Url, [string]$Label, [int]$Seconds = 120) {
+  if (Test-HttpOk -Url $Url) {
+    Write-Host "  $Label ready" -ForegroundColor Green
+    return $true
+  }
 
-  Write-Host "     Waiting for $Label at $Url ..." -NoNewline
-  $elapsed = 0
-  while ($elapsed -lt $TimeoutSeconds) {
-    try {
-      $r = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
-      if ($r.StatusCode -eq 200) {
-        Write-Host " ready!" -ForegroundColor Green
-        return $true
-      }
-    } catch {
-      # not ready yet
+  Write-Host "  wait $Label..." -NoNewline
+  $deadline = (Get-Date).AddSeconds($Seconds)
+  while ((Get-Date) -lt $deadline) {
+    if (Test-HttpOk -Url $Url) {
+      Write-Host " OK" -ForegroundColor Green
+      return $true
     }
-    Start-Sleep -Seconds 2
-    $elapsed += 2
+    Start-Sleep -Milliseconds 800
     Write-Host "." -NoNewline
   }
-  Write-Host " timeout ($TimeoutSeconds s)" -ForegroundColor Red
+  Write-Host " TIMEOUT" -ForegroundColor Red
   return $false
 }
 
-# ──────────────────────────────────────────────────────────────
-# Main
-# ──────────────────────────────────────────────────────────────
-$root = $PSScriptRoot
-$backendDir = Join-Path $root 'backend'
-
-Write-Host ""
-Write-Host "========== KPPDF 3.0 - Local Launcher ==========" -ForegroundColor Cyan
-Write-Host ""
-
-# ── Step 0: Check dependencies ──
-Write-Host "[0/5] Checking dependencies..." -ForegroundColor Gray
-Ensure-Dependencies -Dir $root -Label "Frontend"
-Ensure-Dependencies -Dir $backendDir -Label "Backend"
-Write-Host "  Done." -ForegroundColor Green
-Write-Host ""
-
-# ── Step 1: Free ports ──
-Write-Host "[1/5] Freeing ports..." -ForegroundColor Gray
-foreach ($port in $Ports) {
-  Stop-ProcessesOnPort -Port $port
-}
-Write-Host "  Done." -ForegroundColor Green
-Write-Host ""
-
-# ── Step 2: Database ──
-Write-Host "[2/5] Database..." -ForegroundColor Gray
-
-$useMemoryServer = $false
-
-if (-not $SkipDocker) {
-  Write-Host "  >> Starting MongoDB in Docker..."
-  Push-Location $root
-
-  # Run docker, check $? instead of 2>&1 to avoid PS5.1 stream bugs
-  $null = docker compose up -d 2> $null
-  if ($?) {
-    Write-Host "     MongoDB container is up on port 27017." -ForegroundColor Green
-    $useMemoryServer = $false
-  } else {
-    Write-Host "     Docker not available. Falling back to MongoMemoryServer." -ForegroundColor Yellow
-    $useMemoryServer = $true
+function Ensure-NodeModules([string]$Dir, [string]$Label) {
+  if (Test-Path (Join-Path $Dir 'node_modules')) {
+    Write-Host "  $Label OK" -ForegroundColor Green
+    return
   }
+  Write-Host "  $Label npm install..." -ForegroundColor Yellow
+  Push-Location $Dir
+  $null = npm install --legacy-peer-deps 2>$null
   Pop-Location
-} else {
-  Write-Host "  >> Skipping Docker. Using MongoMemoryServer (in-memory)." -ForegroundColor Yellow
-  $useMemoryServer = $true
 }
 
-if (-not $useMemoryServer) {
-  # Seed data into Docker MongoDB
-  Write-Host "  >> Seeding database..."
-  Push-Location $backendDir
-  $null = npm run seed 2> $null
-  if ($?) {
-    Write-Host "     Seed complete." -ForegroundColor Green
-  } else {
-    Write-Host "     Seed skipped or already seeded." -ForegroundColor Yellow
+function Ensure-EnvFile {
+  $envFile = Join-Path $BackendDir '.env'
+  $example = Join-Path $BackendDir '.env.example'
+
+  if (-not (Test-Path $envFile)) {
+    Copy-Item $example $envFile
+    Write-Host "  created backend/.env" -ForegroundColor Green
+    return
   }
-  Pop-Location
-  $backendLabel = "Express (Docker MongoDB)"
-} else {
-  $backendLabel = "Express (MongoMemoryServer)"
+
+  $content = Get-Content $envFile -Raw
+  if ($content -notmatch "MONGO_URI=$([regex]::Escape($MongoUri))") {
+    ($content -split "`n") | ForEach-Object {
+      if ($_ -match '^MONGO_URI=') { "MONGO_URI=$MongoUri" } else { $_ }
+    } | Set-Content $envFile
+    Write-Host "  MONGO_URI -> $MongoUri" -ForegroundColor Yellow
+  } else {
+    Write-Host "  backend/.env OK" -ForegroundColor Green
+  }
 }
-Write-Host ""
 
-# ── Step 3: Start backend ──
-Write-Host "[3/5] Starting backend ($backendLabel)..." -ForegroundColor Gray
+function Test-MongoDockerOk {
+  $status = docker inspect -f '{{.State.Status}}' kppdf-mongodb 2>$null
+  if ($LASTEXITCODE -ne 0 -or $status -ne 'running') { return $false }
 
-if ($useMemoryServer) {
-  # dev.js runs from root (it starts MongoMemoryServer + seed + server)
-  Start-Process -WindowStyle Hidden -FilePath "node" -ArgumentList "backend/dev.js" `
-    -WorkingDirectory $root
-  Write-Host "  >> node backend/dev.js (background)" -ForegroundColor Green
-} else {
-  # For Docker MongoDB - start dev server without MemoryServer
-  Start-Process -WindowStyle Hidden -FilePath "powershell" -ArgumentList @(
-    '-NoExit'
-    '-Command'
-    "Set-Location '$backendDir'; Write-Host '=== KPPDF Backend ($backendLabel) ===' -ForegroundColor Cyan; npm run dev"
+  $mapped = docker port kppdf-mongodb 27017 2>$null
+  if ($LASTEXITCODE -ne 0 -or -not $mapped) { return $false }
+
+  $health = docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{end}}' kppdf-mongodb 2>$null
+  if ($health -eq 'healthy') { return $true }
+
+  return (Test-TcpOpen -Port 27017)
+}
+
+function Wait-Mongo([int]$Seconds = 30) {
+  Write-Host "  wait MongoDB :27017..." -NoNewline
+  $deadline = (Get-Date).AddSeconds($Seconds)
+  while ((Get-Date) -lt $deadline) {
+    if (Test-TcpOpen -Port 27017) {
+      Write-Host " OK" -ForegroundColor Green
+      return $true
+    }
+    Start-Sleep -Milliseconds 500
+    Write-Host "." -NoNewline
+  }
+  Write-Host " TIMEOUT" -ForegroundColor Red
+  return $false
+}
+
+function Ensure-MongoDocker {
+  Push-Location $Root
+  try {
+    if (Test-MongoDockerOk) {
+      Write-Host "  MongoDB OK (reuse)" -ForegroundColor Green
+      return $true
+    }
+
+    Write-Host "  docker compose up -d mongodb" -ForegroundColor Yellow
+    $out = docker compose up -d mongodb 2>&1 | Out-String
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host $out -ForegroundColor Red
+      return $false
+    }
+
+    return (Wait-Mongo)
+  } finally {
+    Pop-Location
+  }
+}
+
+function Test-DbEmpty {
+  $count = docker exec kppdf-mongodb mongosh $MongoDb --quiet --eval 'db.users.countDocuments()' 2>$null
+  if ($LASTEXITCODE -ne 0) { return $true }
+  return ([int]$count -eq 0)
+}
+
+function Invoke-Seed {
+  Write-Host "  npm run seed..." -ForegroundColor Yellow
+  Push-Location $BackendDir
+  npm run seed
+  $ok = ($LASTEXITCODE -eq 0)
+  Pop-Location
+  if ($ok) {
+    Write-Host "  seed OK" -ForegroundColor Green
+  } else {
+    Write-Host "  seed FAILED" -ForegroundColor Red
+  }
+  return $ok
+}
+
+function Start-Backend([bool]$UseMemory) {
+  if ($UseMemory) {
+    Start-Process -WindowStyle Normal -FilePath 'node' -ArgumentList 'backend/dev.js' -WorkingDirectory $Root
+    Write-Host "  node backend/dev.js" -ForegroundColor Green
+    return
+  }
+
+  Start-Process -WindowStyle Normal -FilePath 'powershell' -ArgumentList @(
+    '-NoExit', '-Command',
+    "Set-Location '$BackendDir'; npm run dev"
   )
-  Write-Host "  >> npm run dev (background)" -ForegroundColor Green
+  Write-Host "  npm run dev" -ForegroundColor Green
 }
 
-Start-Sleep -Seconds 4
+function Start-Frontend {
+  Start-Process -WindowStyle Normal -FilePath 'powershell' -ArgumentList @(
+    '-NoExit', '-Command',
+    "Set-Location '$Root'; Write-Host 'Frontend: http://localhost:4200' -ForegroundColor Cyan; npx ng serve"
+  )
+  Write-Host "  npx ng serve (new window)" -ForegroundColor Green
+}
 
-# ── Step 4: Start frontend ──
-Write-Host ""
-Write-Host "[4/5] Starting frontend (Angular)..." -ForegroundColor Gray
+function Show-Ready {
+  Write-Host ""
+  Write-Host "====== KPPDF 3.0 ready ======" -ForegroundColor Cyan
+  Write-Host "  http://localhost:4200" -ForegroundColor White
+  Write-Host "  login: admin / admin123" -ForegroundColor White
+  Write-Host "=============================" -ForegroundColor Cyan
+  Start-Process $FrontUrl
+}
 
-# Determine how to run Angular
-$ngCmd = if (Get-Command "ng.cmd" -ErrorAction SilentlyContinue) { "ng.cmd" } else { "npx" }
-$ngArgs = if ($ngCmd -eq "npx") { @("ng", "serve") } else { @("serve") }
-
-Start-Process -WindowStyle Normal -FilePath "powershell" -ArgumentList @(
-  '-NoExit'
-  '-Command'
-  "Set-Location '$root'; Write-Host '=== KPPDF Frontend (http://localhost:4200) ===' -ForegroundColor Cyan; & '$ngCmd' $ngArgs"
-)
-Write-Host "  >> $ngCmd $ngArgs (new window)" -ForegroundColor Green
-
-# ── Wait for readiness and show summary ──
-Write-Host ""
-Write-Host "====== Waiting for services to start... ======" -ForegroundColor Cyan
-
-$backendReady = Wait-ForEndpoint -Url "http://localhost:3000/api/v1/health" -Label "Backend" -TimeoutSeconds 90
+# ── Main ──────────────────────────────────────────────────────
 
 Write-Host ""
-if ($backendReady) {
-  Write-Host "====== KPPDF 3.0 is running! ======" -ForegroundColor Cyan
-  Write-Host "  Frontend: http://localhost:4200" -ForegroundColor White
-  Write-Host "  Backend:  http://localhost:3000" -ForegroundColor White
-  Write-Host "  Health:   http://localhost:3000/api/v1/health" -ForegroundColor White
-  Write-Host "  Login:    admin / admin123" -ForegroundColor White
-  Write-Host "==================================" -ForegroundColor Cyan
+Write-Host "========== KPPDF 3.0 ==========" -ForegroundColor Cyan
+Write-Host ""
 
-  # Open browser
-  Start-Sleep -Seconds 3
-  Start-Process "http://localhost:4200"
+Write-Step "[1/5] Dependencies"
+Ensure-NodeModules -Dir $Root -Label 'Frontend'
+Ensure-NodeModules -Dir $BackendDir -Label 'Backend'
+Ensure-EnvFile
+Write-Host ""
+
+if ((Test-HttpOk -Url $HealthUrl) -and (Test-HttpOk -Url $FrontUrl)) {
+  Write-Host "Already running." -ForegroundColor Green
+  Show-Ready
+  exit 0
+}
+
+$backendUp = Test-HttpOk -Url $HealthUrl
+$frontendUp = Test-HttpOk -Url $FrontUrl
+
+Write-Step "[2/5] Ports"
+if (-not $backendUp) {
+  Stop-Port -Port 3000
+  # backend down - restart frontend too (stale ng serve)
+  if ($frontendUp) {
+    Write-Host "  backend down -> restart frontend too" -ForegroundColor Yellow
+    Stop-Port -Port 4200
+    $frontendUp = $false
+  }
 } else {
-  Write-Host "WARNING: Backend did not respond within timeout." -ForegroundColor Red
-  Write-Host "Check the backend terminal window for errors." -ForegroundColor Yellow
-  Write-Host "Then open http://localhost:4200 manually." -ForegroundColor Yellow
+  Write-Host "  :3000 backend OK" -ForegroundColor Green
+}
+
+if (-not $frontendUp) {
+  Stop-Port -Port 4200
+} else {
+  Write-Host "  :4200 frontend OK" -ForegroundColor Green
+}
+Write-Host ""
+
+$useMemory = $false
+$mongoOk = $false
+
+Write-Step "[3/5] Database"
+if ($SkipDocker) {
+  Write-Host "  MongoMemoryServer (dev.js)" -ForegroundColor Yellow
+  $useMemory = $true
+  $mongoOk = $true
+} else {
+  $mongoOk = Ensure-MongoDocker
+  if (-not $mongoOk) {
+    Write-Host "  Docker failed -> MongoMemoryServer" -ForegroundColor Yellow
+    $useMemory = $true
+    $mongoOk = $true
+  }
+}
+
+if ($mongoOk -and -not $useMemory -and ($Reseed -or (Test-DbEmpty))) {
+  if (-not (Invoke-Seed)) { exit 1 }
+} elseif ($mongoOk -and -not $useMemory) {
+  Write-Host "  seed skip (data exists)" -ForegroundColor Green
+}
+Write-Host ""
+
+Write-Step "[4/5] Start services"
+$needBackend = -not $backendUp
+$needFrontend = -not $frontendUp
+
+if ($needBackend) { Start-Backend -UseMemory $useMemory } else { Write-Host "  backend skip" -ForegroundColor Green }
+if ($needFrontend) { Start-Frontend } else { Write-Host "  frontend skip (http://localhost:4200)" -ForegroundColor Green }
+Write-Host ""
+
+Write-Step "[5/5] Wait + browser"
+$backendOk = if ($needBackend) { Wait-Http -Url $HealthUrl -Label 'Backend' -Seconds 90 } else { $backendUp }
+
+$frontOk = $frontendUp
+if ($backendOk -and $needFrontend) {
+  $frontOk = Wait-Http -Url $FrontUrl -Label 'Frontend' -Seconds 180
+} elseif ($backendOk -and -not $frontOk) {
+  $frontOk = Wait-Http -Url $FrontUrl -Label 'Frontend' -Seconds 60
 }
 
 Write-Host ""
-Write-Host "To stop: .\stop.ps1" -ForegroundColor Gray
-Write-Host "Or close the 'KPPDF Frontend' terminal window." -ForegroundColor Gray
+if ($backendOk) {
+  if (-not $frontOk) {
+    Write-Host 'Frontend still compiling - opening browser anyway.' -ForegroundColor Yellow
+  }
+  Show-Ready
+} else {
+  Write-Host 'Backend not ready. Fix errors in Backend window, then run .\start.ps1 again.' -ForegroundColor Red
+}
+
+Write-Host ""
+Write-Host "Stop: .\stop.ps1" -ForegroundColor Gray
 Write-Host ""

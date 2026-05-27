@@ -1,0 +1,19 @@
+/* KpDialog — PrimeNG p-dialog wrapper (BEM host) */
+:host {
+  display: contents;
+}
+
+:host ::ng-deep .kp-dialog.p-dialog {
+  max-width: 90vw;
+  border-radius: var(--kp-radius-xl);
+}
+
+:host ::ng-deep .kp-dialog .p-dialog-header .p-dialog-header-close:focus-visible {
+  outline: none;
+  box-shadow: var(--kp-focus-ring);
+}
+
+:host ::ng-deep .kp-dialog .p-dialog-content :focus-visible {
+  outline: none;
+  box-shadow: var(--kp-focus-ring);
+}

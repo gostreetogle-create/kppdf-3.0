@@ -56,19 +56,39 @@ function tenderSeverity(value: unknown): string {
   ],
   template: `
     <app-kp-crud-page
-      title="Запросы"
-      entityLabel="запроса"
+      title="Тендеры"
+      entityLabel="тендера"
       description="Входящие запросы от компаний"
       [store]="store"
       [columns]="columns()"
       [permissions]="PERMISSIONS.tenders"
       [severityFn]="tenderSeverity"
-      createLabel="Создать запрос"
+      createLabel="Создать тендер"
     >
       <ng-template #form let-row>
         <div class="form-layout">
-          <app-kp-input label="Номер" name="number" [value]="row['number'] || ''" (valueChange)="row['number'] = $event" />
-          <app-kp-datepicker label="Дата" name="date" [value]="row['date'] || ''" (valueChange)="row['date'] = $event" />
+          <app-kp-input
+            label="Номер"
+            name="number"
+            placeholder="Например, ТН-001"
+            [value]="row['number'] || ''"
+            (valueChange)="row['number'] = $event"
+            [required]="true"
+          />
+          <app-kp-input
+            label="ID тендера"
+            name="tenderId"
+            placeholder="Внешний идентификатор"
+            [value]="row['tenderId'] || ''"
+            (valueChange)="row['tenderId'] = $event"
+            [required]="true"
+          />
+          <app-kp-datepicker
+            label="Дата"
+            name="date"
+            [value]="row['date'] || ''"
+            (valueChange)="row['date'] = $event"
+          />
           <app-kp-select
             label="Компания"
             name="companyId"
@@ -78,21 +98,79 @@ function tenderSeverity(value: unknown): string {
             [options]="companyOptions()"
             [required]="true"
           />
-          <app-kp-input label="Email" name="email" type="email" [value]="row['email'] || ''" (valueChange)="row['email'] = $event" />
-          <app-kp-input label="Тема" name="subject" [value]="row['subject'] || ''" (valueChange)="row['subject'] = $event" [required]="true" />
-          <app-kp-input label="Товар" name="productName" [value]="row['productName'] || ''" (valueChange)="row['productName'] = $event" [required]="true" />
-          <app-kp-input-number label="Количество" name="quantity" [value]="row['quantity'] ?? null" (valueChange)="row['quantity'] = $event" />
-          <app-kp-input label="Ед. изм." name="unit" [value]="row['unit'] || ''" (valueChange)="row['unit'] = $event" />
-          <app-kp-input label="Правовая основа" name="legalBasis" [value]="row['legalBasis'] || ''" (valueChange)="row['legalBasis'] = $event" />
+          <app-kp-input
+            label="Email"
+            name="email"
+            type="email"
+            placeholder="contact@company.ru"
+            [value]="row['email'] || ''"
+            (valueChange)="row['email'] = $event"
+            [required]="true"
+          />
+          <app-kp-input
+            label="Тема"
+            name="subject"
+            placeholder="Тема запроса"
+            [value]="row['subject'] || ''"
+            (valueChange)="row['subject'] = $event"
+            [required]="true"
+          />
+          <app-kp-input
+            label="Товар"
+            name="productName"
+            placeholder="Наименование товара"
+            [value]="row['productName'] || ''"
+            (valueChange)="row['productName'] = $event"
+            [required]="true"
+          />
+          <app-kp-input-number
+            label="Количество"
+            name="quantity"
+            placeholder="Кол-во"
+            [value]="row['quantity'] ?? null"
+            (valueChange)="row['quantity'] = $event"
+            [required]="true"
+          />
+          <app-kp-input
+            label="Ед. изм."
+            name="unit"
+            placeholder="шт, м, кг…"
+            [value]="row['unit'] || ''"
+            (valueChange)="row['unit'] = $event"
+            [required]="true"
+          />
+          <app-kp-input
+            label="Правовая основа"
+            name="legalBasis"
+            placeholder="44-ФЗ, 223-ФЗ…"
+            [value]="row['legalBasis'] || ''"
+            (valueChange)="row['legalBasis'] = $event"
+          />
           <app-kp-select
             label="Статус"
             name="statusId"
+            placeholder="Выберите статус"
             [value]="row['statusId'] || 'new'"
             (valueChange)="row['statusId'] = $event"
             [options]="statusOptions"
+            [required]="true"
           />
-          <app-kp-textarea label="Условия поставки" name="deliveryTerms" [value]="row['deliveryTerms'] || ''" (valueChange)="row['deliveryTerms'] = $event" [rows]="2" />
-          <app-kp-textarea label="Требования к отклику" name="responseRequirements" [value]="row['responseRequirements'] || ''" (valueChange)="row['responseRequirements'] = $event" [rows]="2" />
+          <app-kp-textarea
+            label="Условия поставки"
+            name="deliveryTerms"
+            placeholder="Сроки и условия доставки"
+            [value]="row['deliveryTerms'] || ''"
+            (valueChange)="row['deliveryTerms'] = $event"
+            [rows]="2"
+          />
+          <app-kp-textarea
+            label="Требования к отклику"
+            name="responseRequirements"
+            placeholder="Требования к коммерческому предложению"
+            [value]="row['responseRequirements'] || ''"
+            (valueChange)="row['responseRequirements'] = $event"
+            [rows]="2"
+          />
         </div>
       </ng-template>
     </app-kp-crud-page>
@@ -107,6 +185,7 @@ export class TendersPageComponent implements OnInit {
 
   readonly columns = signal<KpColumn[]>([
     { field: 'number', header: 'Номер', type: 'text', sortable: true, width: '118px' },
+    { field: 'tenderId', header: 'ID тендера', type: 'text', sortable: true, width: '120px' },
     { field: 'date', header: 'Дата', type: 'date', sortable: true, width: '108px' },
     { field: 'companyId', header: 'Компания', type: 'select', sortable: true, width: '160px', options: [] },
     { field: 'subject', header: 'Тема', type: 'text', sortable: true, maxLines: 2 },

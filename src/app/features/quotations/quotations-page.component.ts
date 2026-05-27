@@ -67,7 +67,14 @@ function quotationSeverity(value: unknown): string {
     >
       <ng-template #form let-row>
         <div class="form-layout">
-          <app-kp-input label="Номер" name="number" [value]="row['number'] || ''" (valueChange)="row['number'] = $event" />
+          <app-kp-input
+            label="Номер"
+            name="number"
+            placeholder="Например, КП-001"
+            [value]="row['number'] || ''"
+            (valueChange)="row['number'] = $event"
+            [required]="true"
+          />
           <app-kp-select
             label="Контрагент"
             name="counterpartyId"
@@ -77,7 +84,12 @@ function quotationSeverity(value: unknown): string {
             [options]="counterpartyOptions()"
             [required]="true"
           />
-          <app-kp-datepicker label="Дата" name="date" [value]="row['date'] || ''" (valueChange)="row['date'] = $event" />
+          <app-kp-datepicker
+            label="Дата"
+            name="date"
+            [value]="row['date'] || ''"
+            (valueChange)="row['date'] = $event"
+          />
           <app-kp-datepicker
             label="Действительно до"
             name="validUntil"
@@ -87,11 +99,19 @@ function quotationSeverity(value: unknown): string {
           <app-kp-select
             label="Статус"
             name="statusId"
+            placeholder="Выберите статус"
             [value]="row['statusId'] || 'draft'"
             (valueChange)="row['statusId'] = $event"
             [options]="statusOptions"
+            [required]="true"
           />
-          <app-kp-textarea label="Примечание" name="notes" [value]="row['notes'] || ''" (valueChange)="row['notes'] = $event" />
+          <app-kp-textarea
+            label="Примечание"
+            name="notes"
+            placeholder="Условия и комментарии"
+            [value]="row['notes'] || ''"
+            (valueChange)="row['notes'] = $event"
+          />
         </div>
       </ng-template>
     </app-kp-crud-page>
