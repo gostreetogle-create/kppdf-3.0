@@ -91,6 +91,17 @@
 
 .kp-table__number {
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.kp-table__date {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.kp-table__scroll {
+  width: 100%;
+  overflow-x: auto;
 }
 
 /* Таблица внутри панели — без второй рамки */
@@ -99,4 +110,64 @@
   box-shadow: none;
   border-radius: var(--kp-radius-md);
   overflow: hidden;
+  table-layout: fixed;
+  width: 100%;
+}
+
+:host ::ng-deep .kp-table__datatable .p-datatable-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+:host ::ng-deep .kp-table__datatable .p-datatable-thead > tr > th {
+  padding: 0.75rem 1rem !important;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+:host ::ng-deep .kp-table__datatable .p-datatable-tbody > tr > td {
+  padding: 0.875rem 1rem !important;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--kp-border-light, var(--kp-border));
+  font-size: var(--kp-font-size-sm, 0.875rem);
+  line-height: 1.5;
+  color: var(--kp-text);
+}
+
+:host ::ng-deep .kp-table__datatable .p-datatable-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+:host ::ng-deep .kp-table__datatable .p-datatable-tbody > tr.p-row-odd {
+  background: var(--kp-bg-soft, #f8fafc);
+}
+
+:host ::ng-deep .kp-table__datatable .p-datatable-tbody > tr:hover {
+  background: var(--kp-primary-soft) !important;
+}
+
+:host ::ng-deep .kp-table__datatable .p-datatable-tbody > tr > td.kp-table__td--tag {
+  white-space: nowrap;
+}
+
+.kp-table__text {
+  display: block;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.kp-table__text--ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: normal;
+}
+
+.kp-table__text--lines-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+  line-height: 1.45;
 }

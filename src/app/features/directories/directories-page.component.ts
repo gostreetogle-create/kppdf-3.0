@@ -8,7 +8,7 @@ import type { CrudPermissions } from '../../shared/crud/crud-page.types';
 // UI
 import { PageLayoutComponent } from '../../shared/ui/page-layout/page-layout.component';
 import { KpCrudPageComponent } from '../../shared/crud/kp-crud-page.component';
-import { KpInputComponent, KpSelectComponent, type KpSelectOption } from '../../shared/ui';
+import { KpInputComponent, KpSelectComponent, KpButtonComponent, type KpSelectOption } from '../../shared/ui';
 
 // Store
 import { createDirStores, type DirStores } from './directories.store';
@@ -169,6 +169,7 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
     KpCrudPageComponent,
     KpInputComponent,
     KpSelectComponent,
+    KpButtonComponent,
   ],
   template: `
     <app-page-layout>
@@ -187,14 +188,14 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           <div class="dir-dept__tabs">
             @for (key of group.keys; track key) {
               @if (canView(key)) {
-                <button
-                  class="dir-dept__btn"
-                  [class.dir-dept__btn--active]="activeKey() === key"
-                  (click)="selectDir(key)"
-                >
-                  <i [class]="DIR_DISPLAYS[key].icon + ' dir-dept__btn-icon'"></i>
-                  <span>{{ DIR_DISPLAYS[key].label }}</span>
-                </button>
+                <app-kp-button
+                  [label]="DIR_DISPLAYS[key].label"
+                  [icon]="DIR_DISPLAYS[key].icon"
+                  severity="secondary"
+                  [text]="activeKey() !== key"
+                  [styleClass]="'dir-dept__btn' + (activeKey() === key ? ' dir-dept__btn--active' : '')"
+                  (buttonClick)="selectDir(key)"
+                />
               }
             }
           </div>
@@ -206,12 +207,13 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
         <div class="quick-access">
           <span class="quick-access__label">Быстрое добавление:</span>
           @for (preset of currentPresets(); track preset.label) {
-            <button
-              class="quick-access__chip"
-              (click)="createPreset(preset.value)"
-            >
-              {{ preset.label }}
-            </button>
+            <app-kp-button
+              [label]="preset.label"
+              severity="secondary"
+              [text]="true"
+              styleClass="quick-access__chip"
+              (buttonClick)="createPreset(preset.value)"
+            />
           }
         </div>
       }
@@ -222,6 +224,7 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           <app-kp-crud-page
             [embedded]="true"
             title="Категории"
+            entityLabel="категории"
             description="Группировка товаров и материалов"
             [store]="stores.categories"
             [columns]="DIR_DISPLAYS.categories.columns"
@@ -250,6 +253,7 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           <app-kp-crud-page
             [embedded]="true"
             title="Контрагенты"
+            entityLabel="контрагента"
             description="Поставщики, клиенты, подрядчики"
             [store]="stores.counterparties"
             [columns]="DIR_DISPLAYS.counterparties.columns"
@@ -279,6 +283,7 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           <app-kp-crud-page
             [embedded]="true"
             title="Пользователи"
+            entityLabel="пользователя"
             description="Учётные записи сотрудников"
             [store]="stores.users"
             [columns]="DIR_DISPLAYS.users.columns"
@@ -307,6 +312,7 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           <app-kp-crud-page
             [embedded]="true"
             title="Роли"
+            entityLabel="роли"
             description="Роли доступа и их права"
             [store]="stores.roles"
             [columns]="DIR_DISPLAYS.roles.columns"
@@ -335,6 +341,7 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           <app-kp-crud-page
             [embedded]="true"
             title="Статусы"
+            entityLabel="статуса"
             description="Статусы документов и процессов"
             [store]="stores.statuses"
             [columns]="DIR_DISPLAYS.statuses.columns"
@@ -363,6 +370,7 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           <app-kp-crud-page
             [embedded]="true"
             title="Типы работ"
+            entityLabel="типа работ"
             description="Виды работ и операций"
             [store]="stores.workTypes"
             [columns]="DIR_DISPLAYS.workTypes.columns"
@@ -389,6 +397,7 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
           <app-kp-crud-page
             [embedded]="true"
             title="Настройки"
+            entityLabel="настройки"
             description="Системные настройки и конфигурация"
             [store]="stores.settings"
             [columns]="DIR_DISPLAYS.settings.columns"
@@ -415,8 +424,15 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
   styleUrl: './directories-page.component.scss',
 })
 export class DirectoriesPageComponent {
-  readonly stores: DirStores;
-  readonly DIR_PERMS: Record<DirKey, CrudPermissions>;
+  private readonly destroyRef = inject(DestroyRef);
+  readonly stores = createDirStores(this.destroyRef);
+  readonly DIR_PERMS = (() => {
+    const map = {} as Record<DirKey, CrudPermissions>;
+    for (const key of Object.keys(DIR_DISPLAYS) as DirKey[]) {
+      map[key] = perms(key);
+    }
+    return map;
+  })();
   readonly DIR_DISPLAYS = DIR_DISPLAYS;
   readonly severityFn = dirSeverity;
 
@@ -455,17 +471,6 @@ export class DirectoriesPageComponent {
   private readonly auth = inject(AuthService);
 
   readonly activeKey = signal<DirKey>('counterparties');
-
-  constructor() {
-    const destroyRef = inject(DestroyRef);
-    this.stores = createDirStores(destroyRef);
-
-    // Build permissions for each directory type
-    this.DIR_PERMS = {} as Record<DirKey, CrudPermissions>;
-    for (const key of Object.keys(DIR_DISPLAYS) as DirKey[]) {
-      this.DIR_PERMS[key] = perms(key);
-    }
-  }
 
   /** Filter groups to only those containing at least one visible directory */
   readonly visibleGroups = computed(() => {

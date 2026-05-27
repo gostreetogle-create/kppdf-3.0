@@ -1,4 +1,4 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, computed, ChangeDetectionStrategy } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 
@@ -8,24 +8,35 @@ import { TooltipModule } from 'primeng/tooltip';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ButtonModule, TooltipModule],
   template: `
-    <p-button
-      [type]="type()"
-      [label]="label()"
-      [icon]="icon()"
-      [severity]="severity()"
-      [size]="size()"
-      [loading]="loading()"
-      [disabled]="disabled()"
-      [rounded]="rounded()"
-      [text]="text()"
-      [outlined]="outlined()"
-      [raised]="raised()"
-      [styleClass]="styleClass()"
-      [pTooltip]="tooltip()"
-      [attr.aria-label]="ariaLabel() || label() || tooltip() || null"
+    <span
+      class="kp-button-host"
+      [pTooltip]="tooltipText()"
+      [tooltipDisabled]="!showTooltip()"
       tooltipPosition="top"
-      (onClick)="buttonClick.emit($event)"
-    />
+    >
+      <p-button
+        [type]="type()"
+        [label]="label()"
+        [icon]="icon()"
+        [severity]="severity()"
+        [size]="size()"
+        [loading]="loading()"
+        [disabled]="disabled()"
+        [rounded]="rounded()"
+        [text]="text()"
+        [outlined]="outlined()"
+        [raised]="raised()"
+        [styleClass]="styleClass()"
+        [attr.aria-label]="ariaLabel() || label() || tooltip() || null"
+        (onClick)="buttonClick.emit($event)"
+      />
+    </span>
+  `,
+  styles: `
+    .kp-button-host {
+      display: inline-flex;
+      vertical-align: middle;
+    }
   `,
 })
 export class KpButtonComponent {
@@ -41,8 +52,20 @@ export class KpButtonComponent {
   readonly outlined = input(false);
   readonly raised = input(false);
   readonly styleClass = input<string>('');
+  /** Подсказка только для icon-only или когда текст ≠ label кнопки */
   readonly tooltip = input<string>('');
   readonly ariaLabel = input<string>('');
 
   readonly buttonClick = output<MouseEvent>();
+
+  /** Текст подсказки; пусто, если дублирует видимый label */
+  readonly tooltipText = computed(() => {
+    const tip = this.tooltip().trim();
+    if (!tip) return '';
+    const visibleLabel = this.label().trim();
+    if (visibleLabel && tip === visibleLabel) return '';
+    return tip;
+  });
+
+  readonly showTooltip = computed(() => this.tooltipText().length > 0);
 }

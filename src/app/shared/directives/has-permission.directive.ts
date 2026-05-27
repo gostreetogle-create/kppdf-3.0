@@ -13,14 +13,10 @@ export class HasPermissionDirective {
   private requiredPermission = '';
   private hasView = false;
 
-  constructor() {
-    // Реактивно следим за изменением permissions
-    effect(() => {
-      // Читаем сигнал, чтобы подписаться на изменения
-      this.auth.permissions();
-      this.updateView();
-    });
-  }
+  private readonly syncPermissions = effect(() => {
+    this.auth.permissions();
+    this.updateView();
+  });
 
   @Input() set appHasPermission(permission: string) {
     this.requiredPermission = permission;

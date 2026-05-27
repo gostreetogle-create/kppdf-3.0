@@ -4,36 +4,31 @@ import { EntityAttributeValueModel } from './entityAttributeValue.model';
 import { AttributeDefinitionModel } from '../attribute-definitions/attributeDefinition.model';
 import { success, error } from '../../utils/api-response';
 import { authenticate } from '../../middleware/auth';
+import { requirePermission } from '../../middleware/permission';
 
 export const entityAttributeValueRouter = Router();
 
-// All routes require auth
 entityAttributeValueRouter.use(authenticate);
 
-/**
- * GET /:entityType/:entityId
- * Returns all attribute values for a given entity, merged with attribute definitions.
- */
-entityAttributeValueRouter.get('/:entityType/:entityId', async (req: Request, res: Response) => {
+entityAttributeValueRouter.get(
+  '/:entityType/:entityId',
+  requirePermission('admin.attributes.view'),
+  async (req: Request, res: Response) => {
   try {
     const { entityType, entityId } = req.params;
 
-    // Get all definitions for this entity type
     const definitions = await AttributeDefinitionModel.find({
       entityType,
       isActive: true,
     }).sort({ sortOrder: 1 });
 
-    // Get existing values for this entity
     const values = await EntityAttributeValueModel.find({ entityType, entityId });
 
-    // Build a map of attributeId -> value
     const valueMap = new Map<string, unknown>();
     for (const v of values) {
       valueMap.set(v.attributeId, v.value);
     }
 
-    // Merge definitions with values
     const result = definitions.map((def) => ({
       _id: def._id,
       attributeId: def._id,
@@ -54,22 +49,19 @@ entityAttributeValueRouter.get('/:entityType/:entityId', async (req: Request, re
   }
 });
 
-/**
- * PUT /:entityType/:entityId
- * Bulk-update attribute values for an entity.
- * Body: { values: Array<{ attributeId: string, value: any }> }
- */
-entityAttributeValueRouter.put('/:entityType/:entityId', async (req: Request, res: Response) => {
+entityAttributeValueRouter.put(
+  '/:entityType/:entityId',
+  requirePermission('admin.attributes.edit'),
+  async (req: Request, res: Response) => {
   try {
     const { entityType, entityId } = req.params;
-    const { values } = req.body as { values: Array<{ attributeId: string; value: unknown }> };
+    const { values } = req.body as { values: { attributeId: string; value: unknown }[] };
 
     if (!Array.isArray(values)) {
       res.status(400).json(error('Body must contain "values" array'));
       return;
     }
 
-    // Validate — ensure all attributeIds exist for this entityType
     const defIds = new Set(
       (await AttributeDefinitionModel.find({ entityType }).select('_id')).map((d) =>
         d._id.toString(),
@@ -88,7 +80,6 @@ entityAttributeValueRouter.put('/:entityType/:entityId', async (req: Request, re
       return;
     }
 
-    // Upsert each value
     const operations: AnyBulkWriteOperation[] = values.map((v) => ({
       updateOne: {
         filter: { entityType, entityId, attributeId: v.attributeId },
@@ -99,7 +90,6 @@ entityAttributeValueRouter.put('/:entityType/:entityId', async (req: Request, re
 
     await EntityAttributeValueModel.bulkWrite(operations);
 
-    // Return updated values
     const updated = await EntityAttributeValueModel.find({ entityType, entityId });
     res.json(success(updated, 'Attributes updated'));
   } catch (err: unknown) {

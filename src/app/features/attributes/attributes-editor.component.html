@@ -1,0 +1,100 @@
+<div class="attributes-editor">
+  <h3 class="attributes-editor__title">Характеристики</h3>
+
+  @if (loading) {
+    <div class="attributes-editor__loading">Загрузка...</div>
+  }
+
+  @if (error) {
+    <div class="attributes-editor__error">{{ error }}</div>
+  }
+
+  @if (!loading && attributes.length === 0) {
+    <div class="attributes-editor__empty">Нет дополнительных характеристик для этой сущности</div>
+  }
+
+  @if (!loading && attributes.length > 0) {
+    <div class="attributes-editor__grid">
+      @for (attr of attributes; track attr.attributeId) {
+        <div class="attributes-editor__field">
+          @if (attr.type === 'string') {
+            <app-kp-input
+              [label]="attr.label + (attr.unit ? ' (' + attr.unit + ')' : '')"
+              [name]="attr.name"
+              [value]="toStr(attr.value)"
+              (valueChange)="setValue(attr, $event)"
+              [required]="attr.required"
+            />
+          } @else if (attr.type === 'text') {
+            <app-kp-textarea
+              [label]="attr.label"
+              [name]="attr.name"
+              [value]="toStr(attr.value)"
+              (valueChange)="setValue(attr, $event)"
+              [required]="attr.required"
+            />
+          } @else if (attr.type === 'number') {
+            <app-kp-input-number
+              [label]="attr.label + (attr.unit ? ' (' + attr.unit + ')' : '')"
+              [name]="attr.name"
+              [value]="toNumber(attr.value)"
+              (valueChange)="setValue(attr, $event)"
+              [required]="attr.required"
+            />
+          } @else if (attr.type === 'boolean') {
+            <app-kp-checkbox
+              [label]="attr.label"
+              [name]="attr.name"
+              [checked]="toBool(attr.value)"
+              (checkedChange)="setValue(attr, $event)"
+            />
+          } @else if (attr.type === 'date') {
+            <app-kp-datepicker
+              [label]="attr.label"
+              [name]="attr.name"
+              [value]="toStr(attr.value)"
+              (valueChange)="setValue(attr, $event)"
+              [required]="attr.required"
+            />
+          } @else if (attr.type === 'select') {
+            <app-kp-select
+              [label]="attr.label"
+              [name]="attr.name"
+              placeholder="Выберите..."
+              [value]="toStr(attr.value)"
+              (valueChange)="setValue(attr, $event)"
+              [options]="toSelectOptions(attr.options)"
+              [required]="attr.required"
+            />
+          } @else if (attr.type === 'multiselect') {
+            <app-kp-multiselect
+              [label]="attr.label"
+              [name]="attr.name"
+              [value]="toStringArray(attr.value)"
+              (valueChange)="setValue(attr, $event)"
+              [options]="attr.options || []"
+              [required]="attr.required"
+            />
+          }
+        </div>
+      }
+    </div>
+
+    <div class="attributes-editor__actions">
+      <app-kp-button
+        label="Сохранить"
+        icon="pi pi-check"
+        [loading]="saving"
+        [disabled]="saving"
+        (buttonClick)="save()"
+      />
+      <app-kp-button
+        label="Сбросить"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [disabled]="saving"
+        (buttonClick)="load()"
+      />
+    </div>
+  }
+</div>

@@ -3,7 +3,6 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
 import { EmptyStateComponent } from './empty-state/empty-state.component';
 import { KpButtonComponent } from './kp-button.component';
@@ -17,6 +16,10 @@ export interface KpColumn {
   sortable?: boolean;
   required?: boolean;
   readonly?: boolean;
+  /** Однострочное обрезание с «…» (по умолчанию для text/select) */
+  ellipsis?: boolean;
+  /** Многострочное обрезание (2 строки) для длинных тем */
+  maxLines?: 1 | 2;
 }
 
 export interface KpSortEvent {
@@ -35,7 +38,7 @@ export interface KpPageEvent {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, FormsModule,
-    TableModule, TagModule, TooltipModule, InputTextModule,
+    TableModule, TagModule, InputTextModule,
     EmptyStateComponent, KpButtonComponent,
   ],
   template: `
@@ -80,6 +83,7 @@ export interface KpPageEvent {
       }
 
       @if (!loading()) {
+        <div class="kp-table__scroll">
         <p-table
           [value]="data()"
           [stripedRows]="true"
@@ -118,7 +122,7 @@ export interface KpPageEvent {
           <ng-template pTemplate="body" let-row>
             <tr>
               @for (col of columns(); track col.field || $index) {
-                <td>
+                <td [class.kp-table__td--tag]="col.type === 'tag'">
                   @switch (col.type) {
                     @case ('tag') {
                       <p-tag
@@ -140,16 +144,26 @@ export interface KpPageEvent {
                       </span>
                     }
                     @case ('date') {
-                      <span>{{ row[col.field] ? (row[col.field] | date:'dd.MM.yyyy') : '—' }}</span>
+                      <span class="kp-table__date">{{ row[col.field] ? (row[col.field] | date:'dd.MM.yyyy') : '—' }}</span>
                     }
                     @case ('select') {
-                      <span>{{ getSelectLabel(col, row[col.field]) }}</span>
+                      <span
+                        class="kp-table__text"
+                        [class.kp-table__text--ellipsis]="useEllipsis(col)"
+                        [class.kp-table__text--lines-2]="col.maxLines === 2"
+                        [attr.title]="cellTitle(col, row[col.field])"
+                      >{{ getSelectLabel(col, row[col.field]) }}</span>
                     }
                     @case ('number') {
                       <span class="kp-table__number">{{ row[col.field] ?? '—' }}</span>
                     }
                     @default {
-                      <span>{{ row[col.field] ?? '—' }}</span>
+                      <span
+                        class="kp-table__text"
+                        [class.kp-table__text--ellipsis]="useEllipsis(col)"
+                        [class.kp-table__text--lines-2]="col.maxLines === 2"
+                        [attr.title]="cellTitle(col, row[col.field])"
+                      >{{ formatCell(row[col.field]) }}</span>
                     }
                   }
                 </td>
@@ -199,6 +213,7 @@ export interface KpPageEvent {
             </tr>
           </ng-template>
         </p-table>
+        </div>
       }
     </div>
   `,
@@ -260,5 +275,25 @@ export class KpTableComponent {
     if (!col.options) return String(value ?? '—');
     const opt = col.options.find((o) => o.value === value);
     return opt?.label ?? String(value ?? '—');
+  }
+
+  formatCell(value: unknown): string {
+    if (value == null || value === '') return '—';
+    return String(value);
+  }
+
+  useEllipsis(col: KpColumn): boolean {
+    if (col.maxLines === 2) return false;
+    if (col.ellipsis === false) return false;
+    return col.type === 'text' || col.type === 'select' || col.type === 'textarea';
+  }
+
+  cellTitle(col: KpColumn, value: unknown): string | null {
+    if (!this.useEllipsis(col) && col.maxLines !== 2) return null;
+    const text =
+      col.type === 'select'
+        ? this.getSelectLabel(col, value)
+        : this.formatCell(value);
+    return text === '—' ? null : text;
   }
 }

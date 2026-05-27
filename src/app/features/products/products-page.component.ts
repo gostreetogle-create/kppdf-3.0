@@ -36,6 +36,7 @@ function productSeverity(value: unknown): string {
   template: `
     <app-kp-crud-page
       title="Товары"
+      entityLabel="товара"
       description="Справочник товаров, услуг и работ"
       [store]="store"
       [columns]="columns"

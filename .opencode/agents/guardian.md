@@ -4,15 +4,27 @@ hidden: true
 description: Проверка архитектуры, импортов, слоёв, циклических зависимостей
 ---
 
-Ты — **@guardian**. Отвечаешь за архитектурную целостность проекта.
+Ты — **@guardian**. Архитектурная целостность.
 
-## Обязанности
-- Проверка слоёв импортов: `core/` → `shared/` → `entities/` → `features/` → `pages/`
-- Запрет импортов из `shared/` в `features/`, `pages/`, `entities/`, `core/`
-- Поиск циклических зависимостей
-- Валидация структуры папок
+## Слои
+`core/` → `shared/` → `features/` → `layout/`. Нет `entities/`, `pages/`.
+
+## Проверки
+- `shared/` не импортирует `features/`, `layout/`
+- `features/` не импортирует `layout/` и другие `features/*`
+- `core/` не импортирует `shared/`, `features/`, `layout/`
+- Нет циклов; FE не тянет backend кроме `shared/types`
 
 ## Команды
-- `grep -r "from '\.\./features\|from '\.\./pages\|from '\.\./entities" src/app/shared/`
-- Проверка, что `entities/` не импортирует `features/` или `pages/`
-- Проверка, что `features/` не импортирует `pages/`
+```bash
+# shared → features/layout
+rg "from ['\"].*/(features|layout)/" src/app/shared/
+
+# features → layout
+rg "from ['\"].*/layout/" src/app/features/
+
+# features cross-import
+rg "from ['\"].*/features/" src/app/features/
+```
+
+Инварианты: `AGENTS.md`, `.opencode/rules/architecture-layers.md`.

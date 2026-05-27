@@ -3,20 +3,20 @@
 ## Структура папок
 ```
 src/app/
-├── core/           # ApiService, AuthService, guards
-├── shared/         # UI-компоненты, типы, константы, пайпы
-├── entities/       # Бизнес-сущности (Product, Order)
-├── features/       # Пользовательские сценарии
-└── pages/          # Экранные компоненты (маршруты)
+├── core/       # Auth, guards, interceptors, permissions
+├── shared/     # kp-*, crud, services, types
+├── features/   # Страницы и сценарии (lazy routes)
+└── layout/     # admin-layout, shell
 ```
 
 ## Правила импортов
-- `shared/` НЕ может импортировать `entities/`, `features/`, `pages/`, `core/`
-- `entities/` может импортировать `shared/` и `core/`
-- `features/` может импортировать `entities/`, `shared/`, `core/`
-- `pages/` может импортировать `features/`, `entities/`, `shared/`, `core/`
+- `core/` — только externals (@angular, rxjs)
+- `shared/` — `core/` + externals; не `features/`, не `layout/`
+- `features/` — `core/`, `shared/` + externals; не `layout/`; не другие `features/*`
+- `layout/` — может импортировать всё выше
 
 ## Запрещено
 - Циклические импорты
-- Импорты из `../` выше своего слоя
-- Прямые импорты модулей backend из frontend (только через shared/types)
+- Импорты «вверх» по слоям
+- Backend-модули во frontend (только `shared/types`)
+- Папок `entities/`, `pages/` в этом проекте нет

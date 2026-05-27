@@ -31,6 +31,7 @@ const dirEntries = {
   statuses:       { view: 'admin.statuses.view',          create: 'admin.statuses.create',          edit: 'admin.statuses.edit',          delete: 'admin.statuses.delete' },
   workTypes:      { view: 'admin.workTypes.view',         create: 'admin.workTypes.create',         edit: 'admin.workTypes.edit',         delete: 'admin.workTypes.delete' },
   settings:       { view: 'admin.settings.view',          create: 'admin.settings.create',          edit: 'admin.settings.edit',          delete: 'admin.settings.delete' },
+  attributes:     { view: 'admin.attributes.view',        create: 'admin.attributes.create',        edit: 'admin.attributes.edit',        delete: 'admin.attributes.delete' },
 } satisfies Record<string, PermissionActions>;
 
 // ── Бизнес-процессы ───────────────────────────────────────────
@@ -102,4 +103,5 @@ export const DIR_PERM_PREFIX: Record<string, string> = {
   statuses: 'admin.statuses',
   'work-types': 'admin.workTypes',
   settings: 'admin.settings',
+  attributes: 'admin.attributes',
 };

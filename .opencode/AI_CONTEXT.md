@@ -36,8 +36,9 @@ kppdf-3.0/
 ├── src/                          ← Angular frontend
 │   ├── app/
 │   │   ├── core/                 ← ApiService, AuthService, guards, interceptors
-│   │   ├── pages/                ← Dashboard, Directories, Modules, Login, 404, AdminLayout
-│   │   ├── shared/               ← CrudApiService, EmptyState, PageLayout
+│   │   ├── features/             ← Dashboard, Directories, Modules, Login, …
+│   │   ├── layout/               ← admin-layout
+│   │   ├── shared/               ← CrudApiService, kp-*, crud
 │   │   ├── app.config.ts         ← PrimeNG preset KppdfPreset
 │   │   └── app.routes.ts         ← Маршруты (lazy loading)
 │   ├── environments/             ← environment.ts / environment.prod.ts
@@ -58,6 +59,7 @@ kppdf-3.0/
 ├── shared/types/                 ← 26 интерфейсов для FE + BE
 ├── deploy/                       ← Docker, nginx, Synology deploy
 ├── .opencode/                    ← Агенты, правила, планы, AI контекст
+├── .cursor/rules/                ← Bridge для Cursor (краткие rules)
 ├── PROJECT.md                    ← Полная документация
 ├── AGENTS.md                     ← Система агентов
 └── README.md                     ← Быстрый старт

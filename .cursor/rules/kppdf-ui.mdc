@@ -1,0 +1,14 @@
+---
+description: UI-kit, CRUD, PrimeNG через kp-* (KPPDF)
+globs: src/app/shared/ui/**,src/app/features/**,src/app/shared/crud/**,src/styles/**
+alwaysApply: false
+---
+
+# UI (кратко)
+
+- Компоненты: только `shared/ui/kp-*`; PrimeNG — только внутри `shared/ui`.
+- CRUD: `app-kp-crud-page`; `entityLabel`; колонки `select`/`tag` + `options`; `*Id` через `*OptionsService`.
+- Паттерны: `.opencode/agents/ui-specialist.md`, `.opencode/rules/ui-manifest.md`, `.opencode/golden-samples.ts`.
+- После правок: `ng build`; чеклист — `.opencode/rules/ui-audit-checklist.md`.
+
+Меню/IA — `ux-architect`, не ui-specialist.

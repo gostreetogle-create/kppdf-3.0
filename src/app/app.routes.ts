@@ -60,6 +60,10 @@ export const routes: Routes = [
         path: 'documents',
         loadComponent: () => import('./features/documents').then(c => c.DocumentsPageComponent),
       },
+      {
+        path: 'attribute-definitions',
+        loadComponent: () => import('./features/attribute-definitions').then(c => c.AttributeDefinitionsPageComponent),
+      },
     ],
   },
   {

@@ -39,4 +39,9 @@ export class ApiService {
   delete<T>(path: string, id: string): Observable<ApiResponse<T>> {
     return this.http.delete<ApiResponse<T>>(`${this.baseUrl}${path}/${id}`);
   }
+
+  /** PUT по полному пути без отдельного id (bulk/custom endpoints) */
+  putPayload<T>(path: string, body: unknown): Observable<ApiResponse<T>> {
+    return this.http.put<ApiResponse<T>>(`${this.baseUrl}${path}`, body);
+  }
 }

@@ -124,6 +124,7 @@ export class AdminLayoutComponent {
       items: [
         { label: 'Товары', icon: 'pi pi-box', route: '/products', requiresAny: [PERMISSIONS.products.view] },
         { label: 'Справочники', icon: 'pi pi-book', route: '/directories', requiresAny: ['admin.*', PERMISSIONS.counterparties.view] },
+        { label: 'Атрибуты EAV', icon: 'pi pi-sliders-h', route: '/attribute-definitions', requiresAny: [PERMISSIONS.attributes.view] },
       ],
     },
   ];

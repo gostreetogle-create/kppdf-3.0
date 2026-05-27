@@ -25,7 +25,7 @@ export interface KpSelectOption {
         [class.kp-select__control--error]="!!error()"
         [ngModel]="value()"
         (ngModelChange)="value.set($event)"
-        [disabled]="disabled()"
+        [disabled]="disabled() || loading()"
         [attr.required]="required() ? '' : null"
       >
         @if (placeholder()) {
@@ -50,5 +50,6 @@ export class KpSelectComponent {
   readonly placeholder = input<string>('');
   readonly required = input(false);
   readonly disabled = input(false);
+  readonly loading = input(false);
   readonly error = input<string>('');
 }

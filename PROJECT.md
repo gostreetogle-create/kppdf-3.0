@@ -43,7 +43,9 @@ kppdf-3.0/
 ├── src/                          ← Angular-приложение (frontend)
 │   ├── app/
 │   │   ├── core/                 ← Сервисы (api, auth, directory, notification)
-│   │   ├── pages/                ← Страницы (dashboard, directories, login, admin-layout)
+│   │   ├── features/             ← Страницы и сценарии (lazy routes)
+│   │   ├── layout/               ← admin-layout
+│   │   ├── shared/               ← kp-*, crud, services
 │   │   ├── app.config.ts         ← PrimeNG preset + providers
 │   │   └── app.routes.ts         ← Маршруты (lazy loaded)
 │   ├── environments/             ← environment.ts / environment.prod.ts
@@ -64,7 +66,8 @@ kppdf-3.0/
 │   └── types/                    ← 26 интерфейсов + index.ts
 │
 ├── .opencode/                    ← Конфигурация opencode (агенты, правила, планы)
-│   ├── agents/                   ← orchestrator + 12 subagent'ов
+│   ├── agents/                   ← orchestrator + subagents + chief-architect
+│   ├── audit/                    ← TEAM-WORKFLOW, reports/
 │   ├── rules/                    ← architecture-layers, angular-signals, ui-standards, ui-library
 │   └── plans/                    ← 8 планов разработки (00-07)
 │
@@ -75,7 +78,7 @@ kppdf-3.0/
 
 ### Слои импортов (строгие)
 ```
-core/ → shared/ → entities/ → features/ → pages/
+core/ → shared/ → features/ → layout/
 ```
 
 ---

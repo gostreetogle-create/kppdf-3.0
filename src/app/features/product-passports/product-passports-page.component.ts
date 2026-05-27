@@ -31,6 +31,7 @@ function passportSeverity(value: unknown): string {
   template: `
     <app-kp-crud-page
       title="Паспорта изделий"
+      entityLabel="паспорта изделия"
       description="Технические паспорта продукции"
       [store]="store"
       [columns]="columns"

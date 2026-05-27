@@ -170,7 +170,7 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 | Среда | Конфиг | Роль |
 |-------|--------|------|
 | **OpenCode** | `opencode.json` + `.opencode/agents/*.md` | Primary `@orchestrator`, делегирование subagent'ам |
-| **Cursor** | `AGENTS.md` (этот файл) | Архитектурные инварианты + `@ux-architect` |
+| **Cursor** | `AGENTS.md` + `.cursor/rules/*.mdc` | Инварианты, маршрут агентов, UI/BE по globs |
 | Контекст | `.opencode/AI_CONTEXT.md`, `.opencode/rules/` | Правила UI, слои, golden-samples |
 
 ### Карта агентов (OpenCode)
@@ -193,13 +193,27 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 | `@production-planner` | Планирование, себестоимость | UI-кит |
 | `@compliance-validator` | Compliance-проверки | Навигация |
 | `@deploy-specialist` | nginx, CI/CD | Формы |
+| `@chief-architect` | Сводка аудитов, P0–P2 | Написание фич |
 
 ### Типичные разрывы (почему «агенты не работают»)
 
 1. **Ожидание авто-UI** — после CRUD на `kp-crud-page` нужно вручную: `entityLabel`, select для `*Id`, статусы из seed, подписи в таблице (`type: 'select'` / `tag` + `options`).
 2. **Путаница UX vs UI** — `@ux-architect` не правит модалки; формы → `@ui-specialist` + `ui-manifest.md`.
-3. **Cursor vs OpenCode** — в Cursor по умолчанию виден только блок `@ux-architect` ниже; полный оркестр — в OpenCode.
-4. **QA-цикл** — по `orchestrator.md` после UI обязательны `@ui-qa` → `@ui-auditor`; без них баги вроде «ID вместо имени» проходят.
+3. **Cursor** — rules в `.cursor/rules/`; сложная роль → прочитать один файл из `.opencode/agents/` (см. router rule). Оркестр auto — только OpenCode.
+4. **QA-цикл** — после UI: `@ui-qa` → `@ui-auditor`; иначе баги вроде «ID вместо имени».
+
+### Командный аудит
+
+- Процесс: [.opencode/audit/TEAM-WORKFLOW.md](.opencode/audit/TEAM-WORKFLOW.md)
+- Сводка: `@chief-architect` ← отчёты в `.opencode/audit/reports/`
+- **Последний аудит:** 2026-05-27 → [отчёт](.opencode/audit/reports/2026-05-27.md)
+
+### Cursor (кратко)
+
+- Rules: `.cursor/rules/` (`kppdf-response-style` — краткие ответы).
+- UI-файлы → `kppdf-ui.mdc`; backend → `kppdf-backend.mdc`.
+- Явно в промпте: `@ui-specialist` / `@ux-architect` — если rule не хватило.
+- Примеры: «Действуй по ui-specialist.md — поправь kp-table на tenders»; «По ux-architect — куда в меню положить EAV».
 
 ### CRUD: поля-ссылки (`*Id`)
 

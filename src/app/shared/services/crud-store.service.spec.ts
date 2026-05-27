@@ -130,7 +130,7 @@ describe('CrudStore', () => {
     });
 
     it('should set saving=true during create', () => {
-      const promise = store.create({ name: 'Item D' });
+      void store.create({ name: 'Item D' });
       expect(store.saving()).toBeTrue();
     });
 

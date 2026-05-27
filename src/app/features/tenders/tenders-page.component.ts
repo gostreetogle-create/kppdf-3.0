@@ -1,4 +1,12 @@
-import { Component, inject, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  DestroyRef,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { KpCrudPageComponent } from '../../shared/crud/kp-crud-page.component';
 import {
@@ -10,8 +18,18 @@ import {
   type KpSelectOption,
   type KpColumn,
 } from '../../shared/ui';
+import { CounterpartyOptionsService } from '../../shared/services/counterparty-options.service';
+import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createTendersStore } from './tenders.store';
 import { PERMISSIONS } from '../../core/permissions';
+
+const TENDER_STATUS_OPTIONS: KpSelectOption[] = [
+  { label: 'Новый', value: 'new' },
+  { label: 'В работе', value: 'in_progress' },
+  { label: 'КП отправлено', value: 'kp_sent' },
+  { label: 'Выигран', value: 'won' },
+  { label: 'Проигран', value: 'lost' },
+];
 
 function tenderSeverity(value: unknown): string {
   const map: Record<string, string> = {
@@ -39,9 +57,10 @@ function tenderSeverity(value: unknown): string {
   template: `
     <app-kp-crud-page
       title="Запросы"
+      entityLabel="запроса"
       description="Входящие запросы от компаний"
       [store]="store"
-      [columns]="columns"
+      [columns]="columns()"
       [permissions]="PERMISSIONS.tenders"
       [severityFn]="tenderSeverity"
       createLabel="Создать запрос"
@@ -50,7 +69,15 @@ function tenderSeverity(value: unknown): string {
         <div class="form-layout">
           <app-kp-input label="Номер" name="number" [value]="row['number'] || ''" (valueChange)="row['number'] = $event" />
           <app-kp-datepicker label="Дата" name="date" [value]="row['date'] || ''" (valueChange)="row['date'] = $event" />
-          <app-kp-input label="Компания" name="companyId" [value]="row['companyId'] || ''" (valueChange)="row['companyId'] = $event" />
+          <app-kp-select
+            label="Компания"
+            name="companyId"
+            placeholder="Выберите компанию"
+            [value]="row['companyId'] || ''"
+            (valueChange)="row['companyId'] = $event"
+            [options]="companyOptions()"
+            [required]="true"
+          />
           <app-kp-input label="Email" name="email" type="email" [value]="row['email'] || ''" (valueChange)="row['email'] = $event" />
           <app-kp-input label="Тема" name="subject" [value]="row['subject'] || ''" (valueChange)="row['subject'] = $event" [required]="true" />
           <app-kp-input label="Товар" name="productName" [value]="row['productName'] || ''" (valueChange)="row['productName'] = $event" [required]="true" />
@@ -71,28 +98,43 @@ function tenderSeverity(value: unknown): string {
     </app-kp-crud-page>
   `,
 })
-export class TendersPageComponent {
+export class TendersPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
   readonly tenderSeverity = tenderSeverity;
+  readonly statusOptions = TENDER_STATUS_OPTIONS;
 
-  readonly statusOptions: KpSelectOption[] = [
-    { label: 'Новый', value: 'new' },
-    { label: 'В работе', value: 'in_progress' },
-    { label: 'КП отправлено', value: 'kp_sent' },
-    { label: 'Выигран', value: 'won' },
-    { label: 'Проигран', value: 'lost' },
-  ];
+  readonly companyOptions = signal<KpSelectOption[]>([]);
 
-  readonly columns: KpColumn[] = [
-    { field: 'number', header: 'Номер', type: 'text', sortable: true, width: '120px' },
-    { field: 'date', header: 'Дата', type: 'date', sortable: true, width: '110px' },
-    { field: 'companyId', header: 'Компания', type: 'text', sortable: true },
-    { field: 'subject', header: 'Тема', type: 'text', sortable: true },
-    { field: 'productName', header: 'Товар', type: 'text', sortable: true, width: '160px' },
-    { field: 'quantity', header: 'Кол-во', type: 'number', sortable: true, width: '80px' },
-    { field: 'statusId', header: 'Статус', type: 'tag', sortable: true, width: '130px' },
-    { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '120px' },
-  ];
+  readonly columns = signal<KpColumn[]>([
+    { field: 'number', header: 'Номер', type: 'text', sortable: true, width: '118px' },
+    { field: 'date', header: 'Дата', type: 'date', sortable: true, width: '108px' },
+    { field: 'companyId', header: 'Компания', type: 'select', sortable: true, width: '160px', options: [] },
+    { field: 'subject', header: 'Тема', type: 'text', sortable: true, maxLines: 2 },
+    { field: 'productName', header: 'Товар', type: 'text', sortable: true, width: '140px' },
+    { field: 'quantity', header: 'Кол-во', type: 'number', sortable: true, width: '72px' },
+    {
+      field: 'statusId',
+      header: 'Статус',
+      type: 'tag',
+      sortable: true,
+      width: '128px',
+      options: TENDER_STATUS_OPTIONS,
+    },
+    { field: 'createdAt', header: 'Создан', type: 'date', sortable: true, width: '108px' },
+  ]);
 
   readonly store = createTendersStore(inject(DestroyRef));
+
+  private readonly counterpartyOptionsService = inject(CounterpartyOptionsService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  ngOnInit(): void {
+    this.counterpartyOptionsService
+      .load()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((options) => {
+        this.companyOptions.set(options);
+        patchCrudColumnOptions(this.columns, 'companyId', options);
+      });
+  }
 }

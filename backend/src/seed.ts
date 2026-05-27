@@ -125,6 +125,8 @@ async function seed(): Promise<void> {
       ], isSystem: true, sortOrder: 2 },
     { name: 'manager', label: 'Менеджер', description: 'Управление тендерами, КП, заказами, контрагентами', permissions: [
         'office.*',
+        'admin.attributes.view',
+        'admin.attributes.edit',
       ], isSystem: true, sortOrder: 3 },
     { name: 'accountant', label: 'Бухгалтер', description: 'Калькуляции, фактические затраты, отгрузочные документы', permissions: [
         'accounting.*',
@@ -135,6 +137,8 @@ async function seed(): Promise<void> {
         'production.*',
         'office.interactions.view',
         'office.interactions.create',
+        'admin.attributes.view',
+        'admin.attributes.edit',
       ], isSystem: false, sortOrder: 5 },
     { name: 'foreman', label: 'Мастер цеха', description: 'Производственные наряды, операции, создание паспортов', permissions: [
         'production.operations.view',

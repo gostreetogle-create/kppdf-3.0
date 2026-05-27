@@ -1,0 +1,19 @@
+.kp-multiselect {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kp-space-1, 0.25rem);
+}
+
+.kp-multiselect__label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--kp-text);
+}
+
+.kp-multiselect__required {
+  color: var(--kp-danger, #ef4444);
+}
+
+.kp-multiselect__control {
+  width: 100%;
+}

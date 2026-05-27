@@ -1,54 +1,7 @@
 import { Component, inject, OnInit, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { environment } from '@env/environment';
-import { KpCardComponent } from '../../shared/ui';
-
-interface StatItem {
-  total: number;
-  label: string;
-  icon: string;
-  group?: string;
-  route?: string;
-}
-
-interface DashboardStats {
-  products: StatItem;
-  categories: StatItem;
-  counterparties: StatItem;
-  users: StatItem;
-  roles: StatItem;
-  statuses: StatItem;
-  workTypes: StatItem;
-  settings: StatItem;
-  quotations: StatItem;
-  orders: StatItem;
-  boms: StatItem;
-  operations: StatItem;
-  techProcesses: StatItem;
-  purchaseRequests: StatItem;
-  purchaseOrders: StatItem;
-  warehouses: StatItem;
-  stockMovements: StatItem;
-  reservations: StatItem;
-  workOrders: StatItem;
-  workOrderOperations: StatItem;
-  costCalculations: StatItem;
-  actualCosts: StatItem;
-  shipments: StatItem;
-  shippingDocs: StatItem;
-  counters: StatItem;
-  interactions: StatItem;
-  total: number;
-}
-
-interface DepartmentStatGroup {
-  id: string;
-  label: string;
-  icon: string;
-  items: StatItem[];
-}
+import { KpStatGridComponent, type KpStatSection } from '../../shared/ui';
+import { DashboardService, type DashboardStats, type DashboardStatItem } from '../../core/dashboard.service';
 
 const DEPT_GROUPS: { id: string; label: string; icon: string }[] = [
   { id: 'office', label: 'Офис', icon: 'pi pi-building' },
@@ -99,94 +52,58 @@ const DEPT_STAT_KEYS: Record<string, (keyof DashboardStats)[]> = {
   selector: 'app-dashboard-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KpCardComponent, RouterLink],
+  imports: [KpStatGridComponent],
   template: `
     <div class="page">
       <div class="page__header">
         <h1>Дашборд</h1>
         @if (!loading()) {
           <span class="page__subtitle">
-            Всего записей: <strong>{{ stats()?.total }}</strong>
+            Всего записей: <strong>{{ totalRecords() }}</strong>
           </span>
         }
       </div>
 
-      @if (!loading()) {
-        <div class="dashboard">
-          @for (group of deptStats(); track group.id) {
-            @if (group.items.length > 0) {
-              <h2 class="dashboard__section">
-                <i [class]="group.icon + ' dashboard__section-icon'" aria-hidden="true"></i>
-                {{ group.label }}
-              </h2>
-              <div class="dashboard__grid">
-                @for (item of group.items; track item.label) {
-                  <a
-                    class="dashboard__card"
-                    [routerLink]="item.route || '/dashboard'"
-                  >
-                    <app-kp-card>
-                      <div class="dashboard__card-body">
-                        <i [class]="item.icon + ' dashboard__card-icon'" aria-hidden="true"></i>
-                        <div class="dashboard__card-info">
-                          <span class="dashboard__card-value">{{ item.total }}</span>
-                          <span class="dashboard__card-label">{{ item.label }}</span>
-                        </div>
-                      </div>
-                    </app-kp-card>
-                  </a>
-                }
-              </div>
-            }
-          }
-        </div>
-      } @else {
-        <div class="dashboard dashboard--loading" role="status" aria-live="polite">
-          @for (_ of skeletonSlots; track $index) {
-            <div class="dashboard__skeleton">
-              <div class="dashboard__skeleton-icon"></div>
-              <div class="dashboard__skeleton-text"></div>
-            </div>
-          }
-        </div>
-      }
+      <app-kp-stat-grid [sections]="sections()" [loading]="loading()" />
     </div>
   `,
   styleUrl: './dashboard-page.component.scss',
 })
 export class DashboardPageComponent implements OnInit {
-  private readonly http = inject(HttpClient);
+  private readonly dashboard = inject(DashboardService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly loading = signal(true);
-  readonly stats = signal<DashboardStats | null>(null);
-  readonly deptStats = signal<DepartmentStatGroup[]>([]);
-  readonly skeletonSlots = Array.from({ length: 12 });
+  readonly totalRecords = signal(0);
+  readonly sections = signal<KpStatSection[]>([]);
 
   ngOnInit(): void {
-    this.http
-      .get<{ success: boolean; data: DashboardStats }>(`${environment.apiUrl}/dashboard/stats`)
+    this.dashboard
+      .getStats()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
-          this.stats.set(res.data);
-          const groups: DepartmentStatGroup[] = DEPT_GROUPS.map((dept) => {
-            const items: StatItem[] = [];
-            for (const key of DEPT_STAT_KEYS[dept.id] || []) {
-              const raw = res.data[key];
-              if (raw && typeof raw === 'object' && 'label' in raw) {
-                const item = raw as StatItem;
-                items.push({ ...item, route: STAT_ROUTES[key] });
-              }
-            }
+          this.totalRecords.set(res.data.total);
+          const groups: KpStatSection[] = DEPT_GROUPS.map((dept) => {
+            const items = (DEPT_STAT_KEYS[dept.id] || [])
+              .map((key) => {
+                const raw = res.data[key];
+                if (!raw || typeof raw !== 'object' || !('label' in raw)) return null;
+                const stat = raw as DashboardStatItem;
+                return {
+                  label: stat.label,
+                  icon: stat.icon,
+                  value: stat.total,
+                  route: STAT_ROUTES[key],
+                };
+              })
+              .filter((item): item is NonNullable<typeof item> => item !== null);
             return { id: dept.id, label: dept.label, icon: dept.icon, items };
           });
-          this.deptStats.set(groups);
+          this.sections.set(groups);
           this.loading.set(false);
         },
-        error: () => {
-          this.loading.set(false);
-        },
+        error: () => this.loading.set(false),
       });
   }
 }

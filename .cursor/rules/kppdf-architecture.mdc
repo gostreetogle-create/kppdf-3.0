@@ -1,0 +1,21 @@
+---
+description: Слои FE, импорты, запреты (KPPDF)
+alwaysApply: true
+---
+
+# Архитектура FE
+
+Слои: `core` → `shared` → `features` → `layout`. Папок `entities/`, `pages/` нет.
+
+| Слой | Импорт |
+|------|--------|
+| core | только externals |
+| shared | core + externals |
+| features | core, shared + externals; не layout; не другие features |
+| layout | всё выше |
+
+Запреты: `primeng/*` в features/core (только `shared/ui/kp-*`); `http` в компонентах; inline-стили; constructor DI; `any`; raw `<button>`/`<input>`/`<table>`.
+
+CRUD: `kp-crud-page` + `CrudStore`; `*Id` → `*OptionsService`, не ObjectId в UI.
+
+Полные инварианты: [AGENTS.md](AGENTS.md). Детали: [.opencode/rules/architecture-layers.md](.opencode/rules/architecture-layers.md).

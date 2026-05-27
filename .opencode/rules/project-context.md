@@ -52,21 +52,19 @@ src/app/
 ├── shared/            # Переиспользуемые UI-компоненты, типы
 │   ├── services/      # CrudApiService (CRUD для 18 бизнес-модулей)
 │   └── ui/            # EmptyState, PageLayout
-├── pages/             # Страницы (lazy loaded)
-│   ├── admin-layout/  # Сайдбар + навигация + router-outlet
-│   ├── dashboard/     # Статистика по всем 26 сущностям
-│   ├── directories/   # CRUD для 8 справочников (табы, таблица, диалог)
-│   ├── modules/       # CRUD для 18 бизнес-модулей
-│   ├── login/         # Вход в систему
-│   └── not-found/     # 404 страница
+├── features/          # Страницы и сценарии (lazy routes)
+│   ├── dashboard/, directories/, modules/, login/, …
+└── layout/
+    └── admin-layout/  # Сайдбар + навигация + router-outlet
 ```
 
 ### Слои импортов (строгие)
 ```
-core/ → shared/ → entities/ → features/ → pages/
+core/ → shared/ → features/ → layout/
 ```
-- `shared/` НЕ импортирует `entities/`, `features/`, `pages/`, `core/`
-- `pages/` может импортировать всё, кроме `entities/` (если нет)
+- `shared/` не импортирует `features/`, `layout/`, `core/`
+- `features/` не импортирует `layout/` и другие `features/*`
+- `layout/` может импортировать всё выше
 
 ### Структура папок (backend)
 ```

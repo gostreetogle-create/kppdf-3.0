@@ -1,0 +1,11 @@
+.kp-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--kp-space-2, 0.5rem);
+}
+
+.kp-checkbox__label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--kp-text);
+}

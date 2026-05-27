@@ -1,0 +1,12 @@
+---
+description: Backend, API, shared types (KPPDF)
+globs: backend/**,shared/types/**
+alwaysApply: false
+---
+
+# Backend (кратко)
+
+- CRUD: `createCrudRouter` + `permPrefix` из `core/permissions`.
+- Ответы: `ApiResponse<T>`, пагинация списков.
+- Типы FE/BE: `shared/types/`, синхронно с моделями.
+- Роли: `backend-specialist.md`, `api-specialist.md`, `auth-specialist.md` в `.opencode/agents/`.

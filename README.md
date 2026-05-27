@@ -71,7 +71,9 @@ kppdf-3.0/
 ├── src/                          ← Angular-приложение
 │   ├── app/
 │   │   ├── core/                 ← Сервисы (auth, api, directory, notification)
-│   │   ├── pages/                ← Страницы (dashboard, directories, login, admin-layout, 404)
+│   │   ├── features/             ← Страницы (dashboard, directories, modules, …)
+│   │   ├── layout/               ← admin-layout
+│   │   ├── shared/               ← kp-*, crud, services
 │   │   ├── app.config.ts         ← PrimeNG preset + providers
 │   │   └── app.routes.ts         ← Маршруты (ленивая загрузка)
 │   ├── environments/             ← Окружения (dev/prod)
@@ -170,7 +172,7 @@ GET /api/v1/dashboard/stats → счётчики по всем таблицам
 
 Система из **15 агентов** (1 primary + 14 subagent). Подробная карта и типичные разрывы — в `AGENTS.md` (раздел «Система агентов»).
 
-> Агенты **не правят код сами** при обычной разработке: их нужно явно вызывать в OpenCode (`opencode.json`) или следовать чеклистам. В Cursor по умолчанию подключены архитектурные правила + `@ux-architect` (навигация, не формы).
+> OpenCode: оркестр в `opencode.json`. Cursor: `AGENTS.md` + `.cursor/rules/` (архитектура, UI/BE по файлам, маршрут к `.opencode/agents/`).
 
 | Агент | Специализация |
 |-------|--------------|

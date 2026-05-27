@@ -1,47 +1,5 @@
-.documents-hub {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--kp-space-4, 1rem);
-}
-
-.documents-hub__card {
-  text-decoration: none;
-  color: inherit;
-  display: block;
-
-  &:hover .kp-card {
-    box-shadow: var(--kp-shadow-md);
-    border-color: var(--kp-primary-soft);
-  }
-}
-
-.documents-hub__card-body {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--kp-space-4, 1rem);
-  padding: var(--kp-space-5, 1.25rem);
-}
-
-.documents-hub__icon {
-  font-size: 1.5rem;
-  color: var(--kp-primary);
-  margin-top: 0.125rem;
-}
-
-.documents-hub__title {
-  font-size: var(--kp-font-size-body-lg, 1.125rem);
-  font-weight: var(--kp-font-weight-semibold, 600);
-  margin: 0 0 var(--kp-space-1, 0.25rem);
-}
-
-.documents-hub__desc {
-  font-size: var(--kp-font-size-sm, 0.875rem);
+.page__subtitle {
+  font-size: 13px;
   color: var(--kp-text-secondary);
-  margin: 0;
-}
-
-.documents-hub__arrow {
-  margin-left: auto;
-  color: var(--kp-text-muted);
-  align-self: center;
+  margin-top: var(--kp-space-1);
 }
