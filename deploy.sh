@@ -195,7 +195,7 @@ if [[ "${MODE}" == "local" ]]; then
     --exclude='node_modules' \
     --exclude='.git' \
     --exclude='dist' \
-    backend/ shared/ frontend/ docker-compose.prod.yml deploy.sh 2>&1
+    backend/ shared/ frontend/ monitoring/ docker-compose.prod.yml deploy.sh 2>&1
   ARCHIVE_SIZE=$(du -h "${ARCHIVE_PATH}" | cut -f1)
   ok "Архив: ${ARCHIVE_NAME} (${ARCHIVE_SIZE})"
 
@@ -368,8 +368,8 @@ EOF
   if [[ "${SKIP_BUILD}" -eq 1 ]]; then
     log "Docker build пропущен (--skip-build)"
   else
-    log "Собираю backend (может занять 2-5 минут)..."
-    docker compose -f docker-compose.prod.yml build --no-cache backend 2>&1
+    log "Собираю Docker образы (может занять 2-5 минут)..."
+    docker compose -f docker-compose.prod.yml build --no-cache backend monitoring 2>&1
   fi
 
   log "Запускаю контейнеры..."
@@ -446,6 +446,15 @@ EOF
   docker ps --format "table {{.Names}}\t{{.Status}}" 2>/dev/null | tail -n +2 | while IFS= read -r line; do
     if echo "${line}" | grep -q "Up"; then ok "  ${line}"; else warn "  ${line}"; fi
   done
+
+  echo ""
+  echo "── Мониторинг ──"
+  MONITOR_HTTP=$(curl -sf http://localhost:3001/ 2>/dev/null | grep -c "KPPDF" || true)
+  if [[ "${MONITOR_HTTP}" -gt 0 ]]; then
+    ok "Дашборд мониторинга: http://localhost:3001/"
+  else
+    warn "Мониторинг не отвечает на порту 3001"
+  fi
 
   echo ""
   echo "── Cloudflare Tunnel ──"

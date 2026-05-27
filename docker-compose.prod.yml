@@ -55,3 +55,21 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+
+  monitoring:
+    build:
+      context: ./monitoring
+      dockerfile: Dockerfile
+    container_name: kppdf-monitor
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /:/hostroot:ro
+    environment:
+      HOST_PROC: /host/proc
+      HOST_ROOT: /hostroot
+      BACKEND_URL: http://localhost:3000
+      MONITOR_PORT: "3001"
+      REFRESH_INTERVAL: "10"

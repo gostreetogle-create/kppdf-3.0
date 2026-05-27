@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPPDF 3.0 — Мониторинг</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg-primary: #0a0e17;
+    --bg-secondary: #111827;
+    --bg-card: #1a1f2e;
+    --bg-card-hover: #1f2638;
+    --border: #2a3042;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-dim: #64748b;
+    --green: #22c55e;
+    --green-bg: rgba(34, 197, 94, 0.12);
+    --yellow: #eab308;
+    --yellow-bg: rgba(234, 179, 8, 0.12);
+    --red: #ef4444;
+    --red-bg: rgba(239, 68, 68, 0.12);
+    --blue: #3b82f6;
+    --blue-bg: rgba(59, 130, 246, 0.12);
+    --purple: #8b5cf6;
+    --accent: #06b6d4;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; margin-bottom: 24px;
+    background: var(--bg-secondary); border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header-logo {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: bold; color: white;
+  }
+  .header-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .header-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+
+  .status-badge {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500;
+  }
+  .status-badge .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  .status-badge.online { background: var(--green-bg); color: var(--green); }
+  .status-badge.online .dot { background: var(--green); }
+  .status-badge.offline { background: var(--red-bg); color: var(--red); }
+  .status-badge.offline .dot { background: var(--red); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .last-updated { font-size: 12px; color: var(--text-dim); }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px; margin-bottom: 24px;
+  }
+  .stat-card {
+    padding: 18px 20px; border-radius: var(--radius);
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .stat-card:hover { border-color: var(--accent); background: var(--bg-card-hover); }
+  .stat-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .stat-value { font-size: 24px; font-weight: 700; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.yellow { color: var(--yellow); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.blue { color: var(--blue); }
+  .stat-detail { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+  /* Progress Bar */
+  .progress-bar {
+    width: 100%; height: 6px; border-radius: 3px;
+    background: var(--border); margin-top: 10px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+  .progress-fill.green { background: var(--green); }
+  .progress-fill.yellow { background: var(--yellow); }
+  .progress-fill.red { background: var(--red); }
+  .progress-fill.blue { background: var(--blue); }
+
+  /* Main Grid */
+  .main-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; margin-bottom: 24px;
+  }
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .header { flex-direction: column; gap: 12px; text-align: center; }
+  }
+
+  .card {
+    background: var(--bg-secondary); border-radius: var(--radius);
+    border: 1px solid var(--border); overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    font-size: 14px; font-weight: 600; color: var(--text-secondary);
+  }
+  .card-header .icon { font-size: 16px; margin-right: 8px; }
+  .card-body { padding: 16px 18px; }
+
+  /* Container List */
+  .container-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid rgba(42, 48, 66, 0.5);
+  }
+  .container-item:last-child { border-bottom: none; }
+  .container-info { display: flex; align-items: center; gap: 12px; }
+  .container-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .container-icon.backend { background: var(--blue-bg); }
+  .container-icon.mongodb { background: var(--green-bg); }
+  .container-icon.monitor { background: rgba(139, 92, 246, 0.2); opacity: 0.9; }
+  .container-name { font-size: 14px; font-weight: 500; }
+  .container-image { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+  .container-stats { text-align: right; }
+  .container-stats .cpu { font-size: 12px; color: var(--text-secondary); }
+  .container-stats .mem { font-size: 12px; color: var(--text-secondary); }
+  .container-status {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 500;
+  }
+  .container-status.up { background: var(--green-bg); color: var(--green); }
+  .container-status.degraded { background: var(--yellow-bg); color: var(--yellow); }
+
+  /* Service Status */
+  .service-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-bottom: 12px;
+  }
+  .service-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-radius: var(--radius-sm);
+    background: var(--bg-card); border: 1px solid var(--border);
+  }
+  .service-label { font-size: 13px; color: var(--text-secondary); }
+  .service-value { font-size: 13px; font-weight: 600; }
+  .service-value.ok { color: var(--green); }
+  .service-value.fail { color: var(--red); }
+  .service-value.warn { color: var(--yellow); }
+
+  /* Chart Container */
+  .chart-container {
+    position: relative; height: 120px; margin-top: 8px;
+  }
+  .chart-container canvas { width: 100% !important; height: 120px !important; }
+
+  /* History table mini */
+  .history-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+
+  /* Backend Info */
+  .info-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0; font-size: 13px; border-bottom: 1px solid rgba(42,48,66,0.3);
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: var(--text-dim); }
+  .info-value { color: var(--text-secondary); font-weight: 500; }
+
+  /* Timeline bar */
+  .timeline {
+    display: flex; gap: 2px; align-items: flex-end; height: 40px;
+    margin-top: 10px;
+  }
+  .timeline-bar {
+    flex: 1; border-radius: 2px 2px 0 0;
+    min-height: 4px; transition: height 0.5s ease;
+  }
+  .timeline-bar.green { background: var(--green); }
+  .timeline-bar.yellow { background: var(--yellow); }
+  .timeline-bar.red { background: var(--red); }
+
+  /* Refresh spinner */
+  .refreshing { animation: spin 1s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Footer */
+  .footer {
+    text-align: center; padding: 20px; font-size: 12px; color: var(--text-dim);
+    border-top: 1px solid var(--border); margin-top: 24px;
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  /* Grid for the bottom section */
+  .bottom-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; margin-bottom: 24px;
+  }
+  @media (max-width: 900px) {
+    .bottom-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Entity counts */
+  .entity-counts {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 4px; margin-top: 8px;
+  }
+  .entity-item {
+    text-align: center; padding: 8px; border-radius: var(--radius-sm);
+    background: var(--bg-card); border: 1px solid var(--border);
+  }
+  .entity-number { font-size: 18px; font-weight: 700; color: var(--accent); }
+  .entity-label { font-size: 10px; color: var(--text-dim); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+  /* Tab style for sections */
+  .section-title {
+    font-size: 16px; font-weight: 600; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .badge {
+    font-size: 11px; padding: 2px 8px; border-radius: 10px;
+    background: var(--bg-card); color: var(--text-dim); font-weight: 400;
+  }
+
+  .charts-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; margin-bottom: 24px;
+  }
+  @media (max-width: 900px) {
+    .charts-row { grid-template-columns: 1fr; }
+  }
+
+  .empty-state {
+    text-align: center; padding: 30px; color: var(--text-dim);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">K</div>
+      <div>
+        <div class="header-title">KPPDF 3.0 · Мониторинг</div>
+        <div class="header-subtitle" id="headerSubtitle">Загрузка...</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-badge online" id="statusBadge">
+        <span class="dot"></span>
+        <span id="statusLabel">Online</span>
+      </div>
+      <div class="last-updated" id="lastUpdated"></div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-label">🖥️ Загрузка CPU</div>
+      <div class="stat-value blue" id="cpuValue">—</div>
+      <div class="stat-detail" id="cpuDetail"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">🧠 Память RAM</div>
+      <div class="stat-value" id="ramValue">—</div>
+      <div class="progress-bar"><div class="progress-fill blue" id="ramBar" style="width:0%"></div></div>
+      <div class="stat-detail" id="ramDetail"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">💾 Диск</div>
+      <div class="stat-value" id="diskValue">—</div>
+      <div class="progress-bar"><div class="progress-fill green" id="diskBar" style="width:0%"></div></div>
+      <div class="stat-detail" id="diskDetail"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">⏱️ Uptime</div>
+      <div class="stat-value green" id="uptimeValue">—</div>
+      <div class="stat-detail" id="uptimeDetail"></div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+    <!-- Services -->
+    <div class="card">
+      <div class="card-header"><span class="icon">🔌</span> Сервисы</div>
+      <div class="card-body">
+        <div class="service-grid" id="servicesGrid">
+          <div class="service-item"><span class="service-label">Backend</span><span class="service-value" id="svcBackend">⏳</span></div>
+          <div class="service-item"><span class="service-label">MongoDB</span><span class="service-value" id="svcMongo">⏳</span></div>
+          <div class="service-item"><span class="service-label">Nginx</span><span class="service-value" id="svcNginx">⏳</span></div>
+          <div class="service-item"><span class="service-label">Cloudflare Tunnel</span><span class="service-value" id="svcTunnel">⏳</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backend Info -->
+    <div class="card">
+      <div class="card-header"><span class="icon">⚙️</span> Backend</div>
+      <div class="card-body" id="backendInfo">
+        <div class="empty-state">Загрузка данных...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-header"><span class="icon">📈</span> CPU · последние 5 минут</div>
+      <div class="card-body">
+        <div class="chart-container"><canvas id="cpuChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="icon">📊</span> RAM · последние 5 минут</div>
+      <div class="card-body">
+        <div class="chart-container"><canvas id="ramChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Grid -->
+  <div class="bottom-grid">
+    <!-- Docker Containers -->
+    <div class="card">
+      <div class="card-header">
+        <span><span class="icon">🐳</span> Docker контейнеры</span>
+        <span class="badge" id="containerCount">0</span>
+      </div>
+      <div class="card-body" id="containerList">
+        <div class="empty-state">Загрузка...</div>
+      </div>
+    </div>
+
+    <!-- System Info -->
+    <div class="card">
+      <div class="card-header"><span class="icon">ℹ️</span> Система</div>
+      <div class="card-body" id="systemInfo">
+        <div class="empty-state">Загрузка...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    KPPDF 3.0 · Обновляется каждые <span id="refreshInfo">10</span> секунд
+    · <a href="/api/status" target="_blank">API JSON</a>
+  </div>
+</div>
+
+<script>
+const REFRESH = 10; // seconds
+const MAX_HISTORY = 30; // 5 minutes at 10s intervals
+let historyData = [];
+let cpuChartInstance = null;
+let ramChartInstance = null;
+let currentStatus = null;
+
+function $(id) { return document.getElementById(id); }
+
+function fmtBytes(bytes, decimals = 1) {
+  if (!bytes) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
+}
+
+function fmtPct(val) {
+  return (typeof val === 'number' ? val.toFixed(1) : val) + '%';
+}
+
+function setStatValue(el, value, cls) {
+  el.textContent = value;
+  el.className = 'stat-value';
+  if (cls) el.classList.add(cls);
+}
+
+function initCharts() {
+  const ctx1 = document.getElementById('cpuChart').getContext('2d');
+  cpuChartInstance = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'CPU %',
+        data: [],
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { display: false },
+        y: {
+          beginAtZero: true,
+          max: 100,
+          grid: { color: 'rgba(42, 48, 66, 0.5)' },
+          ticks: { color: '#64748b', font: { size: 10 } }
+        }
+      }
+    }
+  });
+
+  const ctx2 = document.getElementById('ramChart').getContext('2d');
+  ramChartInstance = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'RAM %',
+        data: [],
+        borderColor: '#22c55e',
+        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { display: false },
+        y: {
+          beginAtZero: true,
+          max: 100,
+          grid: { color: 'rgba(42, 48, 66, 0.5)' },
+          ticks: { color: '#64748b', font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+function updateChart(chart, label, value) {
+  if (!chart) return;
+  const maxPoints = MAX_HISTORY;
+  chart.data.labels.push(label);
+  chart.data.datasets[0].data.push(value);
+  if (chart.data.labels.length > maxPoints) {
+    chart.data.labels.shift();
+    chart.data.datasets[0].data.shift();
+  }
+  chart.update('none');
+}
+
+function loadStatus() {
+  fetch('/api/status')
+    .then(r => r.json())
+    .then(d => {
+      currentStatus = d;
+      renderDashboard(d);
+
+      // Update charts
+      const sys = d.system || {};
+      const mem = sys.memory || {};
+      const now = new Date().toLocaleTimeString('ru-RU');
+      if (typeof sys.cpu_percent === 'number') {
+        updateChart(cpuChartInstance, now, sys.cpu_percent);
+      }
+      if (typeof mem.percent === 'number') {
+        updateChart(ramChartInstance, now, mem.percent);
+      }
+
+      $('lastUpdated').textContent = now;
+    })
+    .catch(e => {
+      $('statusBadge').className = 'status-badge offline';
+      $('statusLabel').textContent = 'Offline';
+      $('lastUpdated').textContent = 'Ошибка: ' + e.message;
+    });
+}
+
+function renderDashboard(d) {
+  const sys = d.system || {};
+  const mem = sys.memory || {};
+  const disk = sys.disk || {};
+  const docker = d.docker || {};
+  const containers = docker.containers || [];
+  const backend = d.backend || {};
+  const nginxStatus = (d.nginx || {}).status || 'unknown';
+  const tunnel = d.tunnel || {};
+
+  // Online/Offline Badge
+  const overallOk = backend.status === 'ok' && containers.length > 0;
+  $('statusBadge').className = overallOk ? 'status-badge online' : 'status-badge offline';
+  $('statusLabel').textContent = overallOk ? 'Online' : 'Problems';
+
+  // Refresh info
+  $('refreshInfo').textContent = d.refresh_interval || REFRESH;
+
+  // Header subtitle
+  $('headerSubtitle').textContent = sys.hostname + ' · ' + (sys.platform || '') + ' ' + (sys.release || '');
+
+  // CPU
+  const cpuVal = typeof sys.cpu_percent === 'number' ? sys.cpu_percent.toFixed(1) : '—';
+  setStatValue($('cpuValue'), cpuVal + '%', 'blue');
+  const load = sys.load || {};
+  $('cpuDetail').textContent = 'Load: ' + (load.load_1 || '—') + ' / ' + (load.load_5 || '—') + ' · CPUs: ' + (sys.cpus || '—');
+
+  // RAM
+  const ramPct = mem.percent || 0;
+  const ramUsed = fmtBytes(mem.used);
+  const ramTotal = fmtBytes(mem.total);
+  setStatValue($('ramValue'), fmtPct(ramPct), ramPct > 80 ? 'red' : ramPct > 50 ? 'yellow' : 'blue');
+  $('ramBar').style.width = Math.min(ramPct, 100) + '%';
+  $('ramBar').className = 'progress-fill ' + (ramPct > 80 ? 'red' : ramPct > 50 ? 'yellow' : 'blue');
+  $('ramDetail').textContent = ramUsed + ' / ' + ramTotal;
+
+  // Disk
+  const diskPct = disk.percent || 0;
+  const diskUsed = fmtBytes(disk.used);
+  const diskTotal = fmtBytes(disk.total);
+  setStatValue($('diskValue'), fmtPct(diskPct), diskPct > 80 ? 'red' : diskPct > 50 ? 'yellow' : 'green');
+  $('diskBar').style.width = Math.min(diskPct, 100) + '%';
+  $('diskBar').className = 'progress-fill ' + (diskPct > 80 ? 'red' : diskPct > 50 ? 'yellow' : 'green');
+  $('diskDetail').textContent = diskUsed + ' / ' + diskTotal;
+
+  // Uptime
+  $('uptimeValue').textContent = sys.uptime_human || '—';
+  $('uptimeDetail').textContent = sys.uptime ? Math.floor(sys.uptime) + ' сек' : '';
+
+  // Services
+  renderService('svcBackend', backend.status === 'ok');
+  renderService('svcMongo', backend.data && (backend.data.data || backend.data).mongodb === 'connected');
+  renderService('svcNginx', nginxStatus === 'active');
+  renderService('svcTunnel', tunnel.status === 'active', tunnel.connections);
+
+  // Backend Info
+  renderBackendInfo(backend);
+
+  // Docker Containers
+  renderContainers(containers);
+
+  // System Info
+  renderSystemInfo(sys);
+}
+
+function renderService(id, ok, extra) {
+  const el = $(id);
+  if (!el) return;
+  if (ok) {
+    el.textContent = extra ? '✅ active (' + extra + ')' : '✅ active';
+    el.className = 'service-value ok';
+  } else {
+    el.textContent = extra ? '❌ ' + extra : '❌ inactive';
+    el.className = 'service-value fail';
+  }
+}
+
+function renderBackendInfo(be) {
+  const el = $('backendInfo');
+  if (be.status === 'ok' && be.data) {
+    const data = be.data.data || be.data;
+    const rows = [
+      ['Статус', '✅ ' + (data.status || 'ok')],
+      ['MongoDB', data.mongodb === 'connected' ? '✅ connected' : '❌ ' + (data.mongodb || 'unknown')],
+      ['Timestamp', data.timestamp ? new Date(data.timestamp).toLocaleString('ru-RU') : '—'],
+      ['Uptime', data.uptime ? Math.floor(data.uptime) + ' сек' : '—'],
+    ];
+    el.innerHTML = rows.map(r => '<div class="info-row"><span class="info-label">' + r[0] + '</span><span class="info-value">' + r[1] + '</span></div>').join('');
+  } else {
+    el.innerHTML = '<div class="info-row"><span class="info-label">Статус</span><span class="info-value fail">❌ ' + (be.error || 'недоступен') + '</span></div>';
+  }
+}
+
+function renderContainers(containers) {
+  const el = $('containerList');
+  const count = containers.length;
+  $('containerCount').textContent = count;
+
+  if (count === 0) {
+    el.innerHTML = '<div class="empty-state">Нет запущенных контейнеров</div>';
+    return;
+  }
+
+  const icons = {
+    'kppdf-backend': { icon: '⚙️', cls: 'backend' },
+    'kppdf-mongodb': { icon: '🗄️', cls: 'mongodb' },
+    'kppdf-monitor': { icon: '📊', cls: 'monitor' },
+  };
+
+  el.innerHTML = containers.map(c => {
+    const icon = icons[c.name] || { icon: '🐳', cls: '' };
+    const isUp = c.status && c.status.includes('Up');
+    const stats = c.stats || {};
+    return `
+      <div class="container-item">
+        <div class="container-info">
+          <div class="container-icon ${icon.cls}">${icon.icon}</div>
+          <div>
+            <div class="container-name">${c.name}</div>
+            <div class="container-image">${(c.image || '').split('/').pop() || '—'}</div>
+          </div>
+        </div>
+        <div class="container-stats">
+          <span class="container-status ${isUp ? 'up' : 'degraded'}">${isUp ? '🟢 Up' : '🔴 ' + (c.status || 'stopped')}</span>
+          ${stats.cpu ? '<div class="cpu">' + stats.cpu + '</div>' : ''}
+          ${stats.mem_usage ? '<div class="mem">' + stats.mem_usage + '</div>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSystemInfo(sys) {
+  const el = $('systemInfo');
+  const load = sys.load || {};
+  const info = [
+    ['Hostname', sys.hostname || '—'],
+    ['OS', (sys.platform || '') + ' ' + (sys.release || '')],
+    ['CPU Cores', sys.cpus || '—'],
+    ['Load (1/5/15)', (load.load_1 || '—') + ' / ' + (load.load_5 || '—') + ' / ' + (load.load_15 || '—')],
+    ['Uptime', sys.uptime_human || '—'],
+  ];
+  el.innerHTML = info.map(i => '<div class="info-row"><span class="info-label">' + i[0] + '</span><span class="info-value">' + i[1] + '</span></div>').join('');
+}
+
+// Init charts
+initCharts();
+
+// Load on start
+loadStatus();
+
+// Auto-refresh
+setInterval(loadStatus, REFRESH * 1000);
+</script>
+</body>
+</html>
