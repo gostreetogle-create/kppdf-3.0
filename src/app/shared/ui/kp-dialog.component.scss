@@ -8,6 +8,11 @@
   border-radius: var(--kp-radius-xl);
 }
 
+:host ::ng-deep .kp-dialog .p-dialog-content {
+  overflow: visible;
+  padding-bottom: var(--kp-space-2, 0.5rem);
+}
+
 :host ::ng-deep .kp-dialog .p-dialog-header .p-dialog-header-close:focus-visible {
   outline: none;
   box-shadow: var(--kp-focus-ring);

@@ -55,6 +55,8 @@
 @mixin kp-field-prime-control($root: '.p-select') {
   #{$root} {
     width: 100%;
+    min-height: var(--kp-control-height, 32px);
+    align-items: center;
     background: var(--p-select-background, var(--kp-surface)) !important;
     border: 1px solid var(--p-select-border-color, var(--kp-border)) !important;
     border-radius: var(--p-select-border-radius, var(--kp-radius-sm)) !important;
@@ -113,12 +115,14 @@
   .p-select-sm #{$label-selector},
   .p-multiselect-sm .p-multiselect-label {
     font-size: var(--p-select-sm-font-size, var(--kp-font-size-sm)) !important;
+    line-height: var(--kp-line-height-body, 1.45) !important;
     padding-block: var(--p-select-sm-padding-y, var(--kp-space-2)) !important;
     padding-inline: var(--p-select-sm-padding-x, var(--kp-space-3)) !important;
   }
 
   .p-multiselect-sm .p-multiselect-label {
     font-size: var(--p-multiselect-sm-font-size, var(--kp-font-size-sm)) !important;
+    line-height: var(--kp-line-height-body, 1.45) !important;
     padding-block: var(--p-multiselect-sm-padding-y, var(--kp-space-2)) !important;
     padding-inline: var(--p-multiselect-sm-padding-x, var(--kp-space-3)) !important;
   }
@@ -167,6 +171,55 @@
   }
 }
 
+/* p-inputNumber — matches kp-input / kp-select wrapper */
+@mixin kp-field-prime-inputnumber {
+  .p-inputnumber {
+    width: 100%;
+    background: var(--kp-surface) !important;
+    border: 1px solid var(--kp-border) !important;
+    border-radius: var(--kp-radius-sm) !important;
+    box-shadow: none !important;
+    transition:
+      border-color var(--kp-transition-fast, 150ms ease),
+      box-shadow var(--kp-transition-fast, 150ms ease);
+
+    &:not(.p-disabled):hover {
+      border-color: var(--kp-border-strong) !important;
+    }
+
+    &.p-focus,
+    &.p-inputwrapper-focus {
+      border-color: var(--kp-primary) !important;
+      box-shadow: var(--kp-focus-ring-premium, 0 0 0 3px rgba(37, 99, 235, 0.1)) !important;
+      outline: none !important;
+    }
+
+    &.p-disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: var(--kp-bg-soft) !important;
+    }
+  }
+
+  .p-inputnumber .p-inputnumber-input,
+  .p-inputnumber .p-inputtext {
+    width: 100%;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    font-family: inherit;
+    font-size: var(--p-inputnumber-sm-font-size, var(--kp-font-size-sm));
+    padding: var(--p-inputnumber-sm-padding-y, var(--kp-space-2))
+      var(--p-inputnumber-sm-padding-x, var(--kp-space-3));
+    color: var(--kp-text);
+
+    &:enabled:focus {
+      outline: none;
+      box-shadow: none !important;
+    }
+  }
+}
+
 /* Overlays append to document body — import via styles.scss */
 @mixin kp-field-prime-overlay {
   .p-select-overlay,
@@ -182,6 +235,49 @@
     border-color: var(--p-multiselect-overlay-border-color, var(--kp-border)) !important;
     border-radius: var(--p-multiselect-overlay-border-radius, var(--kp-radius-md)) !important;
     box-shadow: var(--p-multiselect-overlay-shadow, var(--kp-shadow-md)) !important;
+  }
+
+  /* List items — global reset strips PrimeNG padding; restore here for all kp-select overlays */
+  .p-select-list,
+  .p-multiselect-items {
+    padding: var(--kp-space-1) 0 !important;
+  }
+
+  .p-select-option,
+  .p-multiselect-option {
+    margin: 0 var(--kp-space-1) !important;
+    padding: var(--p-select-option-padding-y, var(--kp-space-2))
+      var(--p-select-option-padding-x, var(--kp-space-3)) !important;
+    min-height: var(--kp-control-height, 32px);
+    border-radius: var(--kp-radius-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--kp-space-2);
+    font-size: var(--kp-font-size-sm) !important;
+    line-height: var(--kp-line-height-body, 1.45) !important;
+  }
+
+  .p-select-option-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .p-select-option-group-label {
+    padding: var(--kp-space-2) var(--kp-space-3) !important;
+    font-size: var(--kp-font-size-caption) !important;
+    font-weight: var(--kp-font-weight-semibold);
+    color: var(--kp-text-secondary);
+  }
+
+  .p-select-header {
+    padding: var(--kp-space-2) !important;
+  }
+
+  .p-select-filter,
+  .p-multiselect-filter {
+    width: 100%;
+    padding: var(--kp-space-2) var(--kp-space-3) !important;
+    font-size: var(--kp-font-size-sm) !important;
   }
 
   .p-select-option:not(.p-disabled):hover,

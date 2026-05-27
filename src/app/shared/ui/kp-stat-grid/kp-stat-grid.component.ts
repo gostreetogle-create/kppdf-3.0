@@ -1,15 +1,19 @@
 import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { KpCardComponent } from '../kp-card.component';
+import { KpReadinessBarComponent } from '../kp-readiness-bar/kp-readiness-bar.component';
 
 export interface KpStatItem {
   label: string;
   icon: string;
   route?: string;
+  queryParams?: Record<string, string>;
   /** Режим метрики (дашборд) */
   value?: number | string;
   /** Режим hub-карточки (разделы, документы) */
   description?: string;
+  /** Процент готовности модуля (опционально) */
+  readinessPercent?: number;
 }
 
 export interface KpStatSection {
@@ -17,13 +21,15 @@ export interface KpStatSection {
   label: string;
   icon?: string;
   items: KpStatItem[];
+  /** Средний процент готовности секции */
+  readinessPercent?: number;
 }
 
 @Component({
   selector: 'app-kp-stat-grid',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, KpCardComponent],
+  imports: [RouterLink, KpCardComponent, KpReadinessBarComponent],
   template: `
     @if (loading()) {
       <div class="kp-stat-grid kp-stat-grid--loading" role="status" aria-live="polite">
@@ -39,10 +45,21 @@ export interface KpStatSection {
         @if (section.items.length > 0) {
           @if (section.label) {
             <h2 class="kp-stat-grid__section">
-              @if (section.icon) {
-                <i [class]="section.icon + ' kp-stat-grid__section-icon'" aria-hidden="true"></i>
+              <span class="kp-stat-grid__section-head">
+                @if (section.icon) {
+                  <i [class]="section.icon + ' kp-stat-grid__section-icon'" aria-hidden="true"></i>
+                }
+                {{ section.label }}
+              </span>
+              @if (section.readinessPercent !== undefined) {
+                <span class="kp-stat-grid__section-readiness">
+                  <app-kp-readiness-bar
+                    [percent]="section.readinessPercent"
+                    [label]="section.label"
+                    [compact]="true"
+                  />
+                </span>
               }
-              {{ section.label }}
             </h2>
           }
           <div class="kp-stat-grid__grid">
@@ -51,8 +68,19 @@ export interface KpStatSection {
                 class="kp-stat-grid__card"
                 [class.kp-stat-grid__card--hub]="isHubItem(item)"
                 [routerLink]="item.route || '/'"
+                [queryParams]="item.queryParams"
               >
                 <app-kp-card>
+                  @if (!isHubItem(item) && item.readinessPercent !== undefined) {
+                    <div kpCardHeader class="kp-stat-grid__card-readiness">
+                      <app-kp-readiness-bar
+                        [percent]="item.readinessPercent"
+                        [label]="item.label"
+                        [edge]="true"
+                        [showLabel]="false"
+                      />
+                    </div>
+                  }
                   @if (isHubItem(item)) {
                     <div class="kp-stat-grid__hub-body">
                       <i [class]="item.icon + ' kp-stat-grid__hub-icon'" aria-hidden="true"></i>

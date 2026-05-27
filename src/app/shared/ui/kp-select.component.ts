@@ -29,6 +29,7 @@ export interface KpSelectOption {
         [disabled]="disabled() || loading()"
         [showClear]="!required()"
         [loading]="loading()"
+        appendTo="body"
         [attr.aria-label]="inputAriaLabel() || null"
         optionLabel="label"
         optionValue="value"

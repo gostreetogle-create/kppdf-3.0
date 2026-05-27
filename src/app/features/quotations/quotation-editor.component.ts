@@ -452,12 +452,14 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                         <th style="width:50px">Ед.</th>
                         <th style="width:90px">Цена, ₽</th>
                         <th style="width:100px">Сумма, ₽</th>
-                        <th style="width:40px"></th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr
                         *ngFor="let item of items(); trackBy: trackByItem; let i = index"
+                        class="editor__table-row"
+                        [class.editor__table-row--selected]="selectedItemIndex() === i"
+                        (click)="onTableRowClick($event, i)"
                         (dblclick)="onTableRowDblclick($event, i)"
                       >
                         <td class="editor__table-idx">{{ i + 1 }}</td>
@@ -472,7 +474,14 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                           />
                         </td>
                         <td>
-                          <div class="editor__table-photo" (buttonClick)="showPhotoInput(i)" (keydown.enter)="showPhotoInput(i)" tabindex="0" role="button">
+                          <div
+                            class="editor__table-photo"
+                            (click)="onTablePhotoClick($event, i)"
+                            (keydown.enter)="onTablePhotoClick($event, i)"
+                            tabindex="0"
+                            role="button"
+                            aria-label="Фото товара"
+                          >
                             <i class="pi pi-image" *ngIf="!item.photo"></i>
                             <img *ngIf="item.photo" [src]="item.photo" class="editor__table-photo-img" alt="фото" />
                           </div>
@@ -522,23 +531,12 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                         <td class="editor__table-sum">
                           {{ computeSum(item) | number:'1.2-2' }}
                         </td>
-                        <td>
-                          <app-kp-button
-                            icon="pi pi-trash"
-                            [rounded]="true"
-                            [text]="true"
-                            severity="danger"
-                            size="small"
-                            (buttonClick)="removeItem(i)"
-                          />
-                        </td>
                       </tr>
                     </tbody>
                     <tfoot>
                       <tr>
                         <td colspan="7" class="editor__table-total-label">Итого:</td>
                         <td class="editor__table-total">{{ totalSum() | number:'1.2-2' }}</td>
-                        <td></td>
                       </tr>
                     </tfoot>
                   </table>
@@ -587,20 +585,20 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
           <div class="editor__sidebar-section">
             <h3 class="editor__sidebar-title">Реквизиты</h3>
             <div class="editor__sidebar-field">
-              <label>Номер</label>
-              <input pInputText size="small" [(ngModel)]="quotation().number" readonly class="w-full" />
+              <label for="qe-field-number">Номер</label>
+              <input id="qe-field-number" pInputText size="small" [(ngModel)]="quotation().number" readonly class="w-full" />
             </div>
             <div class="editor__sidebar-field">
-              <label>Дата</label>
-              <input pInputText size="small" [(ngModel)]="quotationDate" class="w-full" />
+              <label for="qe-field-date">Дата</label>
+              <input id="qe-field-date" pInputText size="small" [(ngModel)]="quotationDate" class="w-full" />
             </div>
             <div class="editor__sidebar-field">
-              <label>Контрагент</label>
-              <input pInputText size="small" [(ngModel)]="quotation().counterpartyId" class="w-full" placeholder="ID контрагента" />
+              <label for="qe-field-counterparty">Контрагент</label>
+              <input id="qe-field-counterparty" pInputText size="small" [(ngModel)]="quotation().counterpartyId" class="w-full" placeholder="ID контрагента" />
             </div>
             <div class="editor__sidebar-field">
-              <label>Действует до</label>
-              <input pInputText size="small" [(ngModel)]="quotationValidUntil" class="w-full" />
+              <label for="qe-field-valid-until">Действует до</label>
+              <input id="qe-field-valid-until" pInputText size="small" [(ngModel)]="quotationValidUntil" class="w-full" />
             </div>
           </div>
 
@@ -638,6 +636,99 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
               placeholder="Примечание к документу..."
             ></textarea>
           </div>
+
+          @if (items().length > 0) {
+            <div class="editor__sidebar-section">
+              <h3 class="editor__sidebar-title">Товары</h3>
+              <ul class="editor__item-nav" role="list">
+                @for (item of items(); track $index; let i = $index) {
+                  <li class="editor__item-nav-item" role="listitem">
+                    <button
+                      type="button"
+                      class="editor__item-nav-btn"
+                      [class.editor__item-nav-btn--active]="selectedItemIndex() === i"
+                      (click)="selectItem(i)"
+                    >
+                      <span class="editor__item-nav-idx">{{ i + 1 }}</span>
+                      @if (item.photo) {
+                        <img [src]="item.photo" alt="" class="editor__item-nav-thumb" />
+                      } @else {
+                        <span class="editor__item-nav-thumb editor__item-nav-thumb--empty" aria-hidden="true">
+                          <i class="pi pi-image"></i>
+                        </span>
+                      }
+                      <span class="editor__item-nav-text">
+                        <span class="editor__item-nav-name">{{ item.name || 'Без названия' }}</span>
+                        <span class="editor__item-nav-meta">
+                          {{ item.qty || 0 }} {{ item.unit || 'шт' }} · {{ computeSum(item) | number:'1.2-2' }} ₽
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+
+            @if (selectedItemIndex() !== null) {
+              @if (items()[selectedItemIndex()!]; as item) {
+                <div class="editor__sidebar-section editor__item-editor">
+                  <h3 class="editor__sidebar-title">Позиция {{ selectedItemIndex()! + 1 }}</h3>
+
+                  <div class="editor__item-photo-panel">
+                    @if (item.photo) {
+                      <button
+                        type="button"
+                        class="editor__item-photo-zoom"
+                        (click)="openPhotoZoom(item.photo!)"
+                        aria-label="Увеличить фото товара"
+                      >
+                        <img [src]="item.photo" alt="Фото товара" />
+                        <span class="editor__item-photo-zoom-hint">
+                          <i class="pi pi-search-plus" aria-hidden="true"></i>
+                          Увеличить
+                        </span>
+                      </button>
+                    } @else {
+                      <div class="editor__item-photo-empty">
+                        <i class="pi pi-image" aria-hidden="true"></i>
+                        <span>Фото не задано</span>
+                      </div>
+                    }
+                    <app-kp-button
+                      label="Изменить фото"
+                      icon="pi pi-image"
+                      severity="secondary"
+                      [outlined]="true"
+                      size="small"
+                      styleClass="w-full"
+                      (buttonClick)="showPhotoInput(selectedItemIndex()!)"
+                    />
+                  </div>
+
+                  <div class="editor__item-editor-actions">
+                    <app-kp-button
+                      label="Заменить"
+                      icon="pi pi-refresh"
+                      severity="secondary"
+                      [outlined]="true"
+                      size="small"
+                      styleClass="editor__item-editor-action"
+                      (buttonClick)="replaceItem(selectedItemIndex()!)"
+                    />
+                    <app-kp-button
+                      label="Удалить"
+                      icon="pi pi-trash"
+                      severity="danger"
+                      [outlined]="true"
+                      size="small"
+                      styleClass="editor__item-editor-action"
+                      (buttonClick)="removeItem(selectedItemIndex()!)"
+                    />
+                  </div>
+                </div>
+              }
+            }
+          }
         </aside>
       </div>
     </div>
@@ -709,11 +800,11 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
     >
       <div class="flex flex-col gap-3">
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Заголовок</label>
-          <input pInputText size="small" [(ngModel)]="editingTextBlock.title" class="w-full" placeholder="Необязательно" />
+          <label for="qe-text-block-title" class="text-sm font-medium">Заголовок</label>
+          <input id="qe-text-block-title" pInputText size="small" [(ngModel)]="editingTextBlock.title" class="w-full" placeholder="Необязательно" />
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Колонки</label>
+          <span class="text-sm font-medium">Колонки</span>
           <div class="flex flex-col gap-2">
             <div
               *ngFor="let cell of editingTextBlock.cells; let ci = index"
@@ -749,8 +840,9 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
           />
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium">Размер шрифта</label>
+          <label for="qe-text-block-font-size" class="text-xs font-medium">Размер шрифта</label>
           <p-select
+            inputId="qe-text-block-font-size"
             [(ngModel)]="editingTextBlock.settings.fontSize"
             [options]="fontSizes"
             optionLabel="label"
@@ -779,8 +871,9 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
     >
       <div class="flex flex-col gap-3">
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Текст колонки</label>
+          <label for="qe-cell-content" class="text-sm font-medium">Текст колонки</label>
           <textarea
+            id="qe-cell-content"
             pInputTextarea
             [(ngModel)]="editingCellContent"
             rows="8"
@@ -790,8 +883,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
           <span class="text-xs text-soft">Каждая строка = новый абзац</span>
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium">Выравнивание колонки</label>
-          <div class="editor__align-group" role="group" aria-label="Выравнивание колонки">
+          <span id="qe-cell-align-label" class="text-xs font-medium">Выравнивание колонки</span>
+          <div class="editor__align-group" role="group" aria-labelledby="qe-cell-align-label">
             <app-kp-button
               icon="pi pi-align-left"
               [rounded]="false"
@@ -827,6 +920,24 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
       </ng-template>
     </p-dialog>
 
+    <!-- ═══ Photo Zoom Dialog ═══ -->
+    <p-dialog
+      [(visible)]="showPhotoZoomDialog"
+      header="Фото товара"
+      [modal]="true"
+      [draggable]="false"
+      [resizable]="false"
+      [style]="{ width: 'auto', maxWidth: '95vw' }"
+      styleClass="editor__photo-zoom-dialog"
+    >
+      <img [src]="photoZoomUrl" class="editor__photo-zoom-img" alt="Увеличенное фото товара" />
+      <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-2">
+          <app-kp-button label="Закрыть" severity="secondary" [outlined]="true" size="small" (buttonClick)="showPhotoZoomDialog = false" />
+        </div>
+      </ng-template>
+    </p-dialog>
+
     <!-- ═══ Photo URL Dialog ═══ -->
     <p-dialog
       [(visible)]="showPhotoDialog"
@@ -837,8 +948,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
       [style]="{ width: '400px', maxWidth: '90vw' }"
     >
       <div class="flex flex-col gap-3">
-        <label class="text-sm font-medium">Введите URL изображения товара</label>
-        <input pInputText size="small" [(ngModel)]="photoDialogUrl" class="w-full" placeholder="https://example.com/photo.jpg" />
+        <label for="qe-photo-url" class="text-sm font-medium">Введите URL изображения товара</label>
+        <input id="qe-photo-url" pInputText size="small" [(ngModel)]="photoDialogUrl" class="w-full" placeholder="https://example.com/photo.jpg" />
       </div>
       <ng-template pTemplate="footer">
         <div class="flex justify-end gap-2">
@@ -858,8 +969,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
       [style]="{ width: '350px', maxWidth: '90vw' }"
     >
       <div class="flex flex-col gap-3">
-        <label class="text-sm font-medium">Отступ сверху (px)</label>
-        <p-inputNumber [(ngModel)]="paddingDialogValue" size="small" [min]="0" [max]="100" class="w-full" />
+        <label for="qe-padding-value" class="text-sm font-medium">Отступ сверху (px)</label>
+        <p-inputNumber inputId="qe-padding-value" [(ngModel)]="paddingDialogValue" size="small" [min]="0" [max]="100" class="w-full" />
       </div>
       <ng-template pTemplate="footer">
         <div class="flex justify-end gap-2">
@@ -879,8 +990,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
       [style]="{ width: '450px', maxWidth: '90vw' }"
     >
       <div class="flex flex-col gap-3">
-        <label class="text-sm font-medium">Введите URL фонового изображения</label>
-        <input pInputText size="small" [(ngModel)]="bgDialogUrl" class="w-full" placeholder="https://example.com/bg.jpg" />
+        <label for="qe-bg-url" class="text-sm font-medium">Введите URL фонового изображения</label>
+        <input id="qe-bg-url" pInputText size="small" [(ngModel)]="bgDialogUrl" class="w-full" placeholder="https://example.com/bg.jpg" />
       </div>
       <ng-template pTemplate="footer">
         <div class="flex justify-end gap-2">
@@ -900,8 +1011,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
       [style]="{ width: '400px', maxWidth: '90vw' }"
     >
       <div class="flex flex-col gap-3">
-        <label class="text-sm font-medium">Название шаблона</label>
-        <input pInputText size="small" [(ngModel)]="templateNameValue" class="w-full" placeholder="Мой шаблон" />
+        <label for="qe-template-name" class="text-sm font-medium">Название шаблона</label>
+        <input id="qe-template-name" pInputText size="small" [(ngModel)]="templateNameValue" class="w-full" placeholder="Мой шаблон" />
       </div>
       <ng-template pTemplate="footer">
         <div class="flex justify-end gap-2">
@@ -978,6 +1089,7 @@ export class QuotationEditorComponent implements OnInit {
 
   readonly productPickerVisible = signal(false);
   readonly replaceItemIndex = signal<number | null>(null);
+  readonly selectedItemIndex = signal<number | null>(null);
 
   /** true = порядок блоков зафиксирован, перетаскивание отключено */
   readonly blocksReorderLocked = signal(false);
@@ -990,6 +1102,9 @@ export class QuotationEditorComponent implements OnInit {
   showPhotoDialog = false;
   photoDialogIndex = -1;
   photoDialogUrl = '';
+
+  showPhotoZoomDialog = false;
+  photoZoomUrl = '';
 
   showPaddingDialog = false;
   paddingDialogIndex = -1;
@@ -1221,6 +1336,38 @@ export class QuotationEditorComponent implements OnInit {
     this.productPickerVisible.set(true);
   }
 
+  onTableRowClick(event: MouseEvent, index: number): void {
+    const target = event.target as HTMLElement;
+    if (target.closest('input, select, .p-inputnumber, .p-select, .p-inputtext, .editor__table-photo')) {
+      return;
+    }
+    this.selectItem(index);
+  }
+
+  onTablePhotoClick(event: Event, index: number): void {
+    event.stopPropagation();
+    this.selectItem(index);
+    this.showPhotoInput(index);
+  }
+
+  selectItem(index: number): void {
+    if (index >= 0 && index < this.items().length) {
+      this.selectedItemIndex.set(index);
+    }
+  }
+
+  replaceItem(index: number): void {
+    this.selectItem(index);
+    this.replaceItemIndex.set(index);
+    this.productPickerVisible.set(true);
+  }
+
+  openPhotoZoom(url: string): void {
+    if (!url) return;
+    this.photoZoomUrl = url;
+    this.showPhotoZoomDialog = true;
+  }
+
   onProductsSelected(products: IProduct[]): void {
     const start = this.items().length;
     this.items.update((items) => [
@@ -1238,6 +1385,9 @@ export class QuotationEditorComponent implements OnInit {
     ]);
     for (let i = 0; i < products.length; i++) {
       this.recalcItem(start + i);
+    }
+    if (products.length > 0) {
+      this.selectItem(start);
     }
     this.productPickerVisible.set(false);
   }
@@ -1265,7 +1415,15 @@ export class QuotationEditorComponent implements OnInit {
   }
 
   removeItem(index: number): void {
-    this.items.update(items => items.filter((_, i) => i !== index));
+    this.items.update((items) => items.filter((_, i) => i !== index));
+    const sel = this.selectedItemIndex();
+    if (sel === null) return;
+    if (sel === index) {
+      const next = this.items();
+      this.selectedItemIndex.set(next.length ? Math.min(index, next.length - 1) : null);
+    } else if (sel > index) {
+      this.selectedItemIndex.set(sel - 1);
+    }
   }
 
   recalcItem(index: number): void {
@@ -1280,6 +1438,7 @@ export class QuotationEditorComponent implements OnInit {
   }
 
   showPhotoInput(index: number): void {
+    this.selectItem(index);
     this.photoDialogIndex = index;
     this.photoDialogUrl = this.items()[index]?.photo || '';
     this.showPhotoDialog = true;

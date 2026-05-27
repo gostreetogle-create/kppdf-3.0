@@ -1,5 +1,6 @@
 import { Component, signal, computed, inject, OnInit, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { forkJoin, finalize } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { MODULE_PERM_PREFIX } from '../../core/permissions';
@@ -161,9 +162,15 @@ export class ModulesPageComponent implements OnInit {
     return buildModuleTableColumns(mod, this.refOptions());
   });
 
+  private readonly route = inject(ActivatedRoute);
+
   ngOnInit(): void {
     const visible = this.visibleModules();
-    if (visible.length && !visible.some((m) => m.key === this.activeKey())) {
+    const moduleParam = this.route.snapshot.queryParamMap.get('module');
+
+    if (moduleParam && this.isModuleKey(moduleParam) && visible.some((m) => m.key === moduleParam)) {
+      this.activeKey.set(moduleParam);
+    } else if (visible.length && !visible.some((m) => m.key === this.activeKey())) {
       this.activeKey.set(visible[0].key);
     }
 
@@ -214,5 +221,9 @@ export class ModulesPageComponent implements OnInit {
     this.activeKey.set(key);
     this.stores[key].setSearch('');
     this.stores[key].load();
+  }
+
+  private isModuleKey(value: string): value is ModuleKey {
+    return this.modules.some((m) => m.key === value);
   }
 }

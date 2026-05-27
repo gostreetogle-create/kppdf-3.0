@@ -1,0 +1,33 @@
+module: platform
+label: Архитектурный фундамент
+status: locked
+level: module
+frozen_since: 2026-05-27T00:00:00.000Z
+frozen_by: '@chief-architect'
+criteria:
+  build: true
+  lint: true
+  tests: false
+  ui_audit: true
+  architecture: true
+  functional: true
+audit_ref: .opencode/audit/reports/2026-05-27.md
+seed_policy: manual-review
+locked_files:
+  - AGENTS.md
+  - PROJECT.md
+  - eslint.config.js
+  - backend/eslint.config.js
+exceptions:
+  - reason: backend/src/seed.ts — shared monolith, manual @chief-architect review only
+    files:
+      - backend/src/seed.ts
+  - reason: backend/src/app.ts — route registry, manual review
+    files:
+      - backend/src/app.ts
+check_hash: true
+file_hashes:
+  AGENTS.md: 8d756e558308922a7d40e7005476711d43b8ee9211b6c87f404c6b6e35bb0ff9
+  PROJECT.md: f7bde2c2fe84ef22ca6a4fcce2522f9ce9ed0da2354770fd503c24ea3a7527da
+  eslint.config.js: 2621b39de665a86c601bc3b1be3ba6bf8164c4ef63571b2cf90b9c180d9b3bf7
+  backend/eslint.config.js: 12df781c385d1371680053bf6de46a5a3467cef1e3466b7249857eb6813e3702

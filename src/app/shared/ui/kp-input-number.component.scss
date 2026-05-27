@@ -16,6 +16,11 @@
   @include field.kp-field-error;
 }
 
-:host ::ng-deep .kp-input-number--error .p-inputnumber-input {
-  border-color: var(--kp-danger) !important;
+:host ::ng-deep {
+  @include field.kp-field-prime-inputnumber;
+
+  .kp-input-number--error.p-inputnumber,
+  .kp-input-number--error .p-inputnumber {
+    border-color: var(--kp-danger) !important;
+  }
 }

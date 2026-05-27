@@ -1,0 +1,45 @@
+name: Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    name: Lint, Build & FreezeGuard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: ESLint (frontend)
+        run: npm run lint
+
+      - name: Build (frontend)
+        run: npm run build
+
+      - name: Frontend unit tests
+        run: npx ng test --no-watch --no-progress --browsers=ChromeHeadlessCI
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Backend unit tests
+        run: npm test
+        working-directory: backend
+
+      - name: FreezeGuard integrity check
+        run: npm run freeze:check

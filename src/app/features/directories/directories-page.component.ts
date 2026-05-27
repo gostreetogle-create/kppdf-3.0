@@ -8,6 +8,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 
 import { PERMISSIONS } from '../../core/permissions';
 import { AuthService } from '../../core/auth.service';
@@ -342,6 +343,7 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
             title="Категории"
             entityLabel="категории"
             description="Группировка товаров и материалов"
+            dialogWidth="560px"
             [store]="stores.categories"
             [columns]="categoryColumns()"
             [permissions]="DIR_PERMS.categories"
@@ -366,21 +368,24 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
                   (valueChange)="row['parentId'] = $event || null"
                   [options]="categoryOptions()"
                 />
-                <app-kp-input-number
-                  label="Порядок сортировки"
-                  name="sortOrder"
-                  placeholder="0"
-                  [value]="row['sortOrder'] ?? 0"
-                  (valueChange)="row['sortOrder'] = $event ?? 0"
-                />
-                <app-kp-select
-                  label="Активна"
-                  name="isActive"
-                  placeholder="Выберите"
-                  [value]="boolToStr(row['isActive'] ?? true)"
-                  (valueChange)="row['isActive'] = $event === 'true'"
-                  [options]="yesNoOptions"
-                />
+                <div class="form-row--equal">
+                  <app-kp-input-number
+                    label="Порядок сортировки"
+                    name="sortOrder"
+                    placeholder="0"
+                    [value]="row['sortOrder'] ?? 0"
+                    (valueChange)="row['sortOrder'] = $event ?? 0"
+                  />
+                  <app-kp-select
+                    label="Активна"
+                    name="isActive"
+                    placeholder="Выберите"
+                    [value]="boolToStr(row['isActive'] ?? true)"
+                    (valueChange)="row['isActive'] = $event === 'true'"
+                    [options]="yesNoOptions"
+                    [required]="true"
+                  />
+                </div>
               </div>
             </ng-template>
           </app-kp-crud-page>
@@ -800,11 +805,22 @@ export class DirectoriesPageComponent implements OnInit {
 
   readonly currentPresets = computed(() => QUICK_PRESETS[this.activeKey()] ?? []);
 
+  private readonly route = inject(ActivatedRoute);
+
   ngOnInit(): void {
+    const dir = this.route.snapshot.queryParamMap.get('dir');
+    if (dir && this.isDirKey(dir) && this.canView(dir)) {
+      this.activeKey.set(dir);
+    }
+
     this.categoryOptionsService
       .load()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((options) => this.categoryOptions.set(options));
+  }
+
+  private isDirKey(value: string): value is DirKey {
+    return value in this.stores;
   }
 
   canView(key: DirKey): boolean {

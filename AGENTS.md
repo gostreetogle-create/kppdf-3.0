@@ -34,6 +34,39 @@ core → shared → features → layout
 
 ---
 
+## 🧊 FreezeGuard — блокировка завершённых модулей
+
+> **Перед редактированием любого файла** — проверить FreezeGuard.
+
+1. Открыть [`.opencode/lock/INDEX.yaml`](.opencode/lock/INDEX.yaml) — статус модуля (`frozen` | `locked` | `wip` | `deprecated`).
+2. Открыть lockfile модуля (`.opencode/lock/modules/*.yaml`) — список `locked_files`.
+3. Если файл в `locked_files` и статус **frozen** или **locked** → **STOP**. Сообщить пользователю: `🧊 [module] frozen`.
+4. Статус **wip** → можно менять.
+
+Правила для AI: [`.opencode/lock/FREEZE-RULES.md`](.opencode/lock/FREEZE-RULES.md). CLI: `npm run freeze:status`, `npm run freeze:check`.
+
+Разморозка — только @chief-architect (статус → `wip` → изменения → аудит → `npm run freeze:update` → `frozen`).
+
+**Pre-commit (только AI):** lint → build → tests → `freeze:update` (если менялся frozen/locked) → `freeze:check` (exit 0) → `git commit`. Пользователь не коммитит. Детали: [`.opencode/lock/FREEZE-RULES.md`](.opencode/lock/FREEZE-RULES.md).
+
+---
+
+## Readiness Feedback — замечания для AI
+
+> **Перед задачами по модулю** — проверить open issues в [`.opencode/readiness-feedback.yaml`](.opencode/readiness-feedback.yaml).
+
+| Действие | Команда |
+|----------|---------|
+| Список open issues | `npm run readiness:feedback` |
+| Промпты для AI | `npm run readiness:prompt` |
+| Sync YAML → JSON | `node .opencode/lock/readiness-feedback-sync.mjs` |
+
+- **Canonical plan** (%, галочки): `.opencode/project-readiness.yaml` — правит AI после fix.
+- **Feedback** (замечания пользователя): `.opencode/readiness-feedback.yaml` — не в FreezeGuard.
+- Phase 2: UI в диалоге «Статус реализации» + API сохранения.
+
+---
+
 ## 📦 Public API (Barrel-файлы)
 
 Каждая фича экспортирует ТОЛЬКО через `index.ts`:

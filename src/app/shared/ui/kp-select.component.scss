@@ -2,6 +2,12 @@
 
 .kp-select {
   @include field.kp-field-root;
+  width: 100%;
+}
+
+:host {
+  display: block;
+  width: 100%;
 }
 
 .kp-select__label {

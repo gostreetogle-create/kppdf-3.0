@@ -1,0 +1,24 @@
+module: roles
+label: Роли
+status: frozen
+level: module
+frozen_since: 2026-05-27T00:00:00.000Z
+frozen_by: '@chief-architect'
+criteria:
+  build: true
+  lint: true
+  tests: false
+  ui_audit: true
+  architecture: true
+  functional: true
+audit_ref: .opencode/audit/reports/2026-05-27.md
+locked_files:
+  - shared/types/role.interface.ts
+  - backend/src/modules/roles/role.model.ts
+  - backend/src/modules/roles/role.router.ts
+exceptions: []
+check_hash: true
+file_hashes:
+  shared/types/role.interface.ts: 6d3f345cd7a728def8663cfe7e927cb80666ce60e6147b12889c2ee825a92bfd
+  backend/src/modules/roles/role.model.ts: 789407112603657c1f86a72e0dac4ae312af89254e2e889ba853384f836181ef
+  backend/src/modules/roles/role.router.ts: c4255fa6ff80a208a933f193a6643dc997bf51aac5d7c61173521197de9f5b63

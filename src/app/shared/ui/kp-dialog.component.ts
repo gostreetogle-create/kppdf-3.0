@@ -55,12 +55,10 @@ export class KpDialogComponent {
   readonly hide = output<void>();
   readonly visibleChange = output<boolean>();
 
-  constructor() {
-    effect(() => {
-      if (!this.visible() || !isPlatformBrowser(this.platformId)) return;
-      queueMicrotask(() => this.focusFirstField());
-    });
-  }
+  private readonly focusOnOpenEffect = effect(() => {
+    if (!this.visible() || !isPlatformBrowser(this.platformId)) return;
+    queueMicrotask(() => this.focusFirstField());
+  });
 
   dialogAriaLabel(): string {
     return this.ariaLabel().trim() || this.header().trim();

@@ -15,6 +15,7 @@
 | [ui-audit-checklist.md](ui-audit-checklist.md) | UI-аудит — чеклист проверки перед сдачей |
 | [ui-manifest.md](ui-manifest.md) | UI-манифест — Конституция интерфейсов, правила + YAML-проверки |
 | [golden-samples.ts](../golden-samples.ts) | Эталонные паттерны UI-компонентов (таблица с пагинацией, CRUD-диалог) |
+| [FREEZE-RULES.md](../lock/FREEZE-RULES.md) | FreezeGuard — frozen/locked файлы, алгоритм STOP для AI |
 
 ## Основные принципы
 

@@ -1,0 +1,37 @@
+module: products
+label: Товары/услуги
+status: frozen
+level: module
+frozen_since: 2026-05-27T00:00:00.000Z
+frozen_by: '@chief-architect'
+criteria:
+  build: true
+  lint: true
+  tests: true
+  ui_audit: true
+  architecture: true
+  functional: true
+audit_ref: .opencode/audit/reports/2026-05-27.md
+locked_files:
+  - shared/types/product.interface.ts
+  - backend/src/modules/products/product.model.ts
+  - backend/src/modules/products/product.router.ts
+  - src/app/features/products/**
+  - src/app/features/attributes/attributes-editor.*
+exceptions:
+  - reason: seed.ts — shared policy (platform.yaml)
+    files: []
+  - reason: golden-samples.ts — not yet app-kp-button (separate PR)
+    files: []
+check_hash: true
+file_hashes:
+  shared/types/product.interface.ts: cb035b3e7b69e9eebc590ebeb09e1923fd98e98333dba0db9fa0a9f68ac3a873
+  backend/src/modules/products/product.model.ts: b9e6d982a6b9955f0cf745de56daaa0226873a83c70955abc04b652877634f09
+  backend/src/modules/products/product.router.ts: 84185a77c02d8223532daa1d4f6991a2736795cfa0081e601cc4325606952495
+  src/app/features/products/index.ts: 7c9e0ed353d95ba4c627f572c834202c1e1e4aefbc46c145f57b19e2b1076bc4
+  src/app/features/products/products-page.component.spec.ts: ae8a16f97e90869539a06a9a6276a18044d8b8d93550fe9fa6e621fc9287374d
+  src/app/features/products/products-page.component.ts: 49589be0f65bdd8bdf5486927856e588decbac352e00b6967a3ba48a3fc252c7
+  src/app/features/products/products.store.ts: 948092d2ae9f2ae9b1fcf059d6f92449580e800fd734e720014bdc1fefe4dde4
+  src/app/features/attributes/attributes-editor.component.html: 8b299de079eb118360872cec23734cf9fa867da54ec5d252b009eccbb896fdb3
+  src/app/features/attributes/attributes-editor.component.scss: e0677f636fa7b141e0ccba6502c16a7305b2350034796a07a8b2bf9bf9c6a459
+  src/app/features/attributes/attributes-editor.component.ts: af007b73418c621761dc84d5bd1ca86f26d575552677cda93dcf960b65e13fe0

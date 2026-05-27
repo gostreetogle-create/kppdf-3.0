@@ -27,6 +27,7 @@ Prod URL:    https://sport-set.ru
 | `.opencode/rules/` | Правила архитектуры (7 файлов) |
 | `.opencode/plans/` | Планы разработки (8 файлов) |
 | `.opencode/golden-samples.ts` | Эталонные UI-паттерны |
+| `.opencode/readiness-feedback.yaml` | **Open issues пользователя для AI** (не FreezeGuard) |
 | `opencode.json` | Конфигурация opencode |
 
 ### Структура проекта

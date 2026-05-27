@@ -9,11 +9,6 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface TokensPair {
-  accessToken: string;
-  refreshToken: string;
-}
-
 export interface AuthUser {
   userId: string;
   username: string;
@@ -21,92 +16,62 @@ export interface AuthUser {
   permissions: string[];
 }
 
-const ACCESS_KEY = 'kppdf_access_token';
-const REFRESH_KEY = 'kppdf_refresh_token';
-const USER_KEY = 'kppdf_user';
-const PERMISSIONS_KEY = 'kppdf_permissions';
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly baseUrl = `${environment.apiUrl}/auth`;
 
+  /** Текущий пользователь (токены — только в httpOnly cookies) */
+  private readonly currentUser = signal<AuthUser | null>(null);
+
   /** Реактивный сигнал с правами текущего пользователя */
-  readonly permissions = signal<string[]>(this.loadPermissions());
+  readonly permissions = signal<string[]>([]);
 
-  /** Login — получает токены и сохраняет */
-  login(credentials: LoginRequest): Observable<TokensPair> {
+  /** Login — cookies устанавливает сервер */
+  login(credentials: LoginRequest): Observable<AuthUser> {
     return this.http
-      .post<{ success: boolean; data: TokensPair }>(`${this.baseUrl}/login`, credentials)
+      .post<{ success: boolean; data: AuthUser }>(`${this.baseUrl}/login`, credentials)
       .pipe(
         map((res) => res.data),
-        tap((tokens) => this.saveTokens(tokens)),
+        tap((user) => this.setUser(user)),
       );
   }
 
-  /** Refresh — обновляет access-токен */
-  refresh(): Observable<TokensPair | null> {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) return of(null);
-
+  /** Refresh — refresh cookie отправляется автоматически */
+  refresh(): Observable<AuthUser | null> {
     return this.http
-      .post<{ success: boolean; data: TokensPair }>(`${this.baseUrl}/refresh`, { refreshToken })
+      .post<{ success: boolean; data: AuthUser }>(`${this.baseUrl}/refresh`, {})
       .pipe(
         map((res) => res.data),
-        tap((tokens) => this.saveTokens(tokens)),
+        tap((user) => this.setUser(user)),
+        catchError(() => {
+          this.clearSession();
+          return of(null);
+        }),
       );
   }
 
-  /** Выход */
+  /** Выход — сервер очищает cookies */
   logout(): void {
-    localStorage.removeItem(ACCESS_KEY);
-    localStorage.removeItem(REFRESH_KEY);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(PERMISSIONS_KEY);
-    this.permissions.set([]);
+    this.clearSession();
     this.router.navigate(['/login']);
+    this.http.post(`${this.baseUrl}/logout`, {}).subscribe({ error: () => { /* noop */ } });
   }
 
-  /** Сохранить токены в localStorage */
-  saveTokens(tokens: TokensPair): void {
-    localStorage.setItem(ACCESS_KEY, tokens.accessToken);
-    localStorage.setItem(REFRESH_KEY, tokens.refreshToken);
-
-    // Декодируем payload из access-токена
-    const payload = this.decodeToken(tokens.accessToken);
-    if (payload && typeof payload === 'object') {
-      const userId = String(payload['userId'] ?? '');
-      const username = String(payload['username'] ?? '');
-      const role = String(payload['role'] ?? '');
-      localStorage.setItem(
-        USER_KEY,
-        JSON.stringify({ userId, username, role }),
+  /** Загрузить профиль текущего пользователя */
+  fetchMe(): Observable<AuthUser> {
+    return this.http
+      .get<{ success: boolean; data: AuthUser }>(`${this.baseUrl}/me`)
+      .pipe(
+        map((res) => res.data),
+        tap((user) => this.setUser(user)),
       );
-      // Сохраняем permissions отдельно + обновляем сигнал
-      const perms = Array.isArray(payload['permissions']) ? (payload['permissions'] as string[]) : [];
-      localStorage.setItem(PERMISSIONS_KEY, JSON.stringify(perms));
-      this.permissions.set(perms);
-    }
-  }
-
-  /** Получить access-токен */
-  getAccessToken(): string | null {
-    return localStorage.getItem(ACCESS_KEY);
-  }
-
-  /** Получить refresh-токен */
-  getRefreshToken(): string | null {
-    return localStorage.getItem(REFRESH_KEY);
   }
 
   /** Получить информацию о пользователе */
   getUser(): AuthUser | null {
-    const raw = localStorage.getItem(USER_KEY);
-    if (!raw) return null;
-    const user = JSON.parse(raw) as AuthUser;
-    user.permissions = this.loadPermissions();
-    return user;
+    return this.currentUser();
   }
 
   /** Получить массив permissions */
@@ -120,18 +85,14 @@ export class AuthService {
     if (perms.length === 0) return false;
 
     for (const perm of perms) {
-      // * = полный доступ
       if (perm === '*') return true;
-      // Прямое совпадение
       if (perm === required) return true;
-      // wildcard: office.* → office.tenders.view
       if (perm.endsWith('.*')) {
-        const prefix = perm.slice(0, -2); // 'office'
+        const prefix = perm.slice(0, -2);
         if (required.startsWith(prefix + '.')) return true;
       }
-      // wildcard: *.view → office.tenders.view, production.boms.view
       if (perm.startsWith('*.')) {
-        const action = perm.slice(1); // '.view'
+        const action = perm.slice(1);
         if (required.endsWith(action)) return true;
       }
     }
@@ -143,59 +104,28 @@ export class AuthService {
    * Вызывается через APP_INITIALIZER до монтирования роутера.
    */
   async initializeAuth(): Promise<void> {
-    const token = this.getAccessToken();
-    if (!token) return;
-
-    const payload = this.decodeToken(token);
-    if (!payload) {
-      this.logout();
-      return;
-    }
-
-    const exp = payload['exp'] as number | undefined;
-    // Токен ещё жив — состояние уже восстановлено из localStorage через loadPermissions
-    if (exp && exp * 1000 > Date.now()) {
-      return;
-    }
-
-    // Токен истёк — пытаемся обновить
     try {
-      await firstValueFrom(
-        this.refresh().pipe(
-          catchError(() => {
-            this.logout();
-            return of(undefined);
-          }),
-        ),
-      );
+      await firstValueFrom(this.fetchMe());
     } catch {
-      this.logout();
+      const user = await firstValueFrom(this.refresh());
+      if (!user) {
+        this.clearSession();
+      }
     }
   }
 
   /** Проверить, авторизован ли пользователь */
   isAuthenticated(): boolean {
-    return !!this.getAccessToken();
+    return this.currentUser() !== null;
   }
 
-  /** Загрузить permissions из localStorage */
-  private loadPermissions(): string[] {
-    try {
-      const raw = localStorage.getItem(PERMISSIONS_KEY);
-      return raw ? (JSON.parse(raw) as string[]) : [];
-    } catch {
-      return [];
-    }
+  private setUser(user: AuthUser): void {
+    this.currentUser.set(user);
+    this.permissions.set(user.permissions ?? []);
   }
 
-  /** Декодировать JWT payload (без проверки подписи) */
-  private decodeToken(token: string): Record<string, unknown> | null {
-    try {
-      const payload = token.split('.')[1];
-      const decoded = JSON.parse(atob(payload));
-      return decoded && typeof decoded === 'object' ? (decoded as Record<string, unknown>) : null;
-    } catch {
-      return null;
-    }
+  private clearSession(): void {
+    this.currentUser.set(null);
+    this.permissions.set([]);
   }
 }

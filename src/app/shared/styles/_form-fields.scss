@@ -11,6 +11,102 @@
   gap: var(--kp-space-4, 1rem);
 }
 
+/* Two-column dialog with grouped sections */
+.form-layout--2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--kp-space-4);
+  align-items: start;
+}
+
+.form-layout__column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kp-space-3);
+  min-width: 0;
+}
+
+.form-section {
+  padding: var(--kp-space-3) var(--kp-space-3) var(--kp-space-4);
+  border-radius: var(--kp-radius-lg);
+  border: 1px solid transparent;
+  background: var(--form-section-bg, var(--kp-surface-soft));
+  border-color: color-mix(in srgb, var(--form-section-accent, var(--kp-primary)) 16%, var(--kp-border));
+
+  &--blue {
+    --form-section-accent: #2563eb;
+    --form-section-bg: #eff6ff;
+  }
+
+  &--purple {
+    --form-section-accent: #7c3aed;
+    --form-section-bg: #f5f3ff;
+  }
+
+  &--green {
+    --form-section-accent: #059669;
+    --form-section-bg: #ecfdf5;
+  }
+
+  &--amber {
+    --form-section-accent: #d97706;
+    --form-section-bg: #fffbeb;
+  }
+}
+
+.form-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--kp-space-3);
+  padding-bottom: var(--kp-space-2);
+  border-bottom: 1px solid color-mix(in srgb, var(--form-section-accent, var(--kp-primary)) 14%, var(--kp-border));
+  font-size: var(--kp-font-size-sm);
+  font-weight: var(--kp-font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--form-section-accent, var(--kp-primary)) 70%, var(--kp-text));
+
+  i {
+    font-size: 14px;
+    color: var(--form-section-accent, var(--kp-primary));
+  }
+}
+
+.form-section__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kp-space-3);
+}
+
+.form-row--split {
+  display: grid;
+  grid-template-columns: 1fr 96px;
+  gap: var(--kp-space-3);
+  align-items: start;
+}
+
+.form-row--equal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--kp-space-3);
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .form-layout--2col {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row--split {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row--equal {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 640px) {
   .form-layout--grid {
     grid-template-columns: 1fr;

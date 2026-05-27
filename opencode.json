@@ -14,6 +14,8 @@
     ".opencode/agents/orchestrator.md",
     ".opencode/plans/00-plan-index.md",
     ".opencode/AI_CONTEXT.md",
+    ".opencode/lock/FREEZE-RULES.md",
+    ".opencode/lock/INDEX.yaml",
     "AGENTS.md",
     "mcp://yougile"
   ]

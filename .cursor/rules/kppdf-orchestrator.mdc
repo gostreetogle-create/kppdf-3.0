@@ -26,15 +26,31 @@ alwaysApply: true
 | Code review | .opencode/agents/reviewer.md |
 | Деплой, CI/CD, nginx | `kppdf-deploy-synology.mdc` → deploy/synology/RUNBOOK.md |
 | Сводка аудита | .opencode/agents/chief-architect.md |
+| FreezeGuard / frozen-файлы | `.opencode/lock/FREEZE-RULES.md` + `kppdf-freezeguard.mdc` |
 
 ## Протокол работы
 
 1. Получил задачу → определи тип (UI/BE/архитектура/другое)
-2. Если задача простая (1 файл, 10 строк) — сделай сам
-3. Если задача сложная — используй таблицу, прочитай правило специалиста
-4. После UI-работы: UI-specialist → UI-QA (Red Team) → UI-auditor
-5. После любого изменения: проверь сборку (ng build / npm test)
-6. ВАЖНО: никогда не читай все правила сразу — только то, что нужно под задачу
+2. **Проверь FreezeGuard** — файл не frozen/locked (см. `.opencode/lock/INDEX.yaml`)
+3. Если задача простая (1 файл, 10 строк) — сделай сам
+4. Если задача сложная — используй таблицу, прочитай правило специалиста
+5. После UI-работы: UI-specialist → UI-QA (Red Team) → UI-auditor
+6. После любого изменения: проверь сборку (ng build / npm test)
+7. ВАЖНО: никогда не читай все правила сразу — только то, что нужно под задачу
+
+## Git commit (только AI, не пользователь)
+
+Пользователь **не запускает** freeze-команды и **не коммитит** сам. Полный протокол: [`.opencode/lock/FREEZE-RULES.md`](.opencode/lock/FREEZE-RULES.md) → «Pre-commit протокол».
+
+**Кратко — порядок перед каждым commit:**
+
+1. `npm run lint` + `npm run build` + `ng test` (headless) + `backend/npm test`
+2. Если менялись **frozen/locked** файлы (с approval) → `npm run freeze:update`
+3. `npm run freeze:check` — **exit 0 обязателен**
+4. `git commit` — включить обновлённые `.opencode/lock/modules/*.yaml` если был step 2
+5. При hash mismatch **без approval** → не коммитить, не предлагать override пользователю
+
+**Не предлагать** пользователю: `git commit`, `freeze:update`, `freeze:check`, `GIT_ALLOW_FREEZE=1`, `--no-verify`.
 
 ## Экономия токенов (ОБЯЗАТЕЛЬНО к исполнению)
 

@@ -14,11 +14,24 @@
   border-bottom: 1px solid var(--kp-border);
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 16px;
 
   &:first-child {
     margin-top: 0;
   }
+}
+
+.kp-stat-grid__section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.kp-stat-grid__section-readiness {
+  flex: 0 1 160px;
+  min-width: 120px;
 }
 
 .kp-stat-grid__section-icon {
@@ -54,6 +67,18 @@
 
   &--hub:hover .kp-card {
     border-color: var(--kp-primary-soft, var(--kp-primary));
+  }
+}
+
+.kp-stat-grid__card-readiness {
+  display: block;
+  width: 100%;
+}
+
+.kp-stat-grid__card:has(.kp-stat-grid__card-readiness) {
+  .kp-card__header {
+    padding: 0;
+    border-bottom: none;
   }
 }
 

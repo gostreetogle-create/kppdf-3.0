@@ -1,0 +1,26 @@
+module: modules-page
+label: Модули ERP (FE shell)
+status: frozen
+level: module
+frozen_since: 2026-05-27T00:00:00.000Z
+frozen_by: '@chief-architect'
+criteria:
+  build: true
+  lint: true
+  tests: false
+  ui_audit: true
+  architecture: true
+  functional: true
+audit_ref: .opencode/audit/reports/2026-05-27.md
+locked_files:
+  - src/app/features/modules/**
+exceptions: []
+check_hash: true
+file_hashes:
+  src/app/features/modules/index.ts: 49279a5b9ef8df4264ebccd21f3b8f023e01a9132a786c76f83bde6e89b047aa
+  src/app/features/modules/module-dynamic-form.component.ts: a3fc27239cc33f4cdd6d487ffd1ac8085cc18594d1fc21df46a89aaa6fc27ab7
+  src/app/features/modules/module-severity.util.ts: 73506969c8528b7fe1fbe4ed77feeb3f4a4aabcfac64bfeb61dda2246d04b860
+  src/app/features/modules/modules-page.component.scss: 3a0a7aa24df9a7ec78c328f7ee26bcd7b1908836ee20e7190f8a66be08dec110
+  src/app/features/modules/modules-page.component.ts: b6af8424b21379cc1ada1a6267e3483a5884bf5cc9fd4fc3a26e45fa8e47c29d
+  src/app/features/modules/modules.config.ts: d3c54be75dc42b1f0dc55cc6844b28cc6d81a329237472fe4a9d03e82c6b2ae5
+  src/app/features/modules/modules.store.ts: 9ad8cc7a545916cb7418511ab41088d66d7253ec1acbf0162982372c9ad3677b

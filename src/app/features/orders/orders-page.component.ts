@@ -63,62 +63,92 @@ function orderSeverity(value: unknown): string {
       [permissions]="PERMISSIONS.orders"
       [severityFn]="orderSeverity"
       createLabel="Создать заказ"
+      dialogWidth="min(920px, 96vw)"
     >
       <ng-template #form let-row>
-        <div class="form-layout">
-          <app-kp-input
-            label="Номер"
-            name="number"
-            placeholder="Например, ЗК-001"
-            [value]="row['number'] || ''"
-            (valueChange)="row['number'] = $event"
-            [required]="true"
-          />
-          <app-kp-select
-            label="Контрагент"
-            name="counterpartyId"
-            placeholder="Выберите контрагента"
-            [value]="row['counterpartyId'] || ''"
-            (valueChange)="row['counterpartyId'] = $event"
-            [options]="counterpartyOptions()"
-            [required]="true"
-          />
-          <app-kp-select
-            label="КП основание"
-            name="quotationId"
-            placeholder="Выберите КП"
-            [value]="row['quotationId'] || ''"
-            (valueChange)="row['quotationId'] = $event"
-            [options]="quotationOptions()"
-          />
-          <app-kp-datepicker
-            label="Дата"
-            name="date"
-            [value]="row['date'] || ''"
-            (valueChange)="row['date'] = $event"
-          />
-          <app-kp-datepicker
-            label="План. дата"
-            name="plannedDate"
-            [value]="row['plannedDate'] || ''"
-            (valueChange)="row['plannedDate'] = $event"
-          />
-          <app-kp-select
-            label="Статус"
-            name="statusId"
-            placeholder="Выберите статус"
-            [value]="row['statusId'] || 'draft'"
-            (valueChange)="row['statusId'] = $event"
-            [options]="statusOptions"
-            [required]="true"
-          />
-          <app-kp-textarea
-            label="Примечание"
-            name="notes"
-            placeholder="Комментарий к заказу"
-            [value]="row['notes'] || ''"
-            (valueChange)="row['notes'] = $event"
-          />
+        <div class="form-layout form-layout--2col">
+          <div class="form-layout__column">
+            <section class="form-section form-section--blue">
+              <h3 class="form-section__title">
+                <i class="pi pi-file" aria-hidden="true"></i>
+                Документ
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-input
+                  label="Номер"
+                  name="number"
+                  placeholder="Например, ЗК-001"
+                  [value]="row['number'] || ''"
+                  (valueChange)="row['number'] = $event"
+                  [required]="true"
+                />
+                <app-kp-datepicker
+                  label="Дата"
+                  name="date"
+                  [value]="row['date'] || ''"
+                  (valueChange)="row['date'] = $event"
+                />
+                <app-kp-datepicker
+                  label="План. дата"
+                  name="plannedDate"
+                  [value]="row['plannedDate'] || ''"
+                  (valueChange)="row['plannedDate'] = $event"
+                />
+                <app-kp-select
+                  label="Статус"
+                  name="statusId"
+                  placeholder="Выберите статус"
+                  [value]="row['statusId'] || 'draft'"
+                  (valueChange)="row['statusId'] = $event"
+                  [options]="statusOptions"
+                  [required]="true"
+                />
+              </div>
+            </section>
+          </div>
+          <div class="form-layout__column">
+            <section class="form-section form-section--purple">
+              <h3 class="form-section__title">
+                <i class="pi pi-users" aria-hidden="true"></i>
+                Контрагент и основание
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-select
+                  label="Контрагент"
+                  name="counterpartyId"
+                  placeholder="Выберите контрагента"
+                  [value]="row['counterpartyId'] || ''"
+                  (valueChange)="row['counterpartyId'] = $event"
+                  [options]="counterpartyOptions()"
+                  [required]="true"
+                />
+                <app-kp-select
+                  label="КП основание"
+                  name="quotationId"
+                  placeholder="Выберите КП"
+                  [value]="row['quotationId'] || ''"
+                  (valueChange)="row['quotationId'] = $event"
+                  [options]="quotationOptions()"
+                />
+              </div>
+            </section>
+            <section class="form-section form-section--amber">
+              <h3 class="form-section__title">
+                <i class="pi pi-comment" aria-hidden="true"></i>
+                Примечание
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-textarea
+                  label="Примечание"
+                  name="notes"
+                  placeholder="Комментарий к заказу"
+                  [value]="row['notes'] || ''"
+                  (valueChange)="row['notes'] = $event"
+                  [rows]="3"
+                />
+              </div>
+            </section>
+          </div>
         </div>
       </ng-template>
     </app-kp-crud-page>

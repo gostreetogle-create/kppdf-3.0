@@ -1,0 +1,22 @@
+module: login
+label: Страница входа
+status: locked
+level: module
+frozen_since: 2026-05-27T00:00:00.000Z
+frozen_by: '@chief-architect'
+criteria:
+  build: true
+  lint: true
+  tests: false
+  ui_audit: true
+  architecture: true
+  functional: true
+audit_ref: .opencode/audit/reports/2026-05-27.md
+locked_files:
+  - src/app/features/login/**
+exceptions: []
+check_hash: true
+file_hashes:
+  src/app/features/login/index.ts: 326b6339bb854f04f4901a0b7e14b21df55aea958851d3b3415c43031ba2077b
+  src/app/features/login/login-page.component.scss: d5d7202a92321743e993b217ecb1845650a07eb61c53e923d77a195ce55fe48b
+  src/app/features/login/login-page.component.ts: d51ff7d2119368b523aac8fb5d18ae49cabc88819dbdd9275c9372ff9ad62efa

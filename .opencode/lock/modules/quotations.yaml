@@ -1,0 +1,7 @@
+module: quotations
+label: Коммерческие предложения
+status: wip
+level: module
+locked_files: []
+check_hash: false
+file_hashes: {}

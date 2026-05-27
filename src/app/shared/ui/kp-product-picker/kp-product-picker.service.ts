@@ -24,11 +24,9 @@ export class KpProductPickerService {
   private listSub: Subscription | null = null;
   private readonly limit = PRODUCT_PICKER_PAGE_SIZE;
 
-  constructor() {
-    this.filterSubject
-      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
-      .subscribe((filters) => this.loadProductsImmediate(filters));
-  }
+  private readonly filterPipeline = this.filterSubject
+    .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+    .subscribe((filters) => this.loadProductsImmediate(filters));
 
   loadProducts(filters: ProductPickerFilters): void {
     this.filterSubject.next(filters);

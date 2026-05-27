@@ -342,8 +342,13 @@ button { font-family: inherit; cursor: pointer; }
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-  gap: var(--kp-space-2, 0.5rem);
+  gap: var(--kp-space-3, 0.75rem);
   width: 100%;
+
+  app-kp-button .p-button {
+    min-width: 7.5rem;
+    justify-content: center;
+  }
 }
 
 /* ── Table container (rounded + shadow) ── */

@@ -1,4 +1,4 @@
-/* ===== Admin Layout — Sidebar (Modern · Slate) ===== */
+/* ===== Admin Layout — Sidebar (Light · grouped nav) ===== */
 
 :host {
   display: flex;
@@ -38,13 +38,14 @@
     z-index: var(--kp-z-sticky);
     transition: transform var(--kp-transition-base), width var(--kp-transition-base);
     border-right: 1px solid var(--kp-sidebar-border);
+    box-shadow: var(--kp-shadow-xs);
   }
 
   &__logo {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 20px 16px 16px;
+    padding: 20px 16px 12px;
     margin: 0 4px;
 
     &-icon {
@@ -59,11 +60,11 @@
       font-weight: 700;
       font-size: 15px;
       letter-spacing: -0.5px;
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
     }
 
     &-text {
-      color: var(--kp-bg-soft);
+      color: var(--kp-sidebar-logo-text);
       font-weight: 600;
       font-size: 16px;
       letter-spacing: -0.3px;
@@ -73,8 +74,8 @@
   &__nav {
     display: flex;
     flex-direction: column;
-    padding: 8px 12px 12px;
-    gap: 1px;
+    padding: 4px 10px 12px;
+    gap: var(--kp-space-2);
     flex: 1;
     overflow-y: auto;
 
@@ -86,31 +87,79 @@
     }
   }
 
-  &__group-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--kp-sidebar-text);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    padding: 16px 12px 6px;
-    opacity: 0.6;
-    user-select: none;
+  &__nav-top {
+    padding-bottom: var(--kp-space-1);
+    border-bottom: 1px solid var(--kp-sidebar-border);
+    margin-bottom: var(--kp-space-1);
+  }
 
-    &:first-child {
-      padding-top: 8px;
+  &__group {
+    padding: var(--kp-space-2) var(--kp-space-2) var(--kp-space-1);
+    border-radius: var(--kp-radius-lg);
+    border: 1px solid transparent;
+
+    &--sales {
+      background: var(--kp-nav-group-sales-bg);
+      border-color: color-mix(in srgb, var(--kp-nav-group-sales-accent) 18%, transparent);
+
+      .layout__group-dot { background: var(--kp-nav-group-sales-accent); }
+      .layout__group-label { color: color-mix(in srgb, var(--kp-nav-group-sales-accent) 72%, var(--kp-sidebar-text-strong)); }
     }
+
+    &--production {
+      background: var(--kp-nav-group-production-bg);
+      border-color: color-mix(in srgb, var(--kp-nav-group-production-accent) 18%, transparent);
+
+      .layout__group-dot { background: var(--kp-nav-group-production-accent); }
+      .layout__group-label { color: color-mix(in srgb, var(--kp-nav-group-production-accent) 72%, var(--kp-sidebar-text-strong)); }
+    }
+
+    &--warehouse {
+      background: var(--kp-nav-group-warehouse-bg);
+      border-color: color-mix(in srgb, var(--kp-nav-group-warehouse-accent) 18%, transparent);
+
+      .layout__group-dot { background: var(--kp-nav-group-warehouse-accent); }
+      .layout__group-label { color: color-mix(in srgb, var(--kp-nav-group-warehouse-accent) 72%, var(--kp-sidebar-text-strong)); }
+    }
+
+    &--directories {
+      background: var(--kp-nav-group-directories-bg);
+      border-color: color-mix(in srgb, var(--kp-nav-group-directories-accent) 18%, transparent);
+
+      .layout__group-dot { background: var(--kp-nav-group-directories-accent); }
+      .layout__group-label { color: color-mix(in srgb, var(--kp-nav-group-directories-accent) 72%, var(--kp-sidebar-text-strong)); }
+    }
+  }
+
+  &__group-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: var(--kp-font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 2px 8px 8px;
+    user-select: none;
+  }
+
+  &__group-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: var(--kp-radius-full);
+    flex-shrink: 0;
   }
 
   &__nav-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 9px 12px;
+    padding: 8px 10px;
     border-radius: var(--kp-radius-md);
     color: var(--kp-sidebar-text);
     text-decoration: none;
-    font-size: 14px;
-    font-weight: 400;
+    font-size: var(--kp-font-size-body-lg);
+    font-weight: var(--kp-font-weight-normal);
     transition: background var(--kp-transition-base), color var(--kp-transition-base);
     cursor: pointer;
     position: relative;
@@ -123,42 +172,43 @@
       width: 20px;
       text-align: center;
       font-size: 16px;
-      color: var(--kp-sidebar-text);
+      color: var(--kp-sidebar-text-muted);
       transition: color var(--kp-transition-base);
       flex-shrink: 0;
     }
 
     &:hover {
       background: var(--kp-sidebar-hover);
-      color: var(--kp-bg-muted);
+      color: var(--kp-sidebar-text-strong);
 
-      i { color: var(--kp-text-muted); }
+      i { color: var(--kp-sidebar-text); }
     }
 
     &--active {
-      background: rgba(37, 99, 235, 0.15) !important;
-      color: var(--kp-primary) !important;
-      font-weight: 500;
+      background: var(--kp-sidebar-active-bg) !important;
+      color: var(--kp-sidebar-active-text) !important;
+      font-weight: var(--kp-font-weight-medium);
 
       &::before {
         content: '';
         position: absolute;
-        left: -12px;
+        left: 0;
         top: 50%;
         transform: translateY(-50%);
         width: 3px;
-        height: 20px;
+        height: 18px;
         background: var(--kp-sidebar-active);
         border-radius: 0 2px 2px 0;
       }
 
-      i { color: var(--kp-primary) !important; }
+      i { color: var(--kp-sidebar-active) !important; }
     }
   }
 
   &__footer {
     padding: 12px;
     border-top: 1px solid var(--kp-sidebar-border);
+    background: var(--kp-sidebar-user-bg);
   }
 
   &__user {
@@ -196,7 +246,7 @@
   &__user-name {
     font-size: 13px;
     font-weight: 500;
-    color: var(--kp-bg-muted);
+    color: var(--kp-sidebar-text-strong);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -204,7 +254,7 @@
 
   &__user-role {
     font-size: 11px;
-    color: var(--kp-sidebar-text);
+    color: var(--kp-sidebar-text-muted);
     text-transform: capitalize;
   }
 
@@ -212,14 +262,14 @@
     :host ::ng-deep &.p-button.p-button-sm.p-button-danger {
       background: transparent;
       border: none;
-      color: var(--kp-sidebar-text);
+      color: var(--kp-sidebar-text-muted);
       transform: none !important;
       width: 28px;
       height: 28px;
       border-radius: var(--kp-button-border-radius) !important;
 
       &:hover {
-        background: rgba(239, 68, 68, 0.12);
+        background: var(--kp-danger-soft);
         color: var(--kp-danger);
         transform: none !important;
       }

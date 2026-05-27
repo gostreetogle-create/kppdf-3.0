@@ -58,11 +58,9 @@ export class KpInputComponent {
   readonly errorId = computed(() => (this.name() ? `${this.name()}-error` : 'kp-input-error'));
   readonly inputAriaLabel = computed(() => this.ariaLabel() || this.label() || '');
 
-  constructor() {
-    afterNextRender(() => {
-      if (this.autofocus()) {
-        this.inputEl.nativeElement.querySelector('input')?.focus();
-      }
-    });
-  }
+  private readonly autofocusOnRender = afterNextRender(() => {
+    if (this.autofocus()) {
+      this.inputEl.nativeElement.querySelector('input')?.focus();
+    }
+  });
 }

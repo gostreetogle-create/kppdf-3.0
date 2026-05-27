@@ -68,54 +68,84 @@ function quotationSeverity(value: unknown): string {
       createLabel="Создать КП"
       createRoute="/quotations/new"
       [extraRowActions]="rowActions"
+      dialogWidth="min(920px, 96vw)"
     >
       <ng-template #form let-row>
-        <div class="form-layout">
-          <app-kp-input
-            label="Номер"
-            name="number"
-            placeholder="Например, КП-001"
-            [value]="row['number'] || ''"
-            (valueChange)="row['number'] = $event"
-            [required]="true"
-          />
-          <app-kp-select
-            label="Контрагент"
-            name="counterpartyId"
-            placeholder="Выберите контрагента"
-            [value]="row['counterpartyId'] || ''"
-            (valueChange)="row['counterpartyId'] = $event"
-            [options]="counterpartyOptions()"
-            [required]="true"
-          />
-          <app-kp-datepicker
-            label="Дата"
-            name="date"
-            [value]="row['date'] || ''"
-            (valueChange)="row['date'] = $event"
-          />
-          <app-kp-datepicker
-            label="Действительно до"
-            name="validUntil"
-            [value]="row['validUntil'] || ''"
-            (valueChange)="row['validUntil'] = $event"
-          />
-          <app-kp-select
-            label="Статус"
-            name="statusId"
-            placeholder="Выберите статус"
-            [value]="row['statusId'] || 'draft'"
-            (valueChange)="row['statusId'] = $event"
-            [options]="statusOptions"
-            [required]="true"
-          />
-          <app-kp-textarea
-            label="Примечание"
-            name="notes"
-            placeholder="Условия и комментарии"
-            [value]="row['notes'] || ''"
-            (valueChange)="row['notes'] = $event"
-          />
+        <div class="form-layout form-layout--2col">
+          <div class="form-layout__column">
+            <section class="form-section form-section--blue">
+              <h3 class="form-section__title">
+                <i class="pi pi-file-edit" aria-hidden="true"></i>
+                Документ
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-input
+                  label="Номер"
+                  name="number"
+                  placeholder="Например, КП-001"
+                  [value]="row['number'] || ''"
+                  (valueChange)="row['number'] = $event"
+                  [required]="true"
+                />
+                <app-kp-datepicker
+                  label="Дата"
+                  name="date"
+                  [value]="row['date'] || ''"
+                  (valueChange)="row['date'] = $event"
+                />
+                <app-kp-datepicker
+                  label="Действительно до"
+                  name="validUntil"
+                  [value]="row['validUntil'] || ''"
+                  (valueChange)="row['validUntil'] = $event"
+                />
+                <app-kp-select
+                  label="Статус"
+                  name="statusId"
+                  placeholder="Выберите статус"
+                  [value]="row['statusId'] || 'draft'"
+                  (valueChange)="row['statusId'] = $event"
+                  [options]="statusOptions"
+                  [required]="true"
+                />
+              </div>
+            </section>
+          </div>
+          <div class="form-layout__column">
+            <section class="form-section form-section--purple">
+              <h3 class="form-section__title">
+                <i class="pi pi-building" aria-hidden="true"></i>
+                Контрагент
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-select
+                  label="Контрагент"
+                  name="counterpartyId"
+                  placeholder="Выберите контрагента"
+                  [value]="row['counterpartyId'] || ''"
+                  (valueChange)="row['counterpartyId'] = $event"
+                  [options]="counterpartyOptions()"
+                  [required]="true"
+                />
+              </div>
+            </section>
+            <section class="form-section form-section--amber">
+              <h3 class="form-section__title">
+                <i class="pi pi-comment" aria-hidden="true"></i>
+                Условия
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-textarea
+                  label="Примечание"
+                  name="notes"
+                  placeholder="Условия и комментарии"
+                  [value]="row['notes'] || ''"
+                  (valueChange)="row['notes'] = $event"
+                  [rows]="4"
+                />
+              </div>
+            </section>
+          </div>
         </div>
       </ng-template>
     </app-kp-crud-page>

@@ -8,6 +8,7 @@ import { definePreset } from '@primeuix/themes';
 import { routes } from './app.routes';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { authInterceptor } from './core/auth.interceptor';
+import { credentialsInterceptor } from './core/credentials.interceptor';
 import { AuthService } from './core/auth.service';
 
 /*
@@ -109,7 +110,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([credentialsInterceptor, authInterceptor])),
     provideAnimationsAsync(),
     provideAppInitializer(() => {
       const authService = inject(AuthService);

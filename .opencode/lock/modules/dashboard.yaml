@@ -1,0 +1,31 @@
+module: dashboard
+label: Главная / Dashboard
+status: frozen
+level: module
+frozen_since: 2026-05-27T00:00:00.000Z
+frozen_by: '@chief-architect'
+criteria:
+  build: true
+  lint: true
+  tests: false
+  ui_audit: true
+  architecture: true
+  functional: true
+audit_ref: .opencode/audit/reports/2026-05-27.md
+locked_files:
+  - src/app/features/dashboard/**
+  - src/app/core/dashboard.service.ts
+  - src/app/core/project-readiness.model.ts
+  - backend/src/modules/dashboard/dashboard.router.ts
+exceptions: []
+check_hash: true
+file_hashes:
+  src/app/features/dashboard/dashboard-page.component.scss: 5b77af7d0c3b4e0593b19484f679c9bb9b76822d5058c62a79164bf9b59104ca
+  src/app/features/dashboard/dashboard-page.component.ts: f4b2c7927e24041baca591090a68d787166efe85403f94281973c0383a897ec1
+  src/app/features/dashboard/index.ts: d9cda4cab90c4a83e9a211a6460fe1414b5e6aa37361124f2c757859f9c00ac8
+  src/app/core/dashboard.service.ts: 92d32a12ae0feeb74b9fbf9fcb10a89ab6eb6f27943cb418154236b074e2c71c
+  backend/src/modules/dashboard/dashboard.router.ts: ad66a1039d9d8fb082276d95b17e0a8eb7eb0976a942c749c8373ed2816d8a1b
+  src/app/features/dashboard/readiness-showcase.component.scss: 1830583b28cdcba1b61616f868185bf32bb77aeffd2465e43c056e158b097b6a
+  src/app/features/dashboard/readiness-showcase.component.ts: c2f2810eddc3e4dedc63d50d832aef7e84950c646b526428f57cacd3086912bf
+  src/app/core/project-readiness.model.ts: 7f1215043a4d782a3a51472b340db9b69ff1766c818f64c7c52fc01d9602b09d
+  src/app/features/dashboard/readiness-feedback.service.ts: 922ce0362279ee3781f4e25dba34f3795e9cb256bf1abb80639120312351e61e

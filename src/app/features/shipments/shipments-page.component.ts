@@ -60,63 +60,84 @@ function shipmentSeverity(value: unknown): string {
       [permissions]="PERMISSIONS.shipments"
       [severityFn]="shipmentSeverity"
       createLabel="Создать отгрузку"
+      dialogWidth="min(920px, 96vw)"
     >
       <ng-template #form let-row>
-        <div class="form-layout">
-          <app-kp-input
-            label="Номер"
-            name="number"
-            placeholder="Например, ОТ-001"
-            [value]="row['number'] || ''"
-            (valueChange)="row['number'] = $event"
-            [required]="true"
-          />
-          <app-kp-select
-            label="Заказ"
-            name="orderId"
-            placeholder="Выберите заказ"
-            [value]="row['orderId'] || ''"
-            (valueChange)="row['orderId'] = $event"
-            [options]="orderOptions()"
-            [required]="true"
-          />
-          <app-kp-datepicker
-            label="Дата"
-            name="date"
-            [value]="row['date'] || ''"
-            (valueChange)="row['date'] = $event"
-          />
-          <app-kp-select
-            label="Статус"
-            name="statusId"
-            placeholder="Выберите статус"
-            [value]="row['statusId'] || 'preparing'"
-            (valueChange)="row['statusId'] = $event"
-            [options]="statusOptions"
-            [required]="true"
-          />
-          <app-kp-input
-            label="Получатель"
-            name="recipient"
-            placeholder="ФИО или организация"
-            [value]="row['recipient'] || ''"
-            (valueChange)="row['recipient'] = $event"
-          />
-          <app-kp-textarea
-            label="Адрес доставки"
-            name="address"
-            placeholder="Полный адрес доставки"
-            [value]="row['address'] || ''"
-            (valueChange)="row['address'] = $event"
-            [rows]="2"
-          />
-          <app-kp-input
-            label="Данные водителя"
-            name="driverInfo"
-            placeholder="ФИО, телефон, автомобиль"
-            [value]="row['driverInfo'] || ''"
-            (valueChange)="row['driverInfo'] = $event"
-          />
+        <div class="form-layout form-layout--2col">
+          <div class="form-layout__column">
+            <section class="form-section form-section--blue">
+              <h3 class="form-section__title">
+                <i class="pi pi-send" aria-hidden="true"></i>
+                Документ
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-input
+                  label="Номер"
+                  name="number"
+                  placeholder="Например, ОТ-001"
+                  [value]="row['number'] || ''"
+                  (valueChange)="row['number'] = $event"
+                  [required]="true"
+                />
+                <app-kp-select
+                  label="Заказ"
+                  name="orderId"
+                  placeholder="Выберите заказ"
+                  [value]="row['orderId'] || ''"
+                  (valueChange)="row['orderId'] = $event"
+                  [options]="orderOptions()"
+                  [required]="true"
+                />
+                <app-kp-datepicker
+                  label="Дата"
+                  name="date"
+                  [value]="row['date'] || ''"
+                  (valueChange)="row['date'] = $event"
+                />
+                <app-kp-select
+                  label="Статус"
+                  name="statusId"
+                  placeholder="Выберите статус"
+                  [value]="row['statusId'] || 'preparing'"
+                  (valueChange)="row['statusId'] = $event"
+                  [options]="statusOptions"
+                  [required]="true"
+                />
+              </div>
+            </section>
+          </div>
+          <div class="form-layout__column">
+            <section class="form-section form-section--green">
+              <h3 class="form-section__title">
+                <i class="pi pi-map-marker" aria-hidden="true"></i>
+                Доставка
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-input
+                  label="Получатель"
+                  name="recipient"
+                  placeholder="ФИО или организация"
+                  [value]="row['recipient'] || ''"
+                  (valueChange)="row['recipient'] = $event"
+                />
+                <app-kp-textarea
+                  label="Адрес доставки"
+                  name="address"
+                  placeholder="Полный адрес доставки"
+                  [value]="row['address'] || ''"
+                  (valueChange)="row['address'] = $event"
+                  [rows]="3"
+                />
+                <app-kp-input
+                  label="Данные водителя"
+                  name="driverInfo"
+                  placeholder="ФИО, телефон, автомобиль"
+                  [value]="row['driverInfo'] || ''"
+                  (valueChange)="row['driverInfo'] = $event"
+                />
+              </div>
+            </section>
+          </div>
         </div>
       </ng-template>
     </app-kp-crud-page>

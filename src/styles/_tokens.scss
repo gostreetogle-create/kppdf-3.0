@@ -144,14 +144,28 @@
   --kp-layout-page-padding-y: 28px;
   --kp-layout-content-gap: 16px;
 
-  /* ── Sidebar (dark slate #1E293B · modern) ── */
-  --kp-sidebar-bg: #1e293b;
-  --kp-sidebar-text: #94a3b8;
-  --kp-sidebar-hover: #334155;
+  /* ── Sidebar (light · airy, distinct nav groups) ── */
+  --kp-sidebar-bg: #ffffff;
+  --kp-sidebar-text: #475569;
+  --kp-sidebar-text-strong: #0f172a;
+  --kp-sidebar-text-muted: #64748b;
+  --kp-sidebar-hover: #f1f5f9;
   --kp-sidebar-active: #2563eb;
-  --kp-sidebar-active-text: #ffffff;
-  --kp-sidebar-border: #334155;
-  --kp-sidebar-user-bg: #0f172a;
+  --kp-sidebar-active-bg: #eff6ff;
+  --kp-sidebar-active-text: #1d4ed8;
+  --kp-sidebar-border: #e2e8f0;
+  --kp-sidebar-logo-text: #0f172a;
+  --kp-sidebar-user-bg: #f8fafc;
+
+  /* Nav group accents (sales / production / warehouse / directories) */
+  --kp-nav-group-sales-accent: #2563eb;
+  --kp-nav-group-sales-bg: #eff6ff;
+  --kp-nav-group-production-accent: #d97706;
+  --kp-nav-group-production-bg: #fffbeb;
+  --kp-nav-group-warehouse-accent: #059669;
+  --kp-nav-group-warehouse-bg: #ecfdf5;
+  --kp-nav-group-directories-accent: #7c3aed;
+  --kp-nav-group-directories-bg: #f5f3ff;
 
   /* ── Focus ring ── */
   --kp-focus-ring: 0 0 0 2px rgba(37,99,235,0.4);
@@ -211,6 +225,8 @@
   --p-select-overlay-shadow: var(--kp-shadow-md);
   --p-select-option-focus-background: var(--kp-surface-hover);
   --p-select-option-focus-color: var(--kp-text);
+  --p-select-option-padding-y: var(--kp-space-2);
+  --p-select-option-padding-x: var(--kp-space-3);
 
   /* MultiSelect — same field chrome as select */
   --p-multiselect-background: var(--p-select-background);
@@ -306,12 +322,25 @@
   --kp-shadow-lg: 0 8px 24px rgba(0,0,0,0.40);
 
   --kp-sidebar-bg: #0f172a;
-  --kp-sidebar-text: #64748b;
+  --kp-sidebar-text: #94a3b8;
+  --kp-sidebar-text-strong: #f1f5f9;
+  --kp-sidebar-text-muted: #64748b;
   --kp-sidebar-hover: #1e293b;
   --kp-sidebar-active: #3b82f6;
-  --kp-sidebar-active-text: #ffffff;
+  --kp-sidebar-active-bg: rgba(59, 130, 246, 0.15);
+  --kp-sidebar-active-text: #93c5fd;
   --kp-sidebar-border: #1e293b;
+  --kp-sidebar-logo-text: #f1f5f9;
   --kp-sidebar-user-bg: #0b1120;
+
+  --kp-nav-group-sales-accent: #60a5fa;
+  --kp-nav-group-sales-bg: rgba(37, 99, 235, 0.12);
+  --kp-nav-group-production-accent: #fbbf24;
+  --kp-nav-group-production-bg: rgba(217, 119, 6, 0.12);
+  --kp-nav-group-warehouse-accent: #34d399;
+  --kp-nav-group-warehouse-bg: rgba(5, 150, 105, 0.12);
+  --kp-nav-group-directories-accent: #a78bfa;
+  --kp-nav-group-directories-bg: rgba(124, 58, 237, 0.12);
 }
 
 /* ── Sass aliases for component SCSS ── */

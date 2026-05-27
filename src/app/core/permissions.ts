@@ -65,6 +65,12 @@ export const PERMISSIONS = {
   ...moduleEntries,
 } as const;
 
+/** Readiness feedback — сохранение замечаний в .opencode/readiness-feedback.yaml */
+export const READINESS_FEEDBACK = {
+  view: PERMISSIONS.settings.view,
+  edit: PERMISSIONS.settings.edit,
+} as const;
+
 // ── Backward-compatible префикс-мапы ─────────────────────────
 // Используются в шаблонах для динамической сборки строк:
 //   *appHasPermission="(MODULE_PERM_PREFIX[activeKey()] || 'office.') + '.create'"

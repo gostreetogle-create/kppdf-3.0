@@ -1,0 +1,24 @@
+module: categories
+label: Категории
+status: frozen
+level: module
+frozen_since: 2026-05-27T00:00:00.000Z
+frozen_by: '@chief-architect'
+criteria:
+  build: true
+  lint: true
+  tests: false
+  ui_audit: true
+  architecture: true
+  functional: true
+audit_ref: .opencode/audit/reports/2026-05-27.md
+locked_files:
+  - shared/types/category.interface.ts
+  - backend/src/modules/categories/category.model.ts
+  - backend/src/modules/categories/category.router.ts
+exceptions: []
+check_hash: true
+file_hashes:
+  shared/types/category.interface.ts: fad735ecb8c240834f29a3ad5233460a81c80695fa1a67d468d1b69fa81e49ef
+  backend/src/modules/categories/category.model.ts: e275edfef0ac9d5ae87024fc682188b51350e9e69636291c7e2ab031e7ea42e7
+  backend/src/modules/categories/category.router.ts: 76be0f0cc37cd728ca12d7d07191890bbafc5cc129761cd3845bbc1085a1223d

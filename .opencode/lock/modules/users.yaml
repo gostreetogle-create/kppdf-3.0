@@ -1,0 +1,24 @@
+module: users
+label: Пользователи
+status: frozen
+level: module
+frozen_since: 2026-05-27T00:00:00.000Z
+frozen_by: '@chief-architect'
+criteria:
+  build: true
+  lint: true
+  tests: false
+  ui_audit: true
+  architecture: true
+  functional: true
+audit_ref: .opencode/audit/reports/2026-05-27.md
+locked_files:
+  - shared/types/user.interface.ts
+  - backend/src/modules/users/user.model.ts
+  - backend/src/modules/users/user.router.ts
+exceptions: []
+check_hash: true
+file_hashes:
+  shared/types/user.interface.ts: 75ad5e0eb8fe9f059b6a51e558ab911b0e498c5399a33525d8e67b89f9602938
+  backend/src/modules/users/user.model.ts: 2138edac343fe02c45c44e9540454458dcca6951c73643a39365d121d5639b6c
+  backend/src/modules/users/user.router.ts: f2a7bed817b136094446a904d744e9435e646de48835ec89635bce73b8a6fdda

@@ -1,0 +1,54 @@
+# FreezeGuard — сводный индекс модулей KPPDF 3.0
+# Полные lockfiles: Phase 2. WIP-заглушки: modules/quotations|orders|ui-kit.yaml
+
+index:
+  # --- frozen (Phase 2) ---
+  products:
+    status: frozen
+    path: modules/products.yaml
+  categories:
+    status: frozen
+    path: modules/categories.yaml
+  counterparties:
+    status: frozen
+    path: modules/counterparties.yaml
+  users:
+    status: frozen
+    path: modules/users.yaml
+  roles:
+    status: frozen
+    path: modules/roles.yaml
+  dashboard:
+    status: frozen
+    path: modules/dashboard.yaml
+  directories-page:
+    status: frozen
+    path: modules/directories-page.yaml
+  modules-page:
+    status: frozen
+    path: modules/modules-page.yaml
+
+  # --- locked ---
+  login:
+    status: locked
+    path: modules/login.yaml
+  auth:
+    status: locked
+    path: modules/auth.yaml
+  platform:
+    status: locked
+    path: modules/platform.yaml
+
+  # --- wip (заглушки Phase 1) ---
+  quotations:
+    status: wip
+    path: modules/quotations.yaml
+  orders:
+    status: wip
+    path: modules/orders.yaml
+  ui-kit:
+    status: wip
+    path: modules/ui-kit.yaml
+
+  # 13 ModuleKey (boms, operations, …) — scope modules-page, WIP.
+  # Отдельные записи в INDEX — после Phase 2 freeze.

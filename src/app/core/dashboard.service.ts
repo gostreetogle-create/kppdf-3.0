@@ -1,6 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { ApiService, type ApiResponse } from './api.service';
+import type { ProjectReadinessSnapshot } from './project-readiness.model';
 
 export interface DashboardStatItem {
   total: number;
@@ -43,8 +46,17 @@ export interface DashboardStats {
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private readonly api = inject(ApiService);
+  private readonly http = inject(HttpClient);
 
   getStats(): Observable<ApiResponse<DashboardStats>> {
     return this.api.get<DashboardStats>('/dashboard/stats');
+  }
+
+  /** Статический JSON из public/ — без ApiService (не добавлять baseUrl). */
+  getReadiness(): Observable<ProjectReadinessSnapshot | null> {
+    return this.http.get<ProjectReadinessSnapshot>('/project-readiness.json').pipe(
+      map((data) => (data.enabled ? data : null)),
+      catchError(() => of(null)),
+    );
   }
 }

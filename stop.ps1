@@ -72,6 +72,24 @@ function Kill-ProcessOnPort($Port, $Name) {
 
 # Main
 Write-Host "[1/2] Stopping processes..." -ForegroundColor Gray
+$sessionFile = Join-Path $PSScriptRoot '.kppdf-dev.session.json'
+if (Test-Path $sessionFile) {
+  try {
+    $session = Get-Content $sessionFile -Raw | ConvertFrom-Json
+    foreach ($prop in @('backendWindowPid', 'frontendWindowPid')) {
+      $windowPid = [int]$session.$prop
+      if ($windowPid -gt 0) {
+        $proc = Get-Process -Id $windowPid -ErrorAction SilentlyContinue
+        if ($proc) {
+          Write-Host "  [KILL] dev window $prop (PID $windowPid)" -ForegroundColor Yellow
+          Stop-Process -Id $windowPid -Force -ErrorAction SilentlyContinue
+        }
+      }
+    }
+  } catch { }
+  Remove-Item $sessionFile -Force -ErrorAction SilentlyContinue
+}
+
 foreach ($port in $Ports) {
   $label = if ($port -eq 3000) { "Backend" } elseif ($port -eq 4200) { "Frontend" } else { "Process on :$port" }
   Kill-ProcessOnPort -Port $port -Name $label

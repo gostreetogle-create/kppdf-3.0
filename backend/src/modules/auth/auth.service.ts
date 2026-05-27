@@ -55,9 +55,6 @@ export class AuthService {
     }
   }
 
-  /**
-   * Generate access + refresh token pair
-   */
   private generateTokens(payload: JwtPayload): TokensPair {
     // Передаём как plain object literal (а не реэкспорт payload),
     // чтобы TS однозначно выбрал object-overload, а не string-overload
@@ -77,5 +74,20 @@ export class AuthService {
     const refreshToken = jwt.sign(data, config.jwtRefreshSecret, refreshOptions);
 
     return { accessToken, refreshToken };
+  }
+
+  /** Декодировать access token в профиль (без проверки — уже проверен при выдаче) */
+  profileFromAccessToken(accessToken: string): JwtPayload {
+    const decoded = jwt.decode(accessToken);
+    if (!decoded || typeof decoded !== 'object') {
+      throw new Error('Invalid access token payload');
+    }
+    const p = decoded as JwtPayload;
+    return {
+      userId: p.userId,
+      username: p.username,
+      role: p.role,
+      permissions: p.permissions ?? [],
+    };
   }
 }

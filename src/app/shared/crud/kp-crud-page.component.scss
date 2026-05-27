@@ -35,10 +35,15 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-  gap: var(--kp-space-2);
+  gap: var(--kp-space-3);
   width: 100%;
-  padding-top: var(--kp-space-3);
+  padding-top: var(--kp-space-4);
   border-top: 1px solid var(--kp-border-light, var(--kp-border));
+
+  :host ::ng-deep app-kp-button .p-button {
+    min-width: 7.5rem;
+    justify-content: center;
+  }
 }
 
 .kp-crud-dialog__empty {

@@ -72,85 +72,124 @@ function workOrderSeverity(value: unknown): string {
       [permissions]="PERMISSIONS['work-orders']"
       [severityFn]="workOrderSeverity"
       createLabel="Создать заказ"
+      dialogWidth="min(920px, 96vw)"
     >
       <ng-template #form let-row>
-        <div class="form-layout">
-          <app-kp-input
-            label="Номер"
-            name="number"
-            placeholder="Например, ПЗ-001"
-            [value]="row['number'] || ''"
-            (valueChange)="row['number'] = $event"
-            [required]="true"
-          />
-          <app-kp-select
-            label="Заказ"
-            name="orderId"
-            placeholder="Выберите заказ"
-            [value]="row['orderId'] || ''"
-            (valueChange)="row['orderId'] = $event"
-            [options]="orderOptions()"
-            [required]="true"
-          />
-          <app-kp-select
-            label="Товар"
-            name="productId"
-            placeholder="Выберите товар"
-            [value]="row['productId'] || ''"
-            (valueChange)="row['productId'] = $event"
-            [options]="productOptions()"
-            [required]="true"
-          />
-          <app-kp-input-number
-            label="Количество"
-            name="qty"
-            placeholder="1"
-            [value]="row['qty'] ?? null"
-            (valueChange)="row['qty'] = $event"
-            [required]="true"
-          />
-          <app-kp-select
-            label="Статус"
-            name="statusId"
-            placeholder="Выберите статус"
-            [value]="row['statusId'] || 'pending'"
-            (valueChange)="row['statusId'] = $event"
-            [options]="statusOptions"
-          />
-          <app-kp-datepicker
-            label="Начало"
-            name="startDate"
-            [value]="row['startDate'] || ''"
-            (valueChange)="row['startDate'] = $event"
-          />
-          <app-kp-datepicker
-            label="Окончание"
-            name="endDate"
-            [value]="row['endDate'] || ''"
-            (valueChange)="row['endDate'] = $event"
-          />
-          <app-kp-input
-            label="Ответственный"
-            name="assignedTo"
-            placeholder="ФИО исполнителя"
-            [value]="row['assignedTo'] || ''"
-            (valueChange)="row['assignedTo'] = $event"
-          />
-          <app-kp-textarea
-            label="Примечание"
-            name="notes"
-            placeholder="Дополнительная информация"
-            [value]="row['notes'] || ''"
-            (valueChange)="row['notes'] = $event"
-          />
-          <app-kp-select
-            label="Активен"
-            name="isActive"
-            placeholder="Выберите"
-            [value]="boolToStr(row['isActive'] ?? true)"
-            (valueChange)="row['isActive'] = $event === 'true'"
-            [options]="yesNoOptions"
-          />
+        <div class="form-layout form-layout--2col">
+          <div class="form-layout__column">
+            <section class="form-section form-section--blue">
+              <h3 class="form-section__title">
+                <i class="pi pi-file" aria-hidden="true"></i>
+                Документ
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-input
+                  label="Номер"
+                  name="number"
+                  placeholder="Например, ПЗ-001"
+                  [value]="row['number'] || ''"
+                  (valueChange)="row['number'] = $event"
+                  [required]="true"
+                />
+                <app-kp-select
+                  label="Статус"
+                  name="statusId"
+                  placeholder="Выберите статус"
+                  [value]="row['statusId'] || 'pending'"
+                  (valueChange)="row['statusId'] = $event"
+                  [options]="statusOptions"
+                />
+                <app-kp-select
+                  label="Активен"
+                  name="isActive"
+                  placeholder="Выберите"
+                  [value]="boolToStr(row['isActive'] ?? true)"
+                  (valueChange)="row['isActive'] = $event === 'true'"
+                  [options]="yesNoOptions"
+                />
+              </div>
+            </section>
+            <section class="form-section form-section--amber">
+              <h3 class="form-section__title">
+                <i class="pi pi-calendar" aria-hidden="true"></i>
+                Сроки
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-datepicker
+                  label="Начало"
+                  name="startDate"
+                  [value]="row['startDate'] || ''"
+                  (valueChange)="row['startDate'] = $event"
+                />
+                <app-kp-datepicker
+                  label="Окончание"
+                  name="endDate"
+                  [value]="row['endDate'] || ''"
+                  (valueChange)="row['endDate'] = $event"
+                />
+              </div>
+            </section>
+          </div>
+          <div class="form-layout__column">
+            <section class="form-section form-section--green">
+              <h3 class="form-section__title">
+                <i class="pi pi-cog" aria-hidden="true"></i>
+                Производство
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-select
+                  label="Заказ"
+                  name="orderId"
+                  placeholder="Выберите заказ"
+                  [value]="row['orderId'] || ''"
+                  (valueChange)="row['orderId'] = $event"
+                  [options]="orderOptions()"
+                  [required]="true"
+                />
+                <app-kp-select
+                  label="Товар"
+                  name="productId"
+                  placeholder="Выберите товар"
+                  [value]="row['productId'] || ''"
+                  (valueChange)="row['productId'] = $event"
+                  [options]="productOptions()"
+                  [required]="true"
+                />
+                <app-kp-input-number
+                  label="Количество"
+                  name="qty"
+                  placeholder="1"
+                  [value]="row['qty'] ?? null"
+                  (valueChange)="row['qty'] = $event"
+                  [useGrouping]="false"
+                  [required]="true"
+                />
+              </div>
+            </section>
+            <section class="form-section form-section--purple">
+              <h3 class="form-section__title">
+                <i class="pi pi-user" aria-hidden="true"></i>
+                Исполнение
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-input
+                  label="Ответственный"
+                  name="assignedTo"
+                  placeholder="ФИО исполнителя"
+                  [value]="row['assignedTo'] || ''"
+                  (valueChange)="row['assignedTo'] = $event"
+                />
+                <app-kp-textarea
+                  label="Примечание"
+                  name="notes"
+                  placeholder="Дополнительная информация"
+                  [value]="row['notes'] || ''"
+                  (valueChange)="row['notes'] = $event"
+                  [rows]="3"
+                />
+              </div>
+            </section>
+          </div>
         </div>
       </ng-template>
     </app-kp-crud-page>

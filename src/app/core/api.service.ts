@@ -44,4 +44,8 @@ export class ApiService {
   putPayload<T>(path: string, body: unknown): Observable<ApiResponse<T>> {
     return this.http.put<ApiResponse<T>>(`${this.baseUrl}${path}`, body);
   }
+
+  patch<T>(path: string, body: unknown): Observable<ApiResponse<T>> {
+    return this.http.patch<ApiResponse<T>>(`${this.baseUrl}${path}`, body);
+  }
 }

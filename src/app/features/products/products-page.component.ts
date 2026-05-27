@@ -62,83 +62,126 @@ function productSeverity(value: unknown): string {
       [permissions]="PERMISSIONS.products"
       [severityFn]="productSeverity"
       createLabel="Создать товар"
-      dialogWidth="680px"
+      dialogWidth="min(920px, 96vw)"
     >
       <ng-template #form let-row let-id="id">
         <div class="form-layout">
-          <app-kp-input
-            label="Наименование"
-            name="name"
-            placeholder="Введите наименование"
-            [value]="row['name'] || ''"
-            (valueChange)="row['name'] = $event"
-            [required]="true"
-          />
-          <app-kp-input
-            label="Артикул"
-            name="sku"
-            placeholder="Например, PRD-001"
-            [value]="row['sku'] || ''"
-            (valueChange)="row['sku'] = $event"
-          />
-          <app-kp-select
-            label="Тип"
-            name="kind"
-            placeholder="Выберите тип"
-            [value]="row['kind'] || 'ITEM'"
-            (valueChange)="row['kind'] = $event"
-            [options]="kindOptions"
-            [required]="true"
-          />
-          <app-kp-select
-            label="Категория"
-            name="categoryId"
-            placeholder="Выберите категорию"
-            [value]="row['categoryId'] || ''"
-            (valueChange)="row['categoryId'] = $event"
-            [options]="categoryOptions()"
-          />
-          <app-kp-input
-            label="Единица измерения"
-            name="unit"
-            placeholder="шт, м, кг…"
-            [value]="row['unit'] || ''"
-            (valueChange)="row['unit'] = $event"
-          />
-          <app-kp-input-number
-            label="Цена"
-            name="listPrice"
-            placeholder="0"
-            [value]="row['listPrice'] ?? 0"
-            (valueChange)="row['listPrice'] = $event"
-            [min]="0"
-          />
-          <app-kp-input-number
-            label="Остаток"
-            name="stockQty"
-            placeholder="0"
-            [value]="row['stockQty'] ?? 0"
-            (valueChange)="row['stockQty'] = $event"
-            [min]="0"
-          />
-          <app-kp-select
-            label="Статус"
-            name="status"
-            placeholder="Выберите статус"
-            [value]="row['status'] || 'active'"
-            (valueChange)="row['status'] = $event"
-            [options]="statusOptions"
-            [required]="true"
-          />
-          <app-kp-textarea
-            label="Описание"
-            name="description"
-            placeholder="Краткое описание товара"
-            [value]="row['description'] || ''"
-            (valueChange)="row['description'] = $event"
-          />
+          <div class="form-layout form-layout--2col">
+            <div class="form-layout__column">
+              <section class="form-section form-section--blue">
+                <h3 class="form-section__title">
+                  <i class="pi pi-box" aria-hidden="true"></i>
+                  Основное
+                </h3>
+                <div class="form-section__fields">
+                  <app-kp-input
+                    label="Наименование"
+                    name="name"
+                    placeholder="Введите наименование"
+                    [value]="row['name'] || ''"
+                    (valueChange)="row['name'] = $event"
+                    [required]="true"
+                  />
+                  <app-kp-input
+                    label="Артикул"
+                    name="sku"
+                    placeholder="Например, PRD-001"
+                    [value]="row['sku'] || ''"
+                    (valueChange)="row['sku'] = $event"
+                  />
+                  <div class="form-row--equal">
+                    <app-kp-select
+                      label="Тип"
+                      name="kind"
+                      placeholder="Выберите тип"
+                      [value]="row['kind'] || 'ITEM'"
+                      (valueChange)="row['kind'] = $event"
+                      [options]="kindOptions"
+                      [required]="true"
+                    />
+                    <app-kp-select
+                      label="Статус"
+                      name="status"
+                      placeholder="Статус"
+                      [value]="row['status'] || 'active'"
+                      (valueChange)="row['status'] = $event"
+                      [options]="statusOptions"
+                      [required]="true"
+                    />
+                  </div>
+                </div>
+              </section>
+              <section class="form-section form-section--green">
+                <h3 class="form-section__title">
+                  <i class="pi pi-wallet" aria-hidden="true"></i>
+                  Цена и остаток
+                </h3>
+                <div class="form-section__fields">
+                  <div class="form-row--equal">
+                    <app-kp-input-number
+                      label="Цена"
+                      name="listPrice"
+                      placeholder="0"
+                      [value]="row['listPrice'] ?? 0"
+                      (valueChange)="row['listPrice'] = $event"
+                      [min]="0"
+                      [useGrouping]="false"
+                    />
+                    <app-kp-input-number
+                      label="Остаток"
+                      name="stockQty"
+                      placeholder="0"
+                      [value]="row['stockQty'] ?? 0"
+                      (valueChange)="row['stockQty'] = $event"
+                      [min]="0"
+                      [useGrouping]="false"
+                    />
+                  </div>
+                  <app-kp-input
+                    label="Единица измерения"
+                    name="unit"
+                    placeholder="шт, м, кг…"
+                    [value]="row['unit'] || ''"
+                    (valueChange)="row['unit'] = $event"
+                  />
+                </div>
+              </section>
+            </div>
+            <div class="form-layout__column">
+              <section class="form-section form-section--purple">
+                <h3 class="form-section__title">
+                  <i class="pi pi-tags" aria-hidden="true"></i>
+                  Классификация
+                </h3>
+                <div class="form-section__fields">
+                  <app-kp-select
+                    label="Категория"
+                    name="categoryId"
+                    placeholder="Выберите категорию"
+                    [value]="row['categoryId'] || ''"
+                    (valueChange)="row['categoryId'] = $event"
+                    [options]="categoryOptions()"
+                  />
+                  <app-kp-textarea
+                    label="Описание"
+                    name="description"
+                    placeholder="Краткое описание товара"
+                    [value]="row['description'] || ''"
+                    (valueChange)="row['description'] = $event"
+                    [rows]="5"
+                  />
+                </div>
+              </section>
+            </div>
+          </div>
           @if (id) {
-            <app-attributes-editor entityType="product" [entityId]="id" />
+            <section class="form-section form-section--amber">
+              <h3 class="form-section__title">
+                <i class="pi pi-sliders-h" aria-hidden="true"></i>
+                Характеристики
+              </h3>
+              <app-attributes-editor entityType="product" [entityId]="id" />
+            </section>
           } @else {
             <p class="form-hint">Дополнительные характеристики будут доступны после сохранения товара.</p>
           }

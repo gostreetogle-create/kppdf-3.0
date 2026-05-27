@@ -13,6 +13,7 @@ interface FlatMenuItem {
 }
 
 interface MenuGroup {
+  id: 'sales' | 'production' | 'warehouse' | 'directories';
   label: string;
   items: FlatMenuItem[];
 }
@@ -53,33 +54,40 @@ interface MenuGroup {
         </div>
 
         <nav class="layout__nav" aria-label="Основная навигация">
-          @for (item of topItems; track item.label) {
-            <a
-              class="layout__nav-item"
-              [routerLink]="item.route"
-              routerLinkActive="layout__nav-item--active"
-              [routerLinkActiveOptions]="{exact: true}"
-              (click)="closeSidebar()"
-            >
-              <i [class]="item.icon" aria-hidden="true"></i>
-              <span>{{ item.label }}</span>
-            </a>
-          }
-
-          @for (group of visibleGroups(); track group.label) {
-            <span class="layout__group-label">{{ group.label }}</span>
-            @for (item of group.items; track item.label) {
+          <div class="layout__nav-top">
+            @for (item of topItems; track item.label) {
               <a
                 class="layout__nav-item"
                 [routerLink]="item.route"
                 routerLinkActive="layout__nav-item--active"
-                [routerLinkActiveOptions]="{exact: item.route === '/dashboard'}"
+                [routerLinkActiveOptions]="{exact: true}"
                 (click)="closeSidebar()"
               >
                 <i [class]="item.icon" aria-hidden="true"></i>
                 <span>{{ item.label }}</span>
               </a>
             }
+          </div>
+
+          @for (group of visibleGroups(); track group.id) {
+            <div class="layout__group" [class]="'layout__group layout__group--' + group.id">
+              <div class="layout__group-label">
+                <span class="layout__group-dot" aria-hidden="true"></span>
+                <span>{{ group.label }}</span>
+              </div>
+              @for (item of group.items; track item.label) {
+                <a
+                  class="layout__nav-item"
+                  [routerLink]="item.route"
+                  routerLinkActive="layout__nav-item--active"
+                  [routerLinkActiveOptions]="{exact: item.route === '/dashboard'}"
+                  (click)="closeSidebar()"
+                >
+                  <i [class]="item.icon" aria-hidden="true"></i>
+                  <span>{{ item.label }}</span>
+                </a>
+              }
+            </div>
           }
         </nav>
 
@@ -123,6 +131,7 @@ export class AdminLayoutComponent {
 
   readonly menuGroups: MenuGroup[] = [
     {
+      id: 'sales',
       label: 'Продажи',
       items: [
         { label: 'Документы', icon: 'pi pi-folder-open', route: '/documents', alwaysShow: true },
@@ -137,6 +146,7 @@ export class AdminLayoutComponent {
       ],
     },
     {
+      id: 'production',
       label: 'Производство',
       items: [
         { label: 'Модули', icon: 'pi pi-cubes', route: '/modules', alwaysShow: true },
@@ -155,6 +165,7 @@ export class AdminLayoutComponent {
       ],
     },
     {
+      id: 'warehouse',
       label: 'Склад',
       items: [
         {
@@ -167,6 +178,7 @@ export class AdminLayoutComponent {
       ],
     },
     {
+      id: 'directories',
       label: 'Справочники',
       items: [
         { label: 'Товары', icon: 'pi pi-box', route: '/products', requiresAny: [PERMISSIONS.products.view] },

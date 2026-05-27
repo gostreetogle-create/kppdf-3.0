@@ -64,54 +64,84 @@ function poSeverity(value: unknown): string {
       [permissions]="PERMISSIONS['purchase-orders']"
       [severityFn]="poSeverity"
       createLabel="Создать заказ"
+      dialogWidth="min(920px, 96vw)"
     >
       <ng-template #form let-row>
-        <div class="form-layout">
-          <app-kp-input
-            label="Номер"
-            name="number"
-            placeholder="Например, ЗП-001"
-            [value]="row['number'] || ''"
-            (valueChange)="row['number'] = $event"
-            [required]="true"
-          />
-          <app-kp-select
-            label="Поставщик"
-            name="supplierId"
-            placeholder="Выберите поставщика"
-            [value]="row['supplierId'] || ''"
-            (valueChange)="row['supplierId'] = $event"
-            [options]="supplierOptions()"
-            [required]="true"
-          />
-          <app-kp-datepicker
-            label="Дата заказа"
-            name="orderDate"
-            [value]="row['orderDate'] || ''"
-            (valueChange)="row['orderDate'] = $event"
-          />
-          <app-kp-datepicker
-            label="Дата поставки"
-            name="deliveryDate"
-            [value]="row['deliveryDate'] || ''"
-            (valueChange)="row['deliveryDate'] = $event"
-          />
-          <app-kp-select
-            label="Статус"
-            name="statusId"
-            placeholder="Выберите статус"
-            [value]="row['statusId'] || 'new'"
-            (valueChange)="row['statusId'] = $event"
-            [options]="statusOptions"
-            [required]="true"
-          />
-          <app-kp-textarea
-            label="Примечание"
-            name="notes"
-            placeholder="Комментарий к закупке"
-            [value]="row['notes'] || ''"
-            (valueChange)="row['notes'] = $event"
-          />
+        <div class="form-layout form-layout--2col">
+          <div class="form-layout__column">
+            <section class="form-section form-section--blue">
+              <h3 class="form-section__title">
+                <i class="pi pi-file" aria-hidden="true"></i>
+                Документ
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-input
+                  label="Номер"
+                  name="number"
+                  placeholder="Например, ЗП-001"
+                  [value]="row['number'] || ''"
+                  (valueChange)="row['number'] = $event"
+                  [required]="true"
+                />
+                <app-kp-datepicker
+                  label="Дата заказа"
+                  name="orderDate"
+                  [value]="row['orderDate'] || ''"
+                  (valueChange)="row['orderDate'] = $event"
+                />
+                <app-kp-datepicker
+                  label="Дата поставки"
+                  name="deliveryDate"
+                  [value]="row['deliveryDate'] || ''"
+                  (valueChange)="row['deliveryDate'] = $event"
+                />
+                <app-kp-select
+                  label="Статус"
+                  name="statusId"
+                  placeholder="Выберите статус"
+                  [value]="row['statusId'] || 'new'"
+                  (valueChange)="row['statusId'] = $event"
+                  [options]="statusOptions"
+                  [required]="true"
+                />
+              </div>
+            </section>
+          </div>
+          <div class="form-layout__column">
+            <section class="form-section form-section--green">
+              <h3 class="form-section__title">
+                <i class="pi pi-truck" aria-hidden="true"></i>
+                Поставщик
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-select
+                  label="Поставщик"
+                  name="supplierId"
+                  placeholder="Выберите поставщика"
+                  [value]="row['supplierId'] || ''"
+                  (valueChange)="row['supplierId'] = $event"
+                  [options]="supplierOptions()"
+                  [required]="true"
+                />
+              </div>
+            </section>
+            <section class="form-section form-section--amber">
+              <h3 class="form-section__title">
+                <i class="pi pi-comment" aria-hidden="true"></i>
+                Примечание
+              </h3>
+              <div class="form-section__fields">
+                <app-kp-textarea
+                  label="Примечание"
+                  name="notes"
+                  placeholder="Комментарий к закупке"
+                  [value]="row['notes'] || ''"
+                  (valueChange)="row['notes'] = $event"
+                  [rows]="4"
+                />
+              </div>
+            </section>
+          </div>
         </div>
       </ng-template>
     </app-kp-crud-page>

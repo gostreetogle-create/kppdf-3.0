@@ -25,7 +25,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (root — FreezeGuard)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: FreezeGuard integrity check
+        run: npm run freeze:check
+
+      - name: Setup Node.js (backend)
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc

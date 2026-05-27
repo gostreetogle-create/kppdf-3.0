@@ -1,0 +1,23 @@
+---
+description: FreezeGuard — frozen/locked файлы запрещено редактировать
+globs: ["**/*.ts", "**/*.html", "**/*.scss", "**/*.md"]
+alwaysApply: true
+---
+
+# FreezeGuard — frozen-файлы DO NOT MODIFY
+
+Перед редактированием **любого** файла:
+
+1. Прочитать [.opencode/lock/INDEX.yaml](../../.opencode/lock/INDEX.yaml)
+2. Найти файл в `locked_files` модуля со статусом `frozen` или `locked`
+3. Если найден → **STOP**. Сообщить пользователю: `🧊 [module] frozen — не изменяй [path]`
+4. Статус `wip` → можно менять
+5. Статус `deprecated` → не трогать
+
+Полные правила: [.opencode/lock/FREEZE-RULES.md](../../.opencode/lock/FREEZE-RULES.md)
+
+**Не предлагать** «чуть-чуть подправим». **Не игнорировать** — нарушение = архитектурный долг.
+
+Разморозка — только @chief-architect (статус → `wip` → изменения → аудит → `npm run freeze:update` → `frozen`).
+
+**Pre-commit (только AI, не пользователь):** см. [FREEZE-RULES.md](../../.opencode/lock/FREEZE-RULES.md) → «Pre-commit протокол». Кратко: lint → build → tests → `freeze:update` (если frozen/locked) → `freeze:check` exit 0 → `git commit`.

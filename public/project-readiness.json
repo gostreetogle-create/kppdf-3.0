@@ -1,0 +1,672 @@
+{
+  "enabled": true,
+  "version": 1,
+  "updated": "2026-05-27",
+  "items": {
+    "categories": {
+      "label": "Категории",
+      "percent": 100,
+      "freeze_status": "frozen",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD kp-crud-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": true
+        }
+      ]
+    },
+    "statuses": {
+      "label": "Статусы",
+      "percent": 90,
+      "freeze_status": "wip",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD в справочниках",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": true
+        }
+      ]
+    },
+    "roles": {
+      "label": "Роли",
+      "percent": 100,
+      "freeze_status": "frozen",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD + RBAC",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": true
+        }
+      ]
+    },
+    "users": {
+      "label": "Пользователи",
+      "percent": 100,
+      "freeze_status": "frozen",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD + auth",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": true
+        }
+      ]
+    },
+    "workTypes": {
+      "label": "Типы работ",
+      "percent": 80,
+      "freeze_status": "wip",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD в справочниках",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "counters": {
+      "label": "Счётчики",
+      "percent": 70,
+      "freeze_status": "wip",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "settings": {
+      "label": "Настройки",
+      "percent": 80,
+      "freeze_status": "wip",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD в справочниках",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "counterparties": {
+      "label": "Контрагенты",
+      "percent": 100,
+      "freeze_status": "frozen",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD kp-crud-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": true
+        }
+      ]
+    },
+    "products": {
+      "label": "Товары/услуги",
+      "percent": 100,
+      "freeze_status": "frozen",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD + EAV",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": true
+        }
+      ]
+    },
+    "quotations": {
+      "label": "КП",
+      "percent": 55,
+      "freeze_status": "wip",
+      "checklist": [
+        {
+          "id": "list",
+          "label": "Список КП",
+          "done": true
+        },
+        {
+          "id": "editor",
+          "label": "QuotationEditor блоки",
+          "done": true
+        },
+        {
+          "id": "unibutton",
+          "label": "UniButton / kp-button",
+          "done": false
+        },
+        {
+          "id": "pdf",
+          "label": "Печать PDF",
+          "done": false
+        }
+      ]
+    },
+    "orders": {
+      "label": "Заказы",
+      "percent": 50,
+      "freeze_status": "wip",
+      "checklist": [
+        {
+          "id": "list",
+          "label": "Список заказов",
+          "done": true
+        },
+        {
+          "id": "detail",
+          "label": "Карточка заказа",
+          "done": false
+        }
+      ]
+    },
+    "interactions": {
+      "label": "Взаимодействия",
+      "percent": 35,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "warehouses": {
+      "label": "Склады",
+      "percent": 40,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "purchaseRequests": {
+      "label": "Заявки на закупку",
+      "percent": 45,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "purchaseOrders": {
+      "label": "Заказы поставщикам",
+      "percent": 50,
+      "freeze_status": "wip",
+      "checklist": [
+        {
+          "id": "list",
+          "label": "Список закупок",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "stockMovements": {
+      "label": "Движения склада",
+      "percent": 30,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "reservations": {
+      "label": "Резервы",
+      "percent": 30,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "shipments": {
+      "label": "Отгрузки",
+      "percent": 50,
+      "freeze_status": "wip",
+      "checklist": [
+        {
+          "id": "list",
+          "label": "Список отгрузок",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "operations": {
+      "label": "Операции",
+      "percent": 35,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "techProcesses": {
+      "label": "Техпроцессы",
+      "percent": 35,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "boms": {
+      "label": "Спецификации (BOM)",
+      "percent": 40,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "workOrders": {
+      "label": "Производственные заказы",
+      "percent": 50,
+      "freeze_status": "wip",
+      "checklist": [
+        {
+          "id": "list",
+          "label": "Список нарядов",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "workOrderOperations": {
+      "label": "Операции нарядов",
+      "percent": 30,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "costCalculations": {
+      "label": "Калькуляции",
+      "percent": 30,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "actualCosts": {
+      "label": "Факт. затраты",
+      "percent": 25,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "shippingDocs": {
+      "label": "Отгрузочные документы",
+      "percent": 30,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD modules-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "dashboard": {
+      "label": "Дашборд",
+      "percent": 95,
+      "freeze_status": "frozen",
+      "checklist": [
+        {
+          "id": "stats",
+          "label": "Статистика 26 сущностей",
+          "done": true
+        },
+        {
+          "id": "readiness",
+          "label": "Полоски готовности",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": true
+        }
+      ]
+    },
+    "directories_page": {
+      "label": "Справочники (FE)",
+      "percent": 100,
+      "freeze_status": "frozen",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "7 CrudStore",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": true
+        }
+      ]
+    },
+    "modules_page": {
+      "label": "Модули ERP (shell)",
+      "percent": 100,
+      "freeze_status": "frozen",
+      "checklist": [
+        {
+          "id": "shell",
+          "label": "Shell + 13 ModuleKey",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": true
+        }
+      ]
+    },
+    "login": {
+      "label": "Авторизация",
+      "percent": 95,
+      "freeze_status": "locked",
+      "checklist": [
+        {
+          "id": "auth",
+          "label": "JWT + login-page",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "Premium UI",
+          "done": true
+        }
+      ]
+    },
+    "uiKit": {
+      "label": "UI-kit (kp-*)",
+      "percent": 70,
+      "freeze_status": "wip",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "kp-crud-page",
+          "done": true
+        },
+        {
+          "id": "unibutton",
+          "label": "UniButton миграция",
+          "done": false
+        }
+      ]
+    },
+    "documents": {
+      "label": "Документы",
+      "percent": 60,
+      "freeze_status": "wip",
+      "checklist": [
+        {
+          "id": "list",
+          "label": "Список документов",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "tenders": {
+      "label": "Тендеры",
+      "percent": 40,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD страница",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    },
+    "productPassports": {
+      "label": "Паспорта изделий",
+      "percent": 40,
+      "freeze_status": "planned",
+      "checklist": [
+        {
+          "id": "crud",
+          "label": "CRUD страница",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "label": "UI-аудит",
+          "done": false
+        }
+      ]
+    }
+  },
+  "showcase_sections": {
+    "admin": {
+      "label": "Администрирование",
+      "icon": "pi pi-shield",
+      "keys": [
+        "categories",
+        "statuses",
+        "roles",
+        "users",
+        "workTypes",
+        "counters",
+        "settings"
+      ]
+    },
+    "office": {
+      "label": "Офис",
+      "icon": "pi pi-building",
+      "keys": [
+        "counterparties",
+        "products",
+        "quotations",
+        "orders",
+        "interactions",
+        "documents",
+        "tenders"
+      ]
+    },
+    "warehouse": {
+      "label": "Склад",
+      "icon": "pi pi-warehouse",
+      "keys": [
+        "warehouses",
+        "purchaseRequests",
+        "purchaseOrders",
+        "stockMovements",
+        "reservations",
+        "shipments"
+      ]
+    },
+    "production": {
+      "label": "Производство",
+      "icon": "pi pi-cog",
+      "keys": [
+        "operations",
+        "techProcesses",
+        "boms",
+        "workOrders",
+        "workOrderOperations",
+        "productPassports"
+      ]
+    },
+    "accounting": {
+      "label": "Бухгалтерия",
+      "icon": "pi pi-calculator",
+      "keys": [
+        "costCalculations",
+        "actualCosts",
+        "shippingDocs"
+      ]
+    },
+    "platform": {
+      "label": "Платформа",
+      "icon": "pi pi-server",
+      "keys": [
+        "dashboard",
+        "directories_page",
+        "modules_page",
+        "login",
+        "uiKit"
+      ]
+    }
+  }
+}

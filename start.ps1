@@ -23,13 +23,68 @@ param(
 $ErrorActionPreference = 'Continue'
 
 $Root = $PSScriptRoot
+& node (Join-Path $Root '.opencode/lock/setup-githooks.mjs') 2>$null
 $BackendDir = Join-Path $Root 'backend'
 $MongoDb = 'kppdf30'
 $MongoUri = "mongodb://localhost:27017/$MongoDb"
 $HealthUrl = 'http://localhost:3000/api/v1/health'
 $FrontUrl = 'http://localhost:4200'
+$SessionFile = Join-Path $Root '.kppdf-dev.session.json'
 
 # ── Helpers ───────────────────────────────────────────────────
+
+function Stop-DevProcess([int]$ProcessId, [string]$Label) {
+  if ($ProcessId -le 0 -or $ProcessId -eq $PID) { return }
+  $proc = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
+  if (-not $proc) { return }
+  Write-Host "  close $Label (PID $ProcessId, $($proc.ProcessName))" -ForegroundColor Yellow
+  Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
+}
+
+function Stop-LingeringDevProcesses {
+  $ngProcs = Get-Process -Name 'ng' -ErrorAction SilentlyContinue
+  if ($ngProcs) {
+    Write-Host '  stop lingering ng processes' -ForegroundColor Yellow
+    $ngProcs | Stop-Process -Force -ErrorAction SilentlyContinue
+  }
+
+  try {
+    Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue |
+      Where-Object { $_.CommandLine -match 'tsx|ng serve|backend/dev\.js|npm run dev' } |
+      ForEach-Object {
+        Write-Host "  stop node (PID $($_.ProcessId))" -ForegroundColor Yellow
+        Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+      }
+  } catch { }
+}
+
+function Stop-PreviousDevSessions {
+  Write-Host '  close previous dev windows...' -ForegroundColor Gray
+
+  if (Test-Path $SessionFile) {
+    try {
+      $session = Get-Content $SessionFile -Raw | ConvertFrom-Json
+      Stop-DevProcess -ProcessId ([int]$session.backendWindowPid) -Label 'backend window'
+      Stop-DevProcess -ProcessId ([int]$session.frontendWindowPid) -Label 'frontend window'
+    } catch {
+      Write-Host '  session file unreadable, skip' -ForegroundColor DarkYellow
+    }
+    Remove-Item $SessionFile -Force -ErrorAction SilentlyContinue
+  }
+
+  Stop-Port -Port 3000
+  Stop-Port -Port 4200
+  Stop-LingeringDevProcesses
+  Start-Sleep -Milliseconds 400
+}
+
+function Save-DevSession([int]$BackendWindowPid, [int]$FrontendWindowPid) {
+  @{
+    backendWindowPid  = $BackendWindowPid
+    frontendWindowPid = $FrontendWindowPid
+    startedAt         = (Get-Date).ToString('o')
+  } | ConvertTo-Json | Set-Content $SessionFile -Encoding UTF8
+}
 
 function Write-Step([string]$Text) {
   Write-Host $Text -ForegroundColor Gray
@@ -214,24 +269,26 @@ function Invoke-Seed {
 
 function Start-Backend([bool]$UseMemory) {
   if ($UseMemory) {
-    Start-Process -WindowStyle Normal -FilePath 'node' -ArgumentList 'backend/dev.js' -WorkingDirectory $Root
-    Write-Host "  node backend/dev.js" -ForegroundColor Green
-    return
+    $proc = Start-Process -WindowStyle Normal -FilePath 'node' -ArgumentList 'backend/dev.js' -WorkingDirectory $Root -PassThru
+    Write-Host "  node backend/dev.js (PID $($proc.Id))" -ForegroundColor Green
+    return $proc.Id
   }
 
-  Start-Process -WindowStyle Normal -FilePath 'powershell' -ArgumentList @(
-    '-NoExit', '-Command',
-    "Set-Location '$BackendDir'; npm run dev"
-  )
-  Write-Host "  npm run dev" -ForegroundColor Green
+  $proc = Start-Process -WindowStyle Normal -FilePath 'powershell' -ArgumentList @(
+    '-NoExit', '-NoProfile', '-Command',
+    "`$Host.UI.RawUI.WindowTitle = 'KPPDF Backend'; Set-Location '$BackendDir'; npm run dev"
+  ) -PassThru
+  Write-Host "  npm run dev (window PID $($proc.Id))" -ForegroundColor Green
+  return $proc.Id
 }
 
 function Start-Frontend {
-  Start-Process -WindowStyle Normal -FilePath 'powershell' -ArgumentList @(
-    '-NoExit', '-Command',
-    "Set-Location '$Root'; Write-Host 'Frontend: http://localhost:4200' -ForegroundColor Cyan; npx ng serve"
-  )
-  Write-Host "  npx ng serve (new window)" -ForegroundColor Green
+  $proc = Start-Process -WindowStyle Normal -FilePath 'powershell' -ArgumentList @(
+    '-NoExit', '-NoProfile', '-Command',
+    "`$Host.UI.RawUI.WindowTitle = 'KPPDF Frontend'; Set-Location '$Root'; Write-Host 'Frontend: http://localhost:4200' -ForegroundColor Cyan; npx ng serve"
+  ) -PassThru
+  Write-Host "  npx ng serve (window PID $($proc.Id))" -ForegroundColor Green
+  return $proc.Id
 }
 
 function Show-Ready {
@@ -249,45 +306,25 @@ Write-Host ""
 Write-Host "========== KPPDF 3.0 ==========" -ForegroundColor Cyan
 Write-Host ""
 
-Write-Step "[1/5] Dependencies"
+Write-Step '[1/6] Close previous dev windows'
+Stop-PreviousDevSessions
+Write-Host ""
+
+Write-Step "[2/6] Dependencies"
 Ensure-NodeModules -Dir $Root -Label 'Frontend'
 Ensure-NodeModules -Dir $BackendDir -Label 'Backend'
 Ensure-EnvFile
 Write-Host ""
 
-if ((Test-HttpOk -Url $HealthUrl) -and (Test-HttpOk -Url $FrontUrl)) {
-  Write-Host "Already running." -ForegroundColor Green
-  Show-Ready
-  exit 0
-}
-
-$backendUp = Test-HttpOk -Url $HealthUrl
-$frontendUp = Test-HttpOk -Url $FrontUrl
-
-Write-Step "[2/5] Ports"
-if (-not $backendUp) {
-  Stop-Port -Port 3000
-  # backend down - restart frontend too (stale ng serve)
-  if ($frontendUp) {
-    Write-Host "  backend down -> restart frontend too" -ForegroundColor Yellow
-    Stop-Port -Port 4200
-    $frontendUp = $false
-  }
-} else {
-  Write-Host "  :3000 backend OK" -ForegroundColor Green
-}
-
-if (-not $frontendUp) {
-  Stop-Port -Port 4200
-} else {
-  Write-Host "  :4200 frontend OK" -ForegroundColor Green
-}
+Write-Step "[3/6] Ports"
+Stop-Port -Port 3000
+Stop-Port -Port 4200
 Write-Host ""
 
 $useMemory = $false
 $mongoOk = $false
 
-Write-Step "[3/5] Database"
+Write-Step "[4/6] Database"
 if ($SkipDocker) {
   Write-Host "  MongoMemoryServer (dev.js)" -ForegroundColor Yellow
   $useMemory = $true
@@ -308,22 +345,17 @@ if ($mongoOk -and -not $useMemory -and ($Reseed -or (Test-DbEmpty))) {
 }
 Write-Host ""
 
-Write-Step "[4/5] Start services"
-$needBackend = -not $backendUp
-$needFrontend = -not $frontendUp
-
-if ($needBackend) { Start-Backend -UseMemory $useMemory } else { Write-Host "  backend skip" -ForegroundColor Green }
-if ($needFrontend) { Start-Frontend } else { Write-Host "  frontend skip (http://localhost:4200)" -ForegroundColor Green }
+Write-Step "[5/6] Start services"
+$backendWindowPid = Start-Backend -UseMemory $useMemory
+$frontendWindowPid = Start-Frontend
+Save-DevSession -BackendWindowPid $backendWindowPid -FrontendWindowPid $frontendWindowPid
 Write-Host ""
 
-Write-Step "[5/5] Wait + browser"
-$backendOk = if ($needBackend) { Wait-Http -Url $HealthUrl -Label 'Backend' -Seconds 90 } else { $backendUp }
-
-$frontOk = $frontendUp
-if ($backendOk -and $needFrontend) {
+Write-Step "[6/6] Wait + browser"
+$backendOk = Wait-Http -Url $HealthUrl -Label 'Backend' -Seconds 90
+$frontOk = $false
+if ($backendOk) {
   $frontOk = Wait-Http -Url $FrontUrl -Label 'Frontend' -Seconds 180
-} elseif ($backendOk -and -not $frontOk) {
-  $frontOk = Wait-Http -Url $FrontUrl -Label 'Frontend' -Seconds 60
 }
 
 Write-Host ""

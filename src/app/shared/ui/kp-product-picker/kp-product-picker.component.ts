@@ -347,25 +347,23 @@ export class KpProductPickerComponent {
     return n > 0 ? `${base} ${n}` : base;
   });
 
-  constructor() {
-    effect(() => {
-      if (this.visible()) {
-        this.onOpen();
-      } else {
-        this.picker.reset();
-        this.clearCart();
-      }
-    });
+  private readonly openEffect = effect(() => {
+    if (this.visible()) {
+      this.onOpen();
+    } else {
+      this.picker.reset();
+      this.clearCart();
+    }
+  });
 
-    effect(() => {
-      if (!this.visible()) return;
-      this.searchQuery();
-      this.categoryId();
-      this.kindFilter();
-      this.activeOnly();
-      this.picker.loadProducts(this.buildFilters(1));
-    });
-  }
+  private readonly filtersEffect = effect(() => {
+    if (!this.visible()) return;
+    this.searchQuery();
+    this.categoryId();
+    this.kindFilter();
+    this.activeOnly();
+    this.picker.loadProducts(this.buildFilters(1));
+  });
 
   pageRangeLabel(): string {
     const total = this.picker.total();
