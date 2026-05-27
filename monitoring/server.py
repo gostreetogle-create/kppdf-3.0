@@ -8,11 +8,15 @@
 import json
 import math
 import os
+import platform
 import subprocess
 import threading
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.request import urlopen, Request
+
+# Default User-Agent to avoid Cloudflare blocking
+BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 
 HOST = os.getenv("MONITOR_HOST", "127.0.0.1")
 PORT = int(os.getenv("MONITOR_PORT", "3001"))
@@ -22,11 +26,65 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:3000")
 REFRESH_INTERVAL = int(os.getenv("REFRESH_INTERVAL", "10"))
 HISTORY_SIZE = 30  # keep last 30 snapshots
 
+# ─── Remote site check ───
+SITE_URL = os.getenv("SITE_URL", "https://sport-set.ru")
+
 # ─── Telegram alerts ───
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 DISK_ALERT_THRESHOLD = int(os.getenv("DISK_ALERT_THRESHOLD", "90"))
 ALERT_CHECK_INTERVAL = int(os.getenv("ALERT_CHECK_INTERVAL", "300"))  # 5 minutes
+
+
+def check_site_url(url, timeout=8):
+    """Check a remote URL: returns (status_code, response_time_ms, error)."""
+    try:
+        start = time.time()
+        req = Request(url, method="GET")
+        req.add_header("User-Agent", BROWSER_UA)
+        with urlopen(req, timeout=timeout) as resp:
+            elapsed = int((time.time() - start) * 1000)
+            return {
+                "status_code": resp.status,
+                "response_time_ms": elapsed,
+                "error": None,
+            }
+    except Exception as e:
+        return {
+            "status_code": None,
+            "response_time_ms": None,
+            "error": str(e),
+        }
+
+
+def get_site_frontend_status():
+    """Check the frontend (main page) of the remote site."""
+    result = check_site_url(SITE_URL)
+    return {
+        "url": SITE_URL,
+        "status": "ok" if result["status_code"] == 200 else "error",
+        **result,
+    }
+
+
+def get_site_backend_status():
+    """Check the backend health endpoint of the remote site."""
+    api_url = f"{SITE_URL}/api/v1/health"
+    result = check_site_url(api_url)
+    data = None
+    if result["status_code"] == 200:
+        try:
+            req = Request(api_url, method="GET")
+            with urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read())
+        except Exception:
+            pass
+    return {
+        "url": api_url,
+        "status": "ok" if result["status_code"] == 200 else "error",
+        "data": data,
+        **result,
+    }
 
 # Track previous state to avoid alert spam
 _alert_state = {
@@ -431,13 +489,15 @@ def collect_status():
     docker = get_docker_info()
     backend = get_backend_health()
     cpu = get_cpu_percent()
+    site_frontend = get_site_frontend_status()
+    site_backend = get_site_backend_status()
 
     return {
         "timestamp": int(time.time()),
         "system": {
-            "hostname": os.uname().nodename,
-            "platform": os.uname().sysname,
-            "release": os.uname().release,
+            "hostname": platform.node(),
+            "platform": platform.system(),
+            "release": platform.release(),
             "uptime": uptime_secs,
             "uptime_human": format_uptime(uptime_secs),
             "load": load,
@@ -455,6 +515,10 @@ def collect_status():
         "tunnel": {
             "status": get_service_status("cloudflared"),
             "connections": get_tunnel_details(),
+        },
+        "site": {
+            "frontend": site_frontend,
+            "backend": site_backend,
         },
         "refresh_interval": REFRESH_INTERVAL,
     }
@@ -534,14 +598,14 @@ def main():
     alert_thread.start()
 
     server = HTTPServer((HOST, PORT), MonitoringHandler)
-    print(f"🚀 KPPDF Monitoring Server")
+    print("[KPPDF] Monitoring Server starting...")
     print(f"   URL:  http://{HOST}:{PORT}")
     print(f"   API:  http://{HOST}:{PORT}/api/status")
     print(f"   Dash: http://{HOST}:{PORT}/")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n👋 Shutting down...")
+        print("\n[monitor] Shutting down...")
         server.server_close()
 
 

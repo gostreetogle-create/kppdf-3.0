@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import { getNextNumber } from '../modules/counters/counters.service';
 import { CounterModel } from '../modules/counters/counter.model';
 

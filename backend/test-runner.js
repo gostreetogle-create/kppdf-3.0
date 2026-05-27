@@ -1,11 +1,10 @@
 const { spawn } = require('child_process');
 const path = require('path');
-const fs = require('fs');
 const http = require('http');
 const backend = path.join(process.cwd(), 'backend');
 
 // --- Step 1: Kill existing node processes ---
-try { require('child_process').execSync('taskkill /f /im node.exe 2>nul', { stdio: 'ignore' }); } catch(e) {}
+try { require('child_process').execSync('taskkill /f /im node.exe 2>nul', { stdio: 'ignore' }); } catch {}
 setTimeout(main, 3000);
 
 function main() {
@@ -60,12 +59,12 @@ function main() {
           let d = '';
           res.on('data', c => d += c);
           res.on('end', () => {
-            try { JSON.parse(d); if (res.statusCode === 200) ok++; } catch(e) {}
+            try { JSON.parse(d); if (res.statusCode === 200) ok++; } catch {}
             console.log((res.statusCode === 200 ? '  OK  ' : '  FAIL ') + name + ' [' + res.statusCode + ']');
             idx++;
             next();
           });
-        }).on('error', err => {
+        }).on('error', _err => {
           console.log('  FAIL ' + name + ' [ERR]');
           idx++;
           next();
@@ -83,7 +82,7 @@ function main() {
               const j = JSON.parse(d);
               if (res.statusCode === 200) ok++;
               console.log((res.statusCode === 200 ? '  OK  ' : '  FAIL ') + name + ' [' + res.statusCode + '] ' + (j.data?.token ? '(token:yes)' : ''));
-            } catch(e) {
+            } catch {
               console.log('  FAIL ' + name + ' [PARSE_ERR]');
             }
             idx++;

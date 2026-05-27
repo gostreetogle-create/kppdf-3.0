@@ -27,3 +27,7 @@
 - [x] kp-button inline → scss (UniButton: стили в kp-button.component.scss, global 390–425 удалён)
 - [ ] **[AUDIT] kp-button `variant="premium"`** — вынести градиент login из `styleClass="auth__submit-btn"` + `::ng-deep` в API `app-kp-button`. Градиент #5e6ad2 → #4f5bc7, hover lift, disabled — после миграции всех features.
 - [ ] chief-architect в opencode.json
+
+## Новое от 2026-05-28
+- [ ] **Деплой обновлённого мониторинга на Synology** — дашборд обновлён (график времени ответа sport-set.ru, фикс `os.uname()` для Windows, добавлен User-Agent для Cloudflare). Нужно задеплоить `monitoring/server.py` и `monitoring/index.html` на Synology.
+- [ ] **e2e тесты для quotation API** — supertest установлен (`backend/package.json`), тесты не написаны. Нужно создать `backend/src/__tests__/quotation.e2e.test.ts` с CRUD + permissions.

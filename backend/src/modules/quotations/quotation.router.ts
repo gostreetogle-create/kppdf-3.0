@@ -3,7 +3,7 @@ import { QuotationModel } from './quotation.model';
 import { getNextNumber } from '../counters/counters.service';
 
 function calcItems(body: Record<string, unknown>): void {
-  const items = body.items as unknown as Array<Record<string, unknown>>;
+  const items = body.items as unknown as Record<string, unknown>[];
   if (Array.isArray(items)) {
     body.items = items.map((item, i) => ({
       ...item,

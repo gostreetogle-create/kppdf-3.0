@@ -20,5 +20,5 @@ exceptions: []
 check_hash: true
 file_hashes:
   shared/types/user.interface.ts: 75ad5e0eb8fe9f059b6a51e558ab911b0e498c5399a33525d8e67b89f9602938
-  backend/src/modules/users/user.model.ts: 2138edac343fe02c45c44e9540454458dcca6951c73643a39365d121d5639b6c
+  backend/src/modules/users/user.model.ts: c94b7250ec929c3b8061bf13de2dcb977adc6ff9d8e938e903ec0a5a3d99bb8d
   backend/src/modules/users/user.router.ts: f2a7bed817b136094446a904d744e9435e646de48835ec89635bce73b8a6fdda

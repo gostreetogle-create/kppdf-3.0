@@ -164,7 +164,7 @@ describe('CRUD Factory', () => {
     it('should apply $or regex on default searchFields', async () => {
       mockModel.countDocuments.mockResolvedValue(0);
       const handler = getListHandler(router);
-      const { res, jsonSpy } = mockRes();
+      const { res } = mockRes();
 
       await handler(mockReq({ search: 'test' }), res);
 

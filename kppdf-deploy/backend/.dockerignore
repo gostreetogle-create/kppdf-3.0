@@ -1,0 +1,9 @@
+node_modules
+npm-debug.log
+src/__tests__
+.git
+.env
+.env.development
+dev.js
+dev.ts
+run-all.ps1
