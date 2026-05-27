@@ -24,5 +24,6 @@
 ## P2 (опционально)
 - [ ] EAV в tenders / orders
 - [ ] login MessageService → NotificationService
-- [ ] kp-button inline → scss
+- [x] kp-button inline → scss (UniButton: стили в kp-button.component.scss, global 390–425 удалён)
+- [ ] **[AUDIT] kp-button `variant="premium"`** — вынести градиент login из `styleClass="auth__submit-btn"` + `::ng-deep` в API `app-kp-button`. Градиент #5e6ad2 → #4f5bc7, hover lift, disabled — после миграции всех features.
 - [ ] chief-architect в opencode.json

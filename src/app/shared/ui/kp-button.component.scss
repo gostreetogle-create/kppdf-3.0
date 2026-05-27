@@ -10,9 +10,42 @@
     border-color var(--kp-transition-base),
     color var(--kp-transition-base),
     box-shadow var(--kp-transition-base);
+  gap: 6px;
+  font-weight: 500;
 }
 
 :host ::ng-deep .p-button:focus-visible {
   outline: none;
   box-shadow: var(--kp-focus-ring);
+}
+
+:host ::ng-deep .p-button.p-button-sm {
+  gap: 5px;
+}
+
+/* Icon-only (kp-table pattern) */
+:host ::ng-deep .p-button.p-button-rounded.p-button-text {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--kp-button-border-radius) !important;
+}
+
+:host ::ng-deep .p-button.p-button-rounded.p-button-text:hover {
+  background: var(--kp-bg-soft) !important;
+}
+
+:host ::ng-deep .p-button.p-button-rounded.p-button-text.p-button-danger:hover {
+  background: var(--kp-danger-soft) !important;
+  color: var(--kp-danger) !important;
+}
+
+/* Block variant */
+:host.kp-button--block-host {
+  display: flex;
+  width: 100%;
+}
+
+:host ::ng-deep .kp-button--block.p-button {
+  width: 100%;
+  justify-content: center;
 }

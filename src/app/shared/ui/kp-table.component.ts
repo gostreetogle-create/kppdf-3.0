@@ -204,7 +204,7 @@ export interface KpPageEvent {
                           [icon]="action.icon || 'pi pi-bolt'"
                           [rounded]="true"
                           [text]="true"
-                          [severity]="action.severity || 'secondary'"
+                          [severity]="resolveButtonSeverity(action.severity)"
                           size="small"
                           [tooltip]="action.label"
                           [ariaLabel]="action.label"
@@ -277,6 +277,15 @@ export class KpTableComponent {
   readonly showToolbar = computed(
     () => this.showSearch() || this.showActions() || this.showToolbarTitle(),
   );
+
+  /** UniButton: только primary | secondary | danger */
+  resolveButtonSeverity(
+    severity?: CrudAction<Record<string, unknown>>['severity'],
+  ): 'primary' | 'secondary' | 'danger' {
+    if (severity === 'danger') return 'danger';
+    if (severity === 'secondary') return 'secondary';
+    return 'primary';
+  }
 
   onSortHandler(event: { field?: string; order?: number }): void {
     this.sortChange.emit({

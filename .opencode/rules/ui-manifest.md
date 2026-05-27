@@ -95,37 +95,38 @@
 
 ---
 
-## 3. Кнопки (`p-button`)
+## 3. Кнопки (`app-kp-button`)
 
 ### Человеческое правило
 
-- ВСЕГДА `size="small"` на всех кнопках проекта. НИКОГДА default size.
-- IconOnly кнопки: ВСЕГДА `severity="secondary"` (редактирование) / `severity="danger"` (удаление).
-- На тёмном фоне (сайдбар) — `transform: none !important`.
+- В `features/*` — **только** `<app-kp-button>` (обёртка `shared/ui/kp-button`).
+- **Исключения:** block-controls toggle-панель в `quotation-editor` (`p-button` + локальный SCSS); login submit (`variant` premium через `styleClass="auth__submit-btn"` — см. backlog).
+- ВСЕГДА `size="small"`. Severity: `primary` | `secondary` | `danger`.
+- IconOnly: `severity="secondary"` (edit) / `severity="danger"` (delete); `[rounded]="true"` + `[text]="true"`.
+- Диалоги: «Отмена» — `severity="secondary" [outlined]="true"`; подтверждение — default primary.
+- Событие клика: `(buttonClick)`, не `(click)`.
 
 ### Машиночитаемая проверка
 
 ```yaml
+- rule: "features use app-kp-button not p-button"
+  selector: "app-kp-button"
+  check: "exists-in-features"
 - rule: "all buttons must be size=small"
-  selector: "p-button:not(.p-button-lg)"
+  selector: "app-kp-button:not(.p-button-lg)"
   check: "attr"
   attr: "size"
   expected: "small"
 - rule: "icon-only edit buttons are secondary"
-  selector: "p-button[icon=pi pi-pencil]"
+  selector: "app-kp-button[icon=pi pi-pencil]"
   check: "attr"
   attr: "severity"
   expected: "secondary"
 - rule: "icon-only delete buttons are danger"
-  selector: "p-button[icon=pi pi-trash]"
+  selector: "app-kp-button[icon=pi pi-trash]"
   check: "attr"
   attr: "severity"
   expected: "danger"
-- rule: "no raw buttons"
-  selector: "template"
-  check: "no-raw"
-  tag: "button"
-  hint: "All buttons must be p-button"
 ```
 
 ---

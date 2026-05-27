@@ -1,4 +1,11 @@
-import { Component, input, output, computed, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  computed,
+  ChangeDetectionStrategy,
+  HostBinding,
+} from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 
@@ -18,6 +25,9 @@ import { TooltipModule } from 'primeng/tooltip';
         [type]="type()"
         [label]="label()"
         [icon]="icon()"
+        [iconPos]="iconPos()"
+        [badge]="badge()"
+        [badgeSeverity]="badgeSeverity()"
         [severity]="severity()"
         [size]="size()"
         [loading]="loading()"
@@ -26,7 +36,8 @@ import { TooltipModule } from 'primeng/tooltip';
         [text]="text()"
         [outlined]="outlined()"
         [raised]="raised()"
-        [styleClass]="styleClass()"
+        [styleClass]="mergedStyleClass()"
+        [autofocus]="autoFocus()"
         [attr.aria-label]="ariaLabel() || label() || tooltip() || null"
         (onClick)="buttonClick.emit($event)"
       />
@@ -38,7 +49,10 @@ export class KpButtonComponent {
   readonly type = input<'button' | 'submit' | 'reset'>('button');
   readonly label = input<string>('');
   readonly icon = input<string>('');
-  readonly severity = input<'success' | 'info' | 'warn' | 'danger' | 'help' | 'primary' | 'secondary' | 'contrast'>('primary');
+  readonly iconPos = input<'left' | 'right' | 'top' | 'bottom'>('left');
+  readonly badge = input<string>('');
+  readonly badgeSeverity = input<'danger' | 'info' | 'success' | 'warn'>('danger');
+  readonly severity = input<'primary' | 'secondary' | 'danger'>('primary');
   readonly size = input<'small' | 'large'>('small');
   readonly loading = input(false);
   readonly disabled = input(false);
@@ -46,12 +60,25 @@ export class KpButtonComponent {
   readonly text = input(false);
   readonly outlined = input(false);
   readonly raised = input(false);
+  readonly block = input(false);
+  readonly autoFocus = input(false);
   readonly styleClass = input<string>('');
   /** Подсказка только для icon-only или когда текст ≠ label кнопки */
   readonly tooltip = input<string>('');
   readonly ariaLabel = input<string>('');
 
   readonly buttonClick = output<MouseEvent>();
+
+  readonly mergedStyleClass = computed(() => {
+    const classes = [this.styleClass()];
+    if (this.block()) classes.push('kp-button--block');
+    return classes.filter(Boolean).join(' ');
+  });
+
+  @HostBinding('class.kp-button--block-host')
+  get isBlockHost(): boolean {
+    return this.block();
+  }
 
   /** Текст подсказки; пусто, если дублирует видимый label */
   readonly tooltipText = computed(() => {

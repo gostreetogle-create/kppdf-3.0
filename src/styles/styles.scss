@@ -387,43 +387,6 @@ button { font-family: inherit; cursor: pointer; }
   font-size: var(--kp-font-size-sm) !important;
 }
 
-/* ── Buttons — minimal radius, smooth hover (150ms) ── */
-.p-button,
-.p-button.p-button-rounded,
-.p-button.p-button-icon-only {
-  border-radius: var(--kp-button-border-radius) !important;
-  transition:
-    background var(--kp-transition-base),
-    border-color var(--kp-transition-base),
-    color var(--kp-transition-base),
-    box-shadow var(--kp-transition-base);
-  gap: 6px;
-  font-weight: 500;
-}
-
-.p-button:focus-visible {
-  outline: none;
-  box-shadow: var(--kp-focus-ring);
-}
-
-.p-button.p-button-sm { gap: 5px; }
-
-/* Icon buttons (edit/delete rows) — square, not circular */
-.p-button.p-button-rounded.p-button-text {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--kp-button-border-radius) !important;
-}
-
-.p-button.p-button-rounded.p-button-text:hover {
-  background: var(--kp-bg-soft) !important;
-}
-
-.p-button.p-button-rounded.p-button-text.p-button-danger:hover {
-  background: var(--kp-danger-soft) !important;
-  color: var(--kp-danger) !important;
-}
-
 /* Paginator controls */
 .p-paginator .p-paginator-first,
 .p-paginator .p-paginator-prev,
