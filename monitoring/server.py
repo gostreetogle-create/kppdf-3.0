@@ -358,7 +358,7 @@ class MonitoringHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         """Suppress default logging; use custom format."""
-        msg = args[0] if args else ""
+        msg = str(args[0]) if args else ""
         if "/api/status" in msg:
             return  # Don't log frequent API calls
         print(f"[monitor] {self.client_address[0]} - {msg}")

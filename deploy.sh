@@ -95,7 +95,7 @@ fi
 # Если есть ARCHIVE_ARG или файл архива рядом — серверный режим
 # Если есть angular.json рядом — локальный режим
 
-if [[ -n "${ARCHIVE_ARG}" ]]; then
+if [[ -n "${ARCHIVE_ARG:-}" ]]; then
   # Передан путь к архиву — серверный режим
   MODE="server"
 elif [[ "$(id -u)" -eq 0 ]] || [[ -f "/opt/kppdf-3.0/deploy.sh" ]]; then
@@ -149,6 +149,9 @@ if [[ "${MODE}" == "local" ]]; then
   SSH_CMD="ssh ${SSH_OPTS} ${REMOTE_SSH}"
   SCP_CMD="scp ${SSH_OPTS}"
   REMOTE_DIR="${REMOTE_DIR:-/opt/kppdf-3.0}"
+
+  # Пароль для sudo на удалённом сервере
+  SSH_SUDO="echo '${DEPLOY_PASSWORD}' | sudo -S"
 
   echo "  Сервер:   ${DEPLOY_USER}@${DEPLOY_HOST}"
   echo "  Папка:    ${REMOTE_DIR}"
@@ -232,8 +235,8 @@ EOF
   require_cmd ssh; require_cmd scp
 
   ${SSH_CMD} "echo OK" >/dev/null 2>&1 || err "SSH не работает: ${REMOTE_SSH}"
-  ${SSH_CMD} "sudo mkdir -p ${REMOTE_DIR}" || err "Не удалось создать ${REMOTE_DIR}"
-  ${SSH_CMD} "sudo mkdir -p ${KPPDF_DATA_DIR:-/var/lib/kppdf}/mongodb ${KPPDF_DATA_DIR:-/var/lib/kppdf}/media ${KPPDF_DATA_DIR:-/var/lib/kppdf}/backups" 2>/dev/null || true
+  ${SSH_CMD} "${SSH_SUDO} mkdir -p ${REMOTE_DIR}" || err "Не удалось создать ${REMOTE_DIR}"
+  ${SSH_CMD} "${SSH_SUDO} mkdir -p ${KPPDF_DATA_DIR:-/var/lib/kppdf}/mongodb ${KPPDF_DATA_DIR:-/var/lib/kppdf}/media ${KPPDF_DATA_DIR:-/var/lib/kppdf}/backups" 2>/dev/null || true
 
   log "Загружаю архив..."
   ${SCP_CMD} "${ARCHIVE_PATH}" "${REMOTE_SSH}:/tmp/" || err "SCP не удался!"
@@ -247,12 +250,13 @@ EOF
   log "Запускаю deploy.sh в серверном режиме..."
   echo ""
 
-  # 1) Пишем .env на сервер через base64 (безопасная передача спецсимволов)
-  ${SSH_CMD} "echo '${ENV_B64}' | base64 -d | sudo tee ${REMOTE_DIR}/.env >/dev/null && sudo chmod 600 ${REMOTE_DIR}/.env" 2>&1
+  # 1) Пишем .env: base64 → /tmp/ (без sudo), затем sudo mv в целевую папку
+  # Используем /tmp/ чтобы не смешивать pipe с sudo -S (который читает пароль со stdin)
+  ${SSH_CMD} "echo '${ENV_B64}' | base64 -d > /tmp/kppdf-env && ${SSH_SUDO} mv /tmp/kppdf-env ${REMOTE_DIR}/.env && ${SSH_SUDO} chmod 600 ${REMOTE_DIR}/.env" 2>&1
 
   # 2) Извлекаем deploy.sh из архива и запускаем его в серверном режиме
   # Не передаём --skip-build — сервер должен пересобрать Docker образ с новым кодом
-  ${SSH_CMD} "sudo tar xzf /tmp/${ARCHIVE_NAME} -C ${REMOTE_DIR}/ deploy.sh && sudo bash ${REMOTE_DIR}/deploy.sh /tmp/${ARCHIVE_NAME}" 2>&1 | sed 's/^/  /'
+  ${SSH_CMD} "${SSH_SUDO} tar xzf /tmp/${ARCHIVE_NAME} -C ${REMOTE_DIR}/ deploy.sh && ${SSH_SUDO} bash ${REMOTE_DIR}/deploy.sh /tmp/${ARCHIVE_NAME}" 2>&1 | sed 's/^/  /'
 
   # 3) Чистим архив
   ${SSH_CMD} "rm -f /tmp/${ARCHIVE_NAME}" 2>&1
@@ -273,7 +277,7 @@ else
   ARCHIVE=""
 
   # Определяем путь к архиву
-  if [[ -n "${ARCHIVE_ARG}" ]]; then
+  if [[ -n "${ARCHIVE_ARG:-}" ]]; then
     ARCHIVE="${ARCHIVE_ARG}"
   elif [[ -f "${SCRIPT_DIR}/kppdf-deploy.tar.gz" ]]; then
     ARCHIVE="${SCRIPT_DIR}/kppdf-deploy.tar.gz"
