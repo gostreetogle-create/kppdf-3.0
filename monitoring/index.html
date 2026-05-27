@@ -341,6 +341,52 @@
     </div>
   </div>
 
+  <!-- Nginx Metrics -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-header" style="cursor:pointer" id="nginxToggle">
+      <span><span class="icon">🌐</span> Nginx</span>
+      <span id="nginxStatusBadge" style="font-size:12px;font-weight:400">⏳</span>
+    </div>
+    <div class="card-body" id="nginxBody">
+      <div class="nginx-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+        <div class="service-item" style="flex-direction:column;align-items:center;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:var(--blue)" id="nginxActive">—</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">Активных соединений</div>
+        </div>
+        <div class="service-item" style="flex-direction:column;align-items:center;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:var(--green)" id="nginxTotalReq">—</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">Всего запросов</div>
+        </div>
+        <div class="service-item" style="flex-direction:column;align-items:center;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:var(--yellow)" id="nginxReading">—</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">Читает (Reading)</div>
+        </div>
+        <div class="service-item" style="flex-direction:column;align-items:center;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:var(--purple)" id="nginxWriting">—</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">Пишет (Writing)</div>
+        </div>
+      </div>
+      <div class="nginx-details" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="info-row" style="border:none;padding:4px 8px;background:var(--bg-card);border-radius:var(--radius-sm)">
+          <span class="info-label">Waiting</span>
+          <span class="info-value" id="nginxWaiting">—</span>
+        </div>
+        <div class="info-row" style="border:none;padding:4px 8px;background:var(--bg-card);border-radius:var(--radius-sm)">
+          <span class="info-label">Принято</span>
+          <span class="info-value" id="nginxAccepts">—</span>
+        </div>
+        <div class="info-row" style="border:none;padding:4px 8px;background:var(--bg-card);border-radius:var(--radius-sm)">
+          <span class="info-label">Обработано</span>
+          <span class="info-value" id="nginxHandled">—</span>
+        </div>
+      </div>
+      <div class="info-row" style="border:none;padding:4px 0">
+        <span class="info-label">Upstream (api/ → backend)</span>
+        <span class="info-value" id="nginxUpstream">⏳</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Charts Row -->
   <div class="charts-row">
     <div class="card">
@@ -575,6 +621,9 @@ function renderDashboard(d) {
   renderService('svcNginx', nginxStatus === 'active');
   renderService('svcTunnel', tunnel.status === 'active', tunnel.connections);
 
+  // Nginx Metrics
+  renderNginxMetrics(d.nginx || {});
+
   // Backend Info
   renderBackendInfo(backend);
 
@@ -663,6 +712,54 @@ function renderSystemInfo(sys) {
     ['Uptime', sys.uptime_human || '—'],
   ];
   el.innerHTML = info.map(i => '<div class="info-row"><span class="info-label">' + i[0] + '</span><span class="info-value">' + i[1] + '</span></div>').join('');
+}
+
+function renderNginxMetrics(nginx) {
+  const m = nginx.metrics || {};
+  const err = m.error;
+
+  if (err) {
+    $('nginxStatusBadge').innerHTML = '❌ ' + err;
+    $('nginxActive').textContent = '—';
+    $('nginxTotalReq').textContent = '—';
+    $('nginxReading').textContent = '—';
+    $('nginxWriting').textContent = '—';
+    $('nginxWaiting').textContent = '—';
+    $('nginxAccepts').textContent = '—';
+    $('nginxHandled').textContent = '—';
+    $('nginxUpstream').innerHTML = '<span class="service-value fail">❌ недоступен</span>';
+    return;
+  }
+
+  const active = m.active || 0;
+  const total = m.total_requests || 0;
+  const reading = m.reading || 0;
+  const writing = m.writing || 0;
+  const waiting = m.waiting || 0;
+  const accepts = m.accepts || 0;
+  const handled = m.handled || 0;
+
+  $('nginxActive').textContent = active;
+  $('nginxTotalReq').textContent = total.toLocaleString('ru-RU');
+  $('nginxReading').textContent = reading;
+  $('nginxWriting').textContent = writing;
+  $('nginxStatusBadge').innerHTML = '✅ active · ' + active + ' conn';
+
+  // Details
+  $('nginxWaiting').textContent = waiting;
+  $('nginxAccepts').textContent = accepts.toLocaleString('ru-RU');
+  $('nginxHandled').textContent = handled.toLocaleString('ru-RU');
+
+  // Upstream health (accepts vs handled ratio)
+  const upstreamOk = accepts > 0 && handled <= accepts;
+  const dropped = accepts - handled;
+  if (upstreamOk && dropped <= 1) {
+    $('nginxUpstream').innerHTML = '<span class="service-value ok">✅ ' + handled + ' / ' + accepts + ' (потерь нет)</span>';
+  } else if (upstreamOk && dropped > 1) {
+    $('nginxUpstream').innerHTML = '<span class="service-value warn">⚠️ ' + handled + ' / ' + accepts + ' (потеряно ' + dropped + ')</span>';
+  } else {
+    $('nginxUpstream').innerHTML = '<span class="service-value ok">✅ нет данных</span>';
+  }
 }
 
 // Init charts

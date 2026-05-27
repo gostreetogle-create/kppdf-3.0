@@ -161,6 +161,56 @@ def get_disk_usage():
         return {}
 
 
+def get_nginx_metrics():
+    """Fetch and parse Nginx stub_status metrics from localhost."""
+    try:
+        req = Request("http://127.0.0.1:80/nginx_status", method="GET")
+        with urlopen(req, timeout=3) as resp:
+            text = resp.read().decode("utf-8")
+    except Exception as e:
+        return {"error": str(e), "active": 0, "total_requests": 0, "reading": 0, "writing": 0, "waiting": 0}
+
+    metrics = {"error": None}
+    lines = text.strip().split("\n")
+
+    for line in lines:
+        line = line.strip()
+        # Active connections: 1
+        if line.startswith("Active connections:"):
+            try:
+                metrics["active"] = int(line.split(":")[1].strip())
+            except (IndexError, ValueError):
+                metrics["active"] = 0
+        # 66 66 120  (accepts handled requests)
+        elif line.replace(" ", "").isdigit():
+            parts = line.split()
+            if len(parts) >= 3:
+                try:
+                    metrics["accepts"] = int(parts[0])
+                    metrics["handled"] = int(parts[1])
+                    metrics["total_requests"] = int(parts[2])
+                except ValueError:
+                    pass
+        # Reading: 0 Writing: 1 Waiting: 0
+        if "Reading:" in line:
+            try:
+                metrics["reading"] = int(line.split("Reading:")[1].split()[0])
+            except (IndexError, ValueError):
+                metrics["reading"] = 0
+        if "Writing:" in line:
+            try:
+                metrics["writing"] = int(line.split("Writing:")[1].split()[0])
+            except (IndexError, ValueError):
+                metrics["writing"] = 0
+        if "Waiting:" in line:
+            try:
+                metrics["waiting"] = int(line.split("Waiting:")[1].split()[0])
+            except (IndexError, ValueError):
+                metrics["waiting"] = 0
+
+    return metrics
+
+
 def get_docker_info():
     """Get Docker containers via mounted Docker socket (docker CLI)."""
     # Get container list
@@ -400,6 +450,7 @@ def collect_status():
         "backend": backend,
         "nginx": {
             "status": get_service_status("nginx"),
+            "metrics": get_nginx_metrics(),
         },
         "tunnel": {
             "status": get_service_status("cloudflared"),
