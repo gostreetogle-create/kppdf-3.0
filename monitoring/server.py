@@ -6,8 +6,10 @@
 """
 
 import json
+import math
 import os
 import subprocess
+import threading
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.request import urlopen, Request
@@ -19,6 +21,20 @@ HOST_ROOT = os.getenv("HOST_ROOT", "/hostroot")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:3000")
 REFRESH_INTERVAL = int(os.getenv("REFRESH_INTERVAL", "10"))
 HISTORY_SIZE = 30  # keep last 30 snapshots
+
+# ─── Telegram alerts ───
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
+DISK_ALERT_THRESHOLD = int(os.getenv("DISK_ALERT_THRESHOLD", "90"))
+ALERT_CHECK_INTERVAL = int(os.getenv("ALERT_CHECK_INTERVAL", "300"))  # 5 minutes
+
+# Track previous state to avoid alert spam
+_alert_state = {
+    "backend_ok": True,
+    "disk_over_threshold": False,
+    "tunnel_ok": True,
+}
+_alert_state_lock = threading.Lock()
 
 # In-memory history for timeline charts
 history = []
@@ -259,6 +275,88 @@ def get_tunnel_details():
     return 1
 
 
+def send_telegram_alert(message):
+    """Send an alert message via Telegram bot."""
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        return False
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        data = json.dumps({
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message,
+            "parse_mode": "HTML",
+        }).encode("utf-8")
+        req = Request(url, data=data, method="POST")
+        req.add_header("Content-Type", "application/json")
+        with urlopen(req, timeout=10) as resp:
+            return resp.status == 200
+    except Exception as e:
+        print(f"[alert] Telegram send failed: {e}")
+        return False
+
+
+def check_and_alert():
+    """Check current status and send alerts if thresholds exceeded."""
+    global _alert_state
+    status = collect_status()
+    alerts = []
+
+    backend = status.get("backend", {})
+    backend_ok = backend.get("status") == "ok"
+
+    disk = status.get("system", {}).get("disk", {})
+    disk_pct = disk.get("percent", 0)
+    disk_over = disk_pct > DISK_ALERT_THRESHOLD
+
+    tunnel = status.get("tunnel", {})
+    tunnel_ok = tunnel.get("status") == "active"
+
+    with _alert_state_lock:
+        # Backend changed
+        if backend_ok != _alert_state["backend_ok"]:
+            if not backend_ok:
+                alerts.append(f"🔴 <b>Backend недоступен!</b>\n{backend.get('error', 'Нет ответа')}")
+            else:
+                alerts.append(f"🟢 <b>Backend восстановлен</b>")
+            _alert_state["backend_ok"] = backend_ok
+
+        # Disk crossed threshold
+        if disk_over and not _alert_state["disk_over_threshold"]:
+            used = fmt_bytes(disk.get("used", 0))
+            total = fmt_bytes(disk.get("total", 0))
+            alerts.append(f"⚠️ <b>Диск заполнен на {disk_pct}%</b>\n{used} / {total}")
+            _alert_state["disk_over_threshold"] = True
+        elif not disk_over and _alert_state["disk_over_threshold"]:
+            alerts.append(f"✅ <b>Диск в норме</b> ({disk_pct}%)")
+            _alert_state["disk_over_threshold"] = False
+
+        # Tunnel changed
+        if tunnel_ok != _alert_state["tunnel_ok"]:
+            if not tunnel_ok:
+                alerts.append(f"🔴 <b>Cloudflare Tunnel отключён!</b>")
+            else:
+                alerts.append(f"🟢 <b>Cloudflare Tunnel восстановлен</b>")
+            _alert_state["tunnel_ok"] = tunnel_ok
+
+    if alerts:
+        msg = "🚀 <b>KPPDF 3.0 — Мониторинг</b>\n" + "─" * 20 + "\n"
+        msg += "\n\n".join(alerts)
+        msg += f"\n\n🕐 {time.strftime('%d.%m.%Y %H:%M:%S')}"
+        send_telegram_alert(msg)
+
+
+def alert_worker():
+    """Background thread: periodically check status and alert."""
+    print(f"[alert] Telegram alerts{' enabled' if TELEGRAM_BOT_TOKEN else ' disabled (no token)'}")
+    print(f"[alert] Disk threshold: {DISK_ALERT_THRESHOLD}%, Check interval: {ALERT_CHECK_INTERVAL}s")
+    while True:
+        time.sleep(ALERT_CHECK_INTERVAL)
+        try:
+            check_and_alert()
+        except Exception as e:
+            print(f"[alert] Error: {e}")
+
+
 def get_seed_counts():
     """Get entity counts from backend API."""
     try:
@@ -309,6 +407,16 @@ def collect_status():
         },
         "refresh_interval": REFRESH_INTERVAL,
     }
+
+
+def fmt_bytes(bytes_val):
+    """Format bytes to human-readable string."""
+    if not bytes_val:
+        return "0 B"
+    k = 1024
+    sizes = ["B", "KB", "MB", "GB", "TB"]
+    i = int(math.log(bytes_val, k)) if bytes_val > 0 else 0
+    return f"{bytes_val / (k ** i):.1f} {sizes[i]}"
 
 
 def format_uptime(seconds):
@@ -369,6 +477,10 @@ def main():
     get_cpu_percent()
     time.sleep(0.5)
     get_cpu_percent()
+
+    # Start Telegram alert worker in background
+    alert_thread = threading.Thread(target=alert_worker, daemon=True)
+    alert_thread.start()
 
     server = HTTPServer((HOST, PORT), MonitoringHandler)
     print(f"🚀 KPPDF Monitoring Server")
