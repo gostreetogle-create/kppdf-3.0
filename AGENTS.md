@@ -220,7 +220,7 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 | `@meta-architect` | BOM, EAV, сложная предметка | Простые CRUD |
 | `@production-planner` | Планирование, себестоимость | UI-кит |
 | `@compliance-validator` | Compliance-проверки | Навигация |
-| `@deploy-specialist` | nginx, CI/CD | Формы |
+| `@deploy-specialist` | Деплой на Ubuntu-сервер (192.168.1.46), Docker, nginx, CI/CD | Формы |
 | `@chief-architect` | Сводка аудитов, P0–P2 | Написание фич |
 
 ### Типичные разрывы (почему «агенты не работают»)
@@ -342,3 +342,40 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 | Мастер смены | Задания на смену, отметки выполнения | Производство |
 | Склад | Остатки, материалы, перемещения | Склад / Материалы |
 | Администратор | Пользователи, роли, настройки | Администрирование |
+
+---
+
+## 🚀 Агент: @deploy-specialist — Deployment to Ubuntu VM
+
+> **Специализация:** Деплой KPPDF 3.0 на Ubuntu-сервер (192.168.1.46) через Docker Compose.
+> Каноническая инструкция: [`.opencode/agents/deploy-specialist.md`](.opencode/agents/deploy-specialist.md)
+
+### Когда вызывать
+
+- При запросе «задеплой» / «обнови на сервере» / «выкати на прод»
+- При первом развёртывании на новом сервере
+- При проблемах с доступностью сайта после деплоя
+
+### Чек-лист (обязательно!)
+
+- [ ] **Конвертировать .sh в LF:** `sed -i 's/\r$//' deploy.sh deploy/deploy.sh deploy/synology/deploy.sh`
+- [ ] **Проверить deploy/.env:** заполнены JWT_SECRET, JWT_REFRESH_SECRET, DEPLOY_PASSWORD, DEPLOY_HOST, DEPLOY_USER
+- [ ] **Проверить monitoring HOST:** в `deploy/monitoring/server.py` должно быть `HOST = os.getenv("MONITOR_HOST", "0.0.0.0")`
+- [ ] **Проверить SSH:** `ssh -o ConnectTimeout=10 tiit@192.168.1.46 "echo OK"`
+- [ ] **Проверить git pull:** код должен быть свежим
+- [ ] **Запустить:** `bash deploy.sh --skip-seed` (обновление) или `bash deploy.sh` (первый деплой)
+- [ ] **Верифицировать:** health, контейнеры, мониторинг
+
+### Известные проблемы
+
+| Проблема | Решение |
+|----------|---------|
+| `$'\r': command not found` | Не конвертировали CRLF → LF |
+| Monitoring не открывается | Проверить `ss -tlnp \| grep 3001` на сервере |
+| `sudo: a password is required` | Пароль в deploy/.env или NOPASSWD |
+| Backend не отвечает | `docker logs kppdf-backend --tail 50` |
+
+### Ссылки
+
+- Полная инструкция: [`.opencode/agents/deploy-specialist.md`](.opencode/agents/deploy-specialist.md)
+- Конфиг деплоя: `deploy/.env` (не коммитится, в .gitignore)

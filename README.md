@@ -177,6 +177,62 @@ GET /api/v1/dashboard/stats → счётчики по всем таблицам
 
 ---
 
+---
+
+## 🚀 Деплой на production-сервер
+
+> **Полная инструкция:** [`DEPLOY.md`](./DEPLOY.md) | **AI-агент:** [`.opencode/agents/deploy-specialist.md`](.opencode/agents/deploy-specialist.md)
+
+### Быстрый старт (обновление сайта)
+
+```bash
+# 1. Обновить код
+cd C:\Users\user\WebstormProjects\kppdf-3.0
+git pull
+
+# 2. Конвертировать .sh в LF (ОБЯЗАТЕЛЬНО!)
+sed -i 's/\r$//' deploy.sh deploy/deploy.sh deploy/synology/deploy.sh
+
+# 3. Проверить deploy/.env
+grep -v "^#" deploy/.env | grep -v "^$"
+
+# 4. Проверить SSH
+ssh -o ConnectTimeout=10 tiit@192.168.1.46 "echo OK"
+
+# 5. Запустить деплой
+bash deploy.sh --skip-seed
+```
+
+### После деплоя — проверить
+
+| Проверка | Команда | Ожидание |
+|----------|---------|----------|
+| Backend | `curl http://192.168.1.46:3000/api/v1/health` | `{"status":"ok","mongodb":"connected"}` |
+| Frontend | `curl -s -o /dev/null -w '%{http_code}' http://192.168.1.46/` | `200` |
+| Monitoring | открыть `http://192.168.1.46:3001` в браузере | Дашборд с метриками |
+| Docker | `ssh tiit@192.168.1.46 "sudo docker ps"` | Все 3 контейнера Up |
+
+### Известные проблемы (чтоб не мучиться)
+
+| Проблема | Решение |
+|----------|---------|
+| `$'\r': command not found` на сервере | **Забыли конвертировать .sh в LF!** → `sed -i 's/\r$//' deploy.sh` |
+| `http://192.168.1.46:3001` не открывается | Monitoring слушает 127.0.0.1 → исправить на 0.0.0.0 в `server.py`, rebuild |
+| `sudo: a password is required` | Пароль в `deploy/.env` → `DEPLOY_PASSWORD` |
+
+### Адреса
+
+| URL | Назначение |
+|-----|------------|
+| `https://sport-set.ru` | Production (через Cloudflare Tunnel) |
+| `http://192.168.1.46:3000/` | Frontend (прямой доступ) |
+| `http://192.168.1.46:3001/` | Дашборд мониторинга |
+| `http://192.168.1.46:3000/api/v1/health` | Health API |
+
+**Логин:** admin / admin123
+
+---
+
 ## Команда разработки (opencode)
 
 Система из **15 агентов** (1 primary + 14 subagent). Подробная карта и типичные разрывы — в `AGENTS.md` (раздел «Система агентов»).
