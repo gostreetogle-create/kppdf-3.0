@@ -3,7 +3,7 @@
 > **YouGile:** [PLM-126](https://yougile.com/team/0bdbccb0610e/#PLM-126) (редактор) · [PLM-139](https://yougile.com/team/0bdbccb0610e/#PLM-139) (8.1.1 шаблоны) · [PLM-140](https://yougile.com/team/0bdbccb0610e/#PLM-140) (8.1.2 таблицы)  
 > Маршрут: `/quotations/:id` · компонент: `quotation-editor.component.ts`  
 > Реестр: `config/yougile-task-registry.yaml`  
-> Последнее обновление: **2026-05-28** · `ng build` OK
+> Последнее обновление: **2026-05-28** (добавлен `work` / `productKind`) · `ng build` OK
 
 Документ фиксирует UX и технические решения редактора коммерческого предложения: панель блоков, таблицы разных типов, product picker, диалоги на UI-ките.
 
@@ -40,17 +40,18 @@
 |-------------|-----------|---------------------|------------------------|
 | `products` | Товары | `tableKind: 'products'` | да, фильтр `ITEM` |
 | `services` | Услуги | `tableKind: 'services'` | да, фильтр `SERVICE` |
+| `work` | Работы | `tableKind: 'work'` | да, фильтр `WORK` |
 
-- **Один блок каждого типа** — нельзя две таблицы «Товары»; можно **Товары + Услуги** одновременно.
+- **Один блок каждого типа** — нельзя две таблицы «Товары»; можно **Товары + Услуги + Работы** одновременно.
 - Меню **«+» → Таблица**: всегда видны селект и «Добавить таблицу»; занятые типы скрыты из списка (не блокируют меню целиком).
 - Fallback типов: `FALLBACK_TABLE_BLOCK_OPTIONS` + merge с API `/document-table-types?docType=quotation`.
-- Seed: типы `products` и `services` (`backend/src/seed.ts`).
+- Seed: типы `products`, `services`, `work` (`backend/src/seed.ts`).
 
 ### Кнопка подбора в toolbar таблицы
 
 - **«Выбрать товары»** / **«Выбрать услуги»** — `app-kp-button` с подписью и иконкой корзины.
 - Видимость: `tableBlockHasPicker(block)` — по `pickerMetaByKind` (**не затирать fallback при загрузке API**).
-- Default meta: `DEFAULT_PICKER_META` (`products` → `dataSource: 'products'`, `services` → `dataSource: 'services'`).
+- Default meta: `DEFAULT_PICKER_META` (`products` → `dataSource: 'products'` / `ITEM`, `services` → `dataSource: 'services'` / `SERVICE`, `work` → `dataSource: 'work'` / `WORK`).
 
 ### Персистенция
 
@@ -108,7 +109,7 @@
 | `quotation-editor.component.scss` | separator, FAB, dialog, text-card width |
 | `kp-product-picker/*` | row click, paginator, footer, без cart chips |
 | `document-table-type-options.service.ts` | `loadFullTypes`, кеш |
-| `backend/src/seed.ts` | тип таблицы `services` |
+| `backend/src/seed.ts` | типы таблиц `products`, `services`, `work` |
 | `shared/types/quotationItem.interface.ts` | `tableKind` |
 
 ---
@@ -128,7 +129,7 @@
 - **PrimeNG `p-button`** на панели блоков — tech debt (остальное через `kp-*`).
 - **Кодировка** `quotation-editor.component.ts`: на Windows иногда UTF-16 → ломает сборку; сохранять UTF-8.
 - **Колонки таблицы из `document-table-types`** — пока фиксированная вёрстка в редакторе, не из JSON columns.
-- **ProductPicker:** `productKind` для фильтра — маппинг `PRODUCT_KIND_BY_NAME`, не поле в модели типа таблицы.
+- **ProductPicker:** ✅ фильтр по `productKind` из поля модели `document-table-types` (ITEM/SERVICE/WORK). Убран fallback `PRODUCT_KIND_BY_NAME`.
 
 ---
 
