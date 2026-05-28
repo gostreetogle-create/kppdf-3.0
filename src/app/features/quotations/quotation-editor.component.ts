@@ -597,32 +597,40 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
               <app-kp-button
                 icon="pi pi-plus"
                 [rounded]="true"
+                size="large"
                 severity="primary"
+                styleClass="editor__add-fab-btn"
+                [attr.aria-label]="'Добавить блок'"
+                [attr.title]="'Добавить блок'"
                 (buttonClick)="showAddMenu = !showAddMenu"
               />
               <div class="editor__add-menu" *ngIf="showAddMenu" (keydown.escape)="showAddMenu = false" tabindex="-1" role="menu">
                 <app-kp-button label="Текстовый блок" icon="pi pi-align-left" [text]="true" size="small" (buttonClick)="addBlock('text')" />
                 <app-kp-button label="Разделитель" icon="pi pi-minus" [text]="true" size="small" (buttonClick)="addBlock('separator')" />
-                <div class="editor__add-menu-table" role="presentation" (buttonClick)="$event.stopPropagation()" *ngIf="availableTableBlockOptions().length > 0">
+                <div class="editor__add-menu-table" role="presentation" (buttonClick)="$event.stopPropagation()">
                   <span class="editor__add-menu-label">Таблица</span>
-                  <p-select
-                    [ngModel]="selectedTableKind()"
-                    (ngModelChange)="selectedTableKind.set($event)"
-                    [options]="availableTableBlockOptions()"
-                    optionLabel="label"
-                    optionValue="value"
-                    class="w-full"
-                    size="small"
-                    appendTo="body"
-                  />
-                  <app-kp-button
-                    label="Добавить таблицу"
-                    icon="pi pi-table"
-                    [text]="true"
-                    size="small"
-                    class="w-full"
-                    (buttonClick)="addTableBlock()"
-                  />
+                  @if (availableTableBlockOptions().length > 0) {
+                    <p-select
+                      [ngModel]="selectedTableKind()"
+                      (ngModelChange)="selectedTableKind.set($event)"
+                      [options]="availableTableBlockOptions()"
+                      optionLabel="label"
+                      optionValue="value"
+                      class="w-full"
+                      size="small"
+                      appendTo="body"
+                    />
+                    <app-kp-button
+                      label="Добавить таблицу"
+                      icon="pi pi-table"
+                      [text]="true"
+                      size="small"
+                      class="w-full"
+                      (buttonClick)="addTableBlock()"
+                    />
+                  } @else {
+                    <p class="editor__add-menu-hint">{{ tableAddMenuHint() }}</p>
+                  }
                 </div>
               </div>
             </div>
@@ -1169,7 +1177,9 @@ export class QuotationEditorComponent implements OnInit {
   showTemplates = false;
   showAddMenu = false;
   readonly selectedTableKind = signal<string>('products');
-  readonly tableBlockOptions = signal<KpSelectOption[]>([]);
+  readonly tableBlockOptions = signal<KpSelectOption[]>([
+    { label: 'Товары', value: 'products' },
+  ]);
   showTextEditor = false;
   showCellEditor = false;
   editingTextIndex = -1;
@@ -1234,6 +1244,18 @@ export class QuotationEditorComponent implements OnInit {
     if (!kind) return 'Позиции';
     const block = this.blocks().find((b) => b.type === 'table' && this.resolveTableKind(b) === kind);
     return block?.title || this.tableBlockOptions().find((o) => o.value === kind)?.label || 'Позиции';
+  });
+
+  readonly tableAddMenuHint = computed(() => {
+    const tables = this.blocks().filter((block) => block.type === 'table');
+    if (tables.length === 0 && this.tableBlockOptions().length === 0) {
+      return 'Типы таблиц загружаются…';
+    }
+    if (tables.length === 0) {
+      return 'Выберите тип и нажмите «Добавить таблицу».';
+    }
+    const labels = tables.map((block) => block.title || this.resolveTableKind(block));
+    return `На листе уже есть: ${labels.join(', ')}. Удалите блок таблицы, чтобы добавить снова.`;
   });
 
   // ── Prompt-replacement dialog state ──

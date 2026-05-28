@@ -136,9 +136,11 @@ import {
                     @if (multiple()) {
                       <input
                         type="checkbox"
+                        class="kp-product-picker__check-input"
                         [checked]="allPageSelected()"
                         [indeterminate]="somePageSelected() && !allPageSelected()"
                         (change)="toggleSelectAllPage($event)"
+                        (click)="$event.stopPropagation()"
                         aria-label="Выбрать все на странице"
                       />
                     }
@@ -157,29 +159,34 @@ import {
                   <tr
                     class="kp-product-picker__row"
                     tabindex="0"
+                    role="button"
                     [class.kp-product-picker__row--selected]="isInCart(product._id)"
                     [class.kp-product-picker__row--in-doc]="isAlreadyInDoc(product._id)"
+                    [class.kp-product-picker__row--disabled]="isRowDisabled(product)"
                     [attr.title]="rowTooltip(product)"
+                    [attr.aria-label]="'Выбрать ' + product.name"
+                    [attr.aria-pressed]="multiple() ? isInCart(product._id) : singleSelectedId() === product._id"
+                    (click)="onRowActivate(product)"
                     (dblclick)="onRowDblClick(product)"
                     (keydown.enter)="onRowActivate(product)"
                   >
-                    <td class="kp-product-picker__col-check" (click)="$event.stopPropagation()">
+                    <td class="kp-product-picker__col-check">
                       @if (multiple()) {
-                        <input
-                          type="checkbox"
-                          [checked]="isInCart(product._id)"
-                          [disabled]="isRowDisabled(product)"
-                          (change)="toggleCart(product)"
-                          [attr.aria-label]="'Выбрать ' + product.name"
-                        />
+                        <span
+                          class="kp-product-picker__check"
+                          [class.kp-product-picker__check--checked]="isInCart(product._id)"
+                          aria-hidden="true"
+                        >
+                          @if (isInCart(product._id)) {
+                            <i class="pi pi-check"></i>
+                          }
+                        </span>
                       } @else {
-                        <input
-                          type="radio"
-                          name="product-picker-single"
-                          [checked]="singleSelectedId() === product._id"
-                          (change)="selectSingle(product)"
-                          [attr.aria-label]="'Выбрать ' + product.name"
-                        />
+                        <span
+                          class="kp-product-picker__radio"
+                          [class.kp-product-picker__radio--checked]="singleSelectedId() === product._id"
+                          aria-hidden="true"
+                        ></span>
                       }
                     </td>
                     <td class="kp-product-picker__col-photo">
@@ -535,7 +542,12 @@ export class KpProductPickerComponent {
   }
 
   onRowActivate(product: IProduct): void {
-    this.onRowDblClick(product);
+    if (this.isRowDisabled(product)) return;
+    if (this.multiple()) {
+      this.toggleCart(product);
+    } else if (product._id) {
+      this.selectSingle(product);
+    }
   }
 
   onRowDblClick(product: IProduct): void {

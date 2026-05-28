@@ -593,9 +593,32 @@
   padding: var(--kp-space-2) 0;
 }
 
+:host ::ng-deep .editor__add-fab-btn.p-button {
+  width: 3.25rem;
+  height: 3.25rem;
+  min-width: 3.25rem;
+  padding: 0;
+  border-radius: 50%;
+  box-shadow: var(--kp-shadow-lg);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  .p-button-icon {
+    font-size: 1.25rem;
+  }
+
+  &:enabled:hover {
+    transform: scale(1.05);
+    box-shadow: var(--kp-shadow-lg), 0 0 0 4px var(--kp-primary-soft);
+  }
+
+  &:enabled:active {
+    transform: scale(0.98);
+  }
+}
+
 .editor__add-menu {
   position: absolute;
-  bottom: 100%;
+  bottom: calc(100% + var(--kp-space-2));
   left: 50%;
   transform: translateX(-50%);
   background: var(--kp-surface);
@@ -607,7 +630,7 @@
   flex-direction: column;
   gap: 4px;
   z-index: 20;
-  min-width: 200px;
+  min-width: 240px;
 }
 
 .editor__add-menu-table {
@@ -621,7 +644,16 @@
 
 .editor__add-menu-label {
   font-size: var(--kp-font-size-caption);
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--kp-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.editor__add-menu-hint {
+  margin: 0;
+  font-size: var(--kp-font-size-caption);
+  line-height: 1.45;
   color: var(--kp-text-secondary);
 }
 

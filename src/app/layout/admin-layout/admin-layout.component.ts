@@ -194,6 +194,12 @@ export class AdminLayoutComponent {
           route: '/attribute-definitions',
           requiresAny: [PERMISSIONS.attributes.view],
         },
+        {
+          label: 'Типы таблиц',
+          icon: 'pi pi-table',
+          route: '/document-table-types',
+          requiresAny: [PERMISSIONS['document-table-types'].view],
+        },
       ],
     },
   ];
