@@ -1,7 +1,6 @@
 import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { KpCardComponent } from '../kp-card.component';
-import { KpReadinessBarComponent } from '../kp-readiness-bar/kp-readiness-bar.component';
 
 export interface KpStatItem {
   label: string;
@@ -12,8 +11,6 @@ export interface KpStatItem {
   value?: number | string;
   /** Режим hub-карточки (разделы, документы) */
   description?: string;
-  /** Процент готовности модуля (опционально) */
-  readinessPercent?: number;
 }
 
 export interface KpStatSection {
@@ -21,15 +18,13 @@ export interface KpStatSection {
   label: string;
   icon?: string;
   items: KpStatItem[];
-  /** Средний процент готовности секции */
-  readinessPercent?: number;
 }
 
 @Component({
   selector: 'app-kp-stat-grid',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, KpCardComponent, KpReadinessBarComponent],
+  imports: [RouterLink, KpCardComponent],
   template: `
     @if (loading()) {
       <div class="kp-stat-grid kp-stat-grid--loading" role="status" aria-live="polite">
@@ -51,15 +46,7 @@ export interface KpStatSection {
                 }
                 {{ section.label }}
               </span>
-              @if (section.readinessPercent !== undefined) {
-                <span class="kp-stat-grid__section-readiness">
-                  <app-kp-readiness-bar
-                    [percent]="section.readinessPercent"
-                    [label]="section.label"
-                    [compact]="true"
-                  />
-                </span>
-              }
+
             </h2>
           }
           <div class="kp-stat-grid__grid">
@@ -71,16 +58,7 @@ export interface KpStatSection {
                 [queryParams]="item.queryParams"
               >
                 <app-kp-card>
-                  @if (!isHubItem(item) && item.readinessPercent !== undefined) {
-                    <div kpCardHeader class="kp-stat-grid__card-readiness">
-                      <app-kp-readiness-bar
-                        [percent]="item.readinessPercent"
-                        [label]="item.label"
-                        [edge]="true"
-                        [showLabel]="false"
-                      />
-                    </div>
-                  }
+
                   @if (isHubItem(item)) {
                     <div class="kp-stat-grid__hub-body">
                       <i [class]="item.icon + ' kp-stat-grid__hub-icon'" aria-hidden="true"></i>

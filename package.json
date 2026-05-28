@@ -13,9 +13,6 @@
     "freeze:status": "node .opencode/lock/freeze-check.mjs --status",
     "freeze:check": "node .opencode/lock/freeze-check.mjs --check-hashes",
     "freeze:update": "node .opencode/lock/freeze-check.mjs --update-hashes",
-    "readiness:sync": "node .opencode/lock/readiness-sync.mjs",
-    "readiness:feedback": "node .opencode/lock/readiness-feedback-sync.mjs --list-open",
-    "readiness:prompt": "node .opencode/lock/readiness-feedback-sync.mjs --prompt-open",
     "prepare": "node .opencode/lock/setup-githooks.mjs",
     "backend": "cd backend && node dev.js"
   },

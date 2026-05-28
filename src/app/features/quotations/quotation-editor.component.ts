@@ -54,6 +54,7 @@ interface EditorBlockCell {
 
 interface EditorBlock {
   _id?: string;
+  clientKey?: string;
   type: 'text' | 'table' | 'header' | 'separator';
   order: number;
   title?: string;
@@ -89,6 +90,10 @@ interface DocumentTemplate {
   isDefault: boolean;
   backgroundImage?: string;
   blocks: EditorBlock[];
+}
+
+interface RowActionState {
+  index: number;
 }
 
 /** Типы таблиц в редакторе КП (расширяется через настройки приложения — см. backlog). */
@@ -245,6 +250,10 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                 [class.editor__block--header]="block.type === 'header'"
                 [class.editor__block--separator]="block.type === 'separator'"
                 [class.editor__block--reorder-locked]="blocksReorderLocked()"
+                [class.editor__block--controls-active]="isBlockControlsVisible(i, block)"
+                [class.editor__block--has-controls]="hasEditableControls(block)"
+                (appKpSortableItemStarted)="onBlockDragStarted(i)"
+                (appKpSortableItemEnded)="onBlockDragEnded()"
               >
                 <!-- Block Controls (hover) — широкая панель навигации -->
                 <div class="editor__block-controls" role="toolbar" [attr.aria-label]="'Настройки блока ' + (i + 1)">
@@ -383,6 +392,10 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                   [style.font-weight]="block.settings.fontWeight"
                   [style.padding-top.px]="block.settings.paddingTop"
                   [style.padding-bottom.px]="block.settings.paddingBottom"
+                  (mouseenter)="setActiveBlock(i)"
+                  (mouseleave)="clearActiveBlock(i)"
+                  (focusin)="setActiveBlock(i)"
+                  (focusout)="clearActiveBlock(i)"
                 >
                   <div [innerHTML]="block.content"></div>
                 </div>
@@ -395,6 +408,10 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                   appKpSortableHandle
                   [style.padding-top.px]="block.settings.paddingTop"
                   [style.padding-bottom.px]="block.settings.paddingBottom"
+                  (mouseenter)="setActiveBlock(i)"
+                  (mouseleave)="clearActiveBlock(i)"
+                  (focusin)="setActiveBlock(i)"
+                  (focusout)="clearActiveBlock(i)"
                 >
                   <app-kp-split-text-card
                     [title]="block.title ?? ''"
@@ -413,29 +430,46 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                   appKpSortableHandle
                   [style.padding-top.px]="block.settings.paddingTop"
                   [style.padding-bottom.px]="block.settings.paddingBottom"
+                  (mouseenter)="setActiveBlock(i)"
+                  (mouseleave)="clearActiveBlock(i)"
+                  (focusin)="setActiveBlock(i)"
+                  (focusout)="clearActiveBlock(i)"
                 >
                   <hr class="editor__separator" />
                 </div>
 
                 <!-- Table Block -->
-                <div *ngIf="block.type === 'table'" class="editor__table-wrapper">
+                <div
+                  *ngIf="block.type === 'table'"
+                  class="editor__table-wrapper editor__block-drag-surface"
+                  [class.editor__block-drag-surface--active]="!blocksReorderLocked()"
+                  (mouseenter)="setActiveBlock(i)"
+                  (mouseleave)="clearActiveBlock(i)"
+                  (focusin)="setActiveBlock(i)"
+                  (focusout)="clearActiveBlock(i)"
+                >
                   <div class="editor__table-toolbar">
-                    <span
-                      class="editor__table-title editor__block-drag-surface"
-                      [class.editor__block-drag-surface--active]="!blocksReorderLocked()"
-                      appKpSortableHandle
-                    >{{ block.title || 'Таблица' }}</span>
+                    <div class="editor__table-toolbar-left">
+                      <button
+                        type="button"
+                        class="editor__table-drag-handle"
+                        appKpSortableHandle
+                        [disabled]="blocksReorderLocked()"
+                        [attr.aria-label]="'Переместить блок таблицы ' + (i + 1)"
+                        title="Перетащить блок таблицы"
+                      >
+                        <i class="pi pi-grip-vertical" aria-hidden="true"></i>
+                      </button>
+                      <span class="editor__table-title">{{ block.title || 'Таблица' }}</span>
+                    </div>
                     <div class="editor__table-toolbar-actions">
                       <app-kp-button
-                        label="Добавить товар"
-                        icon="pi pi-plus"
-                        size="small"
-                        (buttonClick)="addItem()"
-                      />
-                      <app-kp-button
-                        label="Выбрать товары"
                         icon="pi pi-shopping-cart"
                         size="small"
+                        [rounded]="true"
+                        [text]="true"
+                        [attr.aria-label]="'Выбрать товары'"
+                        [attr.title]="'Выбрать товары'"
                         (buttonClick)="openProductPicker()"
                       />
                     </div>
@@ -460,41 +494,32 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                         class="editor__table-row"
                         [class.editor__table-row--selected]="selectedItemIndex() === i"
                         (click)="onTableRowClick($event, i)"
-                        (dblclick)="onTableRowDblclick($event, i)"
                       >
-                        <td class="editor__table-idx">{{ i + 1 }}</td>
-                        <td>
-                          <input
-                            pInputText
-                            size="small"
-                            [(ngModel)]="item.sku"
-                            class="editor__table-input"
-                            placeholder="Арт."
-                            (dblclick)="$event.stopPropagation()"
-                          />
+                        <td class="editor__table-idx">
+                          <button type="button" class="editor__table-cell-action" (click)="openRowActions(i)">
+                            {{ i + 1 }}
+                          </button>
                         </td>
                         <td>
-                          <div
+                          <button type="button" class="editor__table-cell-action" (click)="openRowActions(i)">
+                            {{ item.sku || '—' }}
+                          </button>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
                             class="editor__table-photo"
-                            (click)="onTablePhotoClick($event, i)"
-                            (keydown.enter)="onTablePhotoClick($event, i)"
-                            tabindex="0"
-                            role="button"
-                            aria-label="Фото товара"
+                            (click)="openRowActions(i)"
+                            [attr.aria-label]="'Действия для товара ' + (i + 1)"
                           >
                             <i class="pi pi-image" *ngIf="!item.photo"></i>
                             <img *ngIf="item.photo" [src]="item.photo" class="editor__table-photo-img" alt="фото" />
-                          </div>
+                          </button>
                         </td>
                         <td>
-                          <input
-                            pInputText
-                            size="small"
-                            [(ngModel)]="item.name"
-                            class="editor__table-input editor__table-input--wide"
-                            placeholder="Наименование товара"
-                            (dblclick)="$event.stopPropagation()"
-                          />
+                          <button type="button" class="editor__table-cell-action editor__table-cell-action--wide" (click)="openRowActions(i)">
+                            {{ item.name || 'Без названия' }}
+                          </button>
                         </td>
                         <td>
                           <p-inputNumber
@@ -507,14 +532,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                           />
                         </td>
                         <td>
-                          <input
-                            pInputText
-                            size="small"
-                            [(ngModel)]="item.unit"
-                            class="editor__table-input"
-                            placeholder="шт"
-                            (dblclick)="$event.stopPropagation()"
-                          />
+                          <span class="editor__table-readonly">{{ item.unit || 'шт' }}</span>
                         </td>
                         <td>
                           <p-inputNumber
@@ -959,6 +977,61 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
       </ng-template>
     </p-dialog>
 
+    <!-- ═══ Row Actions Dialog ═══ -->
+    <p-dialog
+      [(visible)]="showRowActionsDialog"
+      header="Действия с товарной позицией"
+      [modal]="true"
+      [draggable]="false"
+      [resizable]="false"
+      [style]="{ width: '420px', maxWidth: '90vw' }"
+    >
+      <div class="editor__row-actions">
+        @if (rowActionState(); as state) {
+          <div class="editor__row-actions-summary">
+            Позиция {{ state.index + 1 }}: {{ items()[state.index]?.name || 'Без названия' }}
+          </div>
+          <div class="editor__row-actions-buttons">
+            <app-kp-button
+              label="Заменить товар"
+              icon="pi pi-refresh"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              styleClass="w-full"
+              (buttonClick)="replaceItemFromActions()"
+            />
+            <app-kp-button
+              label="Редактировать товар"
+              icon="pi pi-pencil"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              styleClass="w-full"
+              (buttonClick)="editProductFromActions()"
+            />
+            <app-kp-button
+              label="Удалить позицию"
+              icon="pi pi-trash"
+              severity="danger"
+              [outlined]="true"
+              size="small"
+              styleClass="w-full"
+              (buttonClick)="removeItemFromActions()"
+            />
+            <app-kp-button
+              label="Отмена"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              styleClass="w-full"
+              (buttonClick)="closeRowActionsDialog()"
+            />
+          </div>
+        }
+      </div>
+    </p-dialog>
+
     <!-- ═══ Separator Padding Dialog ═══ -->
     <p-dialog
       [(visible)]="showPaddingDialog"
@@ -1090,6 +1163,10 @@ export class QuotationEditorComponent implements OnInit {
   readonly productPickerVisible = signal(false);
   readonly replaceItemIndex = signal<number | null>(null);
   readonly selectedItemIndex = signal<number | null>(null);
+  readonly activeBlockIndex = signal<number | null>(null);
+  readonly isDraggingBlock = signal(false);
+  readonly rowActionState = signal<RowActionState | null>(null);
+  showRowActionsDialog = false;
 
   /** true = порядок блоков зафиксирован, перетаскивание отключено */
   readonly blocksReorderLocked = signal(false);
@@ -1302,22 +1379,6 @@ export class QuotationEditorComponent implements OnInit {
   }
 
   // ===== Items =====
-  addItem(): void {
-    this.items.update(items => [
-      ...items,
-      {
-        sku: '',
-        photo: undefined,
-        name: '',
-        qty: 1,
-        unit: 'шт',
-        price: 0,
-        sum: 0,
-        order: items.length,
-      },
-    ]);
-  }
-
   openProductPicker(): void {
     this.replaceItemIndex.set(null);
     this.productPickerVisible.set(true);
@@ -1348,6 +1409,52 @@ export class QuotationEditorComponent implements OnInit {
     event.stopPropagation();
     this.selectItem(index);
     this.showPhotoInput(index);
+  }
+
+  openRowActions(index: number): void {
+    this.selectItem(index);
+    this.rowActionState.set({ index });
+    this.showRowActionsDialog = true;
+  }
+
+  closeRowActionsDialog(): void {
+    this.showRowActionsDialog = false;
+    this.rowActionState.set(null);
+  }
+
+  replaceItemFromActions(): void {
+    const state = this.rowActionState();
+    if (!state) return;
+    this.closeRowActionsDialog();
+    this.replaceItem(state.index);
+  }
+
+  editProductFromActions(): void {
+    const state = this.rowActionState();
+    if (!state) return;
+    const item = this.items()[state.index];
+    this.closeRowActionsDialog();
+    if (item?.productId) {
+      this.router.navigate(['/products'], { queryParams: { editProductId: item.productId } });
+      this.notification.add({
+        severity: 'info',
+        summary: 'Редактирование товара',
+        detail: 'Открыт справочник товаров. Выберите нужную карточку для редактирования.',
+      });
+      return;
+    }
+    this.notification.add({
+      severity: 'warn',
+      summary: 'Нет связи с товаром',
+      detail: 'Эта позиция не привязана к карточке товара. Используйте "Заменить товар".',
+    });
+  }
+
+  removeItemFromActions(): void {
+    const state = this.rowActionState();
+    if (!state) return;
+    this.closeRowActionsDialog();
+    this.removeItem(state.index);
   }
 
   selectItem(index: number): void {
@@ -1480,7 +1587,7 @@ export class QuotationEditorComponent implements OnInit {
       newBlock.cells = [{ content: 'Новый текст...' }];
       newBlock.content = '';
     }
-    this.blocks.update(blocks => [...blocks, newBlock]);
+    this.blocks.update((blocks) => [...blocks, this.withClientKey(newBlock)]);
   }
 
   addTableBlock(): void {
@@ -1501,11 +1608,41 @@ export class QuotationEditorComponent implements OnInit {
         paddingBottom: 8,
       },
     };
-    this.blocks.update((blocks) => [...blocks, newBlock]);
+    this.blocks.update((blocks) => [...blocks, this.withClientKey(newBlock)]);
   }
 
   toggleBlocksReorderLock(): void {
     this.blocksReorderLocked.update((locked) => !locked);
+    this.activeBlockIndex.set(null);
+  }
+
+  hasEditableControls(block: EditorBlock): boolean {
+    return block.type === 'text' || block.type === 'header' || block.type === 'separator' || block.type === 'table';
+  }
+
+  setActiveBlock(index: number): void {
+    if (this.blocksReorderLocked() || this.isDraggingBlock()) return;
+    this.activeBlockIndex.set(index);
+  }
+
+  clearActiveBlock(index: number): void {
+    if (this.activeBlockIndex() === index) {
+      this.activeBlockIndex.set(null);
+    }
+  }
+
+  isBlockControlsVisible(index: number, block: EditorBlock): boolean {
+    return this.hasEditableControls(block) && this.activeBlockIndex() === index && !this.isDraggingBlock();
+  }
+
+  onBlockDragStarted(index: number): void {
+    this.isDraggingBlock.set(true);
+    this.activeBlockIndex.set(index);
+  }
+
+  onBlockDragEnded(): void {
+    this.isDraggingBlock.set(false);
+    this.activeBlockIndex.set(null);
   }
 
   setBlockAlign(index: number, align: 'left' | 'center' | 'right'): void {
@@ -1629,7 +1766,7 @@ export class QuotationEditorComponent implements OnInit {
 
     this.blocks.update(blocks => {
       const reordered = moveSortableItems(blocks, event);
-      return reordered.map((block, order) => ({ ...block, order }));
+      return reordered.map((block, order) => ({ ...block, order, clientKey: block.clientKey ?? this.nextBlockClientKey() }));
     });
   }
 
@@ -1768,7 +1905,7 @@ export class QuotationEditorComponent implements OnInit {
   }
 
   private normalizeBlocks(blocks: EditorBlock[]): EditorBlock[] {
-    return blocks.map((block) => this.normalizeTableBlock(this.normalizeTextBlock(block)));
+    return blocks.map((block) => this.withClientKey(this.normalizeTableBlock(this.normalizeTextBlock(block))));
   }
 
   private normalizeTableBlock(block: EditorBlock): EditorBlock {
@@ -1819,7 +1956,21 @@ export class QuotationEditorComponent implements OnInit {
   }
 
   trackByBlock(index: number, _block: EditorBlock): string {
-    return `${_block.type}-${index}`;
+    return _block._id || _block.clientKey || `${_block.type}-${index}`;
+  }
+
+  private blockKeySeq = 0;
+
+  private nextBlockClientKey(): string {
+    this.blockKeySeq += 1;
+    return `b-${this.blockKeySeq}`;
+  }
+
+  private withClientKey(block: EditorBlock): EditorBlock {
+    if (block.clientKey) {
+      return block;
+    }
+    return { ...block, clientKey: this.nextBlockClientKey() };
   }
 
   // ===== Background =====

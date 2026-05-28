@@ -1,0 +1,104 @@
+{
+  "sheetName": "products",
+  "match": {
+    "sheetColumn": "Артикул",
+    "inputAliases": ["артикул", "sku", "код", "код товара", "code"]
+  },
+  "updates": [
+    {
+      "sheetColumn": "Наименование",
+      "inputAliases": ["наименование", "название", "товар", "name"]
+    },
+    {
+      "sheetColumn": "Тип",
+      "inputAliases": ["тип", "kind"]
+    },
+    {
+      "sheetColumn": "Ед. изм.",
+      "inputAliases": ["ед изм", "единица", "unit", "unitcode"]
+    },
+    {
+      "sheetColumn": "Категория",
+      "inputAliases": ["категория", "category"]
+    },
+    {
+      "sheetColumn": "Подкатегория",
+      "inputAliases": ["подкатегория", "subcategory"]
+    },
+    {
+      "sheetColumn": "Цена",
+      "inputAliases": ["цена", "price", "pricerub"]
+    },
+    {
+      "sheetColumn": "Себестоимость",
+      "inputAliases": ["себестоимость", "costrub", "cost"]
+    },
+    {
+      "sheetColumn": "Остаток",
+      "inputAliases": ["остаток", "stockqty", "stock"]
+    },
+    {
+      "sheetColumn": "Статус",
+      "inputAliases": ["статус", "status"]
+    },
+    {
+      "sheetColumn": "Описание",
+      "inputAliases": ["описание", "description"]
+    },
+    {
+      "sheetColumn": "Заметки",
+      "inputAliases": ["заметки", "notes"]
+    },
+    {
+      "sheetColumn": "Фото URL",
+      "inputAliases": ["фото url", "imageurl", "photo"]
+    },
+    {
+      "sheetColumn": "Высота",
+      "inputAliases": ["высота", "height"]
+    },
+    {
+      "sheetColumn": "Длина",
+      "inputAliases": ["длина", "length"]
+    },
+    {
+      "sheetColumn": "Ширина",
+      "inputAliases": ["ширина", "width"]
+    },
+    {
+      "sheetColumn": "Вес",
+      "inputAliases": ["вес", "weight"]
+    },
+    {
+      "sheetColumn": "Материалы",
+      "inputAliases": ["материалы", "materials"]
+    },
+    {
+      "sheetColumn": "Монтаж",
+      "inputAliases": ["монтаж", "installation"]
+    },
+    {
+      "sheetColumn": "Назначение",
+      "inputAliases": ["назначение", "purpose"]
+    }
+  ],
+  "pdfPatterns": [
+    {
+      "targetAlias": "артикул",
+      "regex": "(?:Артикул|SKU|Код)\\s*[:\\-]\\s*([A-Za-z0-9\\-_/]+)"
+    },
+    {
+      "targetAlias": "наименование",
+      "regex": "(?:Наименование|Название)\\s*[:\\-]\\s*(.+)"
+    },
+    {
+      "targetAlias": "цена",
+      "regex": "(?:Цена|Price)\\s*[:\\-]\\s*([0-9]+(?:[\\.,][0-9]+)?)"
+    },
+    {
+      "targetAlias": "себестоимость",
+      "regex": "(?:Себестоимость|Cost)\\s*[:\\-]\\s*([0-9]+(?:[\\.,][0-9]+)?)"
+    }
+  ],
+  "archiveMode": "processed_only"
+}

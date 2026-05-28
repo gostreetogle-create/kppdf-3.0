@@ -29,5 +29,7 @@
 - [ ] chief-architect в opencode.json
 
 ## Новое от 2026-05-28
-- [ ] **Деплой обновлённого мониторинга на Synology** — дашборд обновлён (график времени ответа sport-set.ru, фикс `os.uname()` для Windows, добавлен User-Agent для Cloudflare). Нужно задеплоить `monitoring/server.py` и `monitoring/index.html` на Synology.
+- [ ] **Товары: недостающие поля (Sheets ↔ MongoDB ↔ UI)** — после импорта 666 позиций из Google Sheets в MongoDB часть колонок не переносится: **Фото URL / Фото JSON**, **Себестоимость**, **Заметки** (и при необходимости явная **Подкатегория**). Нужно: расширить `IProduct` + `product.model.ts`, форму «Товары», `sync-sheet-to-mongo.js`; синхронизировать `shared/types` FE/BE; не ломать существующие 689 записей (миграция fill-empty).
+- [ ] **Деплой обновлённого мониторинга на Synology** — дашборд обновлён (график времени ответа sport-set.ru, фикс `os.uname()` для Windows, добавлен User-Agent для Cloudflare). Нужно задеплоить `deploy/monitoring/server.py` и `monitoring/index.html` на Synology.
 - [ ] **e2e тесты для quotation API** — supertest установлен (`backend/package.json`), тесты не написаны. Нужно создать `backend/src/__tests__/quotation.e2e.test.ts` с CRUD + permissions.
+- [ ] **Система скидок в КП (отдельный этап)** — спроектировать модель скидок для строк коммерческого предложения (`%`/`₽`, правила расчёта, округления, приоритеты), UI-настройки и серверную валидацию без нарушения текущего формата данных.

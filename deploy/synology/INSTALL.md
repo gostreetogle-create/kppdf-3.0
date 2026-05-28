@@ -3,6 +3,11 @@
 > Полная инструкция для первого развёртывания и последующих обновлений.
 > Краткий чеклист: [RUNBOOK.md](./RUNBOOK.md)
 
+## Source of Truth
+
+- Canonical deployment flow: `DEPLOY.md`
+- Этот документ: только детали установки Synology/Ubuntu
+
 ---
 
 ## 1. Архитектурные решения

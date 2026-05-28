@@ -15,6 +15,14 @@ function cookieFlags(): string {
   return `; HttpOnly${secure}${sameSite}; Path=`;
 }
 
+function safeDecode(value: string): string | undefined {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return undefined;
+  }
+}
+
 /** Прочитать значение cookie из заголовка Cookie */
 export function getCookie(req: Request, name: string): string | undefined {
   const raw = req.headers.cookie;
@@ -24,7 +32,7 @@ export function getCookie(req: Request, name: string): string | undefined {
     const eq = trimmed.indexOf('=');
     if (eq === -1) continue;
     if (trimmed.slice(0, eq) === name) {
-      return decodeURIComponent(trimmed.slice(eq + 1));
+      return safeDecode(trimmed.slice(eq + 1));
     }
   }
   return undefined;

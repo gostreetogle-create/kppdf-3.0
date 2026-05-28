@@ -10,7 +10,14 @@ import type { JwtPayload, AuthRequest } from '../types/auth';
  * Verifies access token from Bearer header or httpOnly cookie.
  */
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction): void {
-  const token = extractAccessToken(req);
+  let token: string | undefined;
+  try {
+    token = extractAccessToken(req);
+  } catch {
+    res.status(401).json(error('Unauthorized: invalid session'));
+    return;
+  }
+
   if (!token) {
     res.status(401).json(error('Unauthorized: no token provided'));
     return;

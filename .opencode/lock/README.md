@@ -107,6 +107,12 @@ git add … && git commit -m "…"
 
 Источник: [`.opencode/project-readiness.yaml`](../project-readiness.yaml) → `npm run readiness:sync` → `public/project-readiness.json`.
 
+### Граница ответственности: Readiness vs FreezeGuard
+
+- **Readiness**: прогресс проекта (проценты, чеклисты, этапы) и UI-полоски готовности.
+- **FreezeGuard**: правила изменения файлов (wip/locked/frozen + hash-контроль).
+- Эти системы не заменяют друг друга: readiness не блокирует изменения, freeze не отражает готовность.
+
 | Действие | Команда |
 |----------|---------|
 | Обновить JSON после правки YAML | `npm run readiness:sync` |

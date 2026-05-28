@@ -1,6 +1,6 @@
-import { Component, inject, OnInit, signal, model, computed, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import {
@@ -13,11 +13,6 @@ import {
   type KpStatItem,
 } from '../../shared/ui';
 import { DashboardService, type DashboardStats, type DashboardStatItem } from '../../core/dashboard.service';
-import { AuthService } from '../../core/auth.service';
-import { READINESS_FEEDBACK } from '../../core/permissions';
-import type { ProjectReadinessSnapshot, ReadinessFeedbackSnapshot } from '../../core/project-readiness.model';
-import { ReadinessShowcaseComponent } from './readiness-showcase.component';
-import { ReadinessFeedbackService } from './readiness-feedback.service';
 
 const DEPT_GROUPS: { id: string; label: string; icon: string }[] = [
   { id: 'admin', label: 'Администрирование', icon: 'pi pi-shield' },
@@ -69,14 +64,6 @@ const DEPT_STAT_KEYS: Record<string, (keyof DashboardStats)[]> = {
   accounting: ['costCalculations', 'actualCosts', 'shippingDocs'],
 };
 
-function sectionReadiness(items: KpStatItem[]): number | undefined {
-  const percents = items
-    .map((item) => item.readinessPercent)
-    .filter((value): value is number => value !== undefined);
-  if (percents.length === 0) return undefined;
-  return Math.round(percents.reduce((sum, value) => sum + value, 0) / percents.length);
-}
-
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
@@ -87,7 +74,6 @@ function sectionReadiness(items: KpStatItem[]): number | undefined {
     KpButtonComponent,
     EmptyStateComponent,
     PageLayoutComponent,
-    ReadinessShowcaseComponent,
   ],
   template: `
     <app-page-layout>
@@ -100,15 +86,6 @@ function sectionReadiness(items: KpStatItem[]): number | undefined {
             </span>
           }
         </div>
-        @if (readinessEnabled()) {
-          <app-kp-button
-            label="Статус реализации"
-            icon="pi pi-list-check"
-            severity="secondary"
-            size="small"
-            (buttonClick)="openReadiness()"
-          />
-        }
       </div>
 
       @if (loadError()) {
@@ -130,22 +107,12 @@ function sectionReadiness(items: KpStatItem[]): number | undefined {
         <app-kp-stat-grid [sections]="sections()" [loading]="loading()" />
       }
     </app-page-layout>
-
-    <app-readiness-showcase
-      [(visible)]="showcaseOpen"
-      [snapshot]="readinessSnapshot()"
-      [feedback]="feedbackSnapshot()"
-      [canEdit]="canEditFeedback()"
-      (feedbackUpdated)="reloadFeedback()"
-    />
     <app-kp-toast position="top-right" />
   `,
   styleUrl: './dashboard-page.component.scss',
 })
 export class DashboardPageComponent implements OnInit {
   private readonly dashboard = inject(DashboardService);
-  private readonly feedbackService = inject(ReadinessFeedbackService);
-  private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly messageService = inject(MessageService);
 
@@ -153,47 +120,20 @@ export class DashboardPageComponent implements OnInit {
   readonly loadError = signal(false);
   readonly totalRecords = signal(0);
   readonly sections = signal<KpStatSection[]>([]);
-  readonly readinessSnapshot = signal<ProjectReadinessSnapshot | null>(null);
-  readonly feedbackSnapshot = signal<ReadinessFeedbackSnapshot | null>(null);
-  readonly readinessEnabled = signal(false);
-  readonly showcaseOpen = model(false);
-
-  readonly canEditFeedback = computed(() => this.auth.hasPermission(READINESS_FEEDBACK.edit));
 
   ngOnInit(): void {
     this.loadStats();
-  }
-
-  openReadiness(): void {
-    this.showcaseOpen.set(true);
-  }
-
-  reloadFeedback(): void {
-    this.feedbackService
-      .getFeedback()
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        catchError(() => of(null)),
-      )
-      .subscribe((feedback) => this.feedbackSnapshot.set(feedback));
   }
 
   loadStats(): void {
     this.loading.set(true);
     this.loadError.set(false);
 
-    forkJoin({
-      stats: this.dashboard.getStats(),
-      readiness: this.dashboard.getReadiness(),
-      feedback: this.feedbackService.getFeedback().pipe(catchError(() => of(null))),
-    })
+    this.dashboard.getStats()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ stats: res, readiness, feedback }) => {
+        next: (res) => {
           this.totalRecords.set(res.data.total);
-          this.readinessSnapshot.set(readiness);
-          this.feedbackSnapshot.set(feedback);
-          this.readinessEnabled.set(readiness !== null);
 
           const groups: KpStatSection[] = DEPT_GROUPS.map((dept) => {
             const items = (DEPT_STAT_KEYS[dept.id] || [])
@@ -202,14 +142,12 @@ export class DashboardPageComponent implements OnInit {
                 if (!raw || typeof raw !== 'object' || !('label' in raw)) return null;
                 const stat = raw as DashboardStatItem;
                 const statRoute = STAT_ROUTES[key];
-                const readinessPercent = readiness?.items[key]?.percent;
                 return {
                   label: stat.label,
                   icon: stat.icon,
                   value: stat.total,
                   route: statRoute?.path,
                   queryParams: statRoute?.queryParams,
-                  readinessPercent,
                 };
               })
               .filter((item): item is NonNullable<typeof item> => item !== null);
@@ -219,7 +157,6 @@ export class DashboardPageComponent implements OnInit {
               label: dept.label,
               icon: dept.icon,
               items,
-              readinessPercent: readiness ? sectionReadiness(items) : undefined,
             };
           });
           this.sections.set(groups);

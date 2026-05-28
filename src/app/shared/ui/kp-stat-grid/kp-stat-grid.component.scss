@@ -29,11 +29,6 @@
   min-width: 0;
 }
 
-.kp-stat-grid__section-readiness {
-  flex: 0 1 160px;
-  min-width: 120px;
-}
-
 .kp-stat-grid__section-icon {
   font-size: 16px;
   color: var(--kp-text-soft);
@@ -67,18 +62,6 @@
 
   &--hub:hover .kp-card {
     border-color: var(--kp-primary-soft, var(--kp-primary));
-  }
-}
-
-.kp-stat-grid__card-readiness {
-  display: block;
-  width: 100%;
-}
-
-.kp-stat-grid__card:has(.kp-stat-grid__card-readiness) {
-  .kp-card__header {
-    padding: 0;
-    border-bottom: none;
   }
 }
 

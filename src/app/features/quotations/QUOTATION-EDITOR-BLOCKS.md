@@ -104,7 +104,7 @@
 - **PrimeNG в `QuotationEditor`** — допустимый tech debt (P0, см. `AGENTS.md`); панель блоков пока на `p-button`, не `kp-button`.
 - **Кодировка файла:** `quotation-editor.component.ts` на Windows иногда сохраняется как **UTF-16** → ломает `ng build` (`Invalid character`). При ошибке сборки: пересохранить в UTF-8 или скрипт конвертации `utf16le` → `utf8`.
 - **Персистенция замка** — только в сессии редактора, не в шаблоне/БД.
-- **ProductPicker** и таблица товаров — отдельная интеграция (см. `AUDIT-PRODUCTPICKER.md`).
+- **ProductPicker** и таблица товаров — отдельная интеграция (см. `docs/archive/analysis/AUDIT-PRODUCTPICKER.md`).
 
 ---
 

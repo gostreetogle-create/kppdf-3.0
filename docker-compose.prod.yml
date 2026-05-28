@@ -58,7 +58,7 @@ services:
 
   monitoring:
     build:
-      context: ./monitoring
+      context: ./deploy/monitoring
       dockerfile: Dockerfile
     container_name: kppdf-monitor
     restart: unless-stopped

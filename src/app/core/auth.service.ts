@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, of, map, catchError, firstValueFrom } from 'rxjs';
 import { environment } from '@env/environment';
@@ -106,9 +106,17 @@ export class AuthService {
   async initializeAuth(): Promise<void> {
     try {
       await firstValueFrom(this.fetchMe());
-    } catch {
-      const user = await firstValueFrom(this.refresh());
-      if (!user) {
+    } catch (err: unknown) {
+      if (this.isServerOrNetworkError(err)) {
+        return;
+      }
+
+      try {
+        const user = await firstValueFrom(this.refresh());
+        if (!user) {
+          this.clearSession();
+        }
+      } catch {
         this.clearSession();
       }
     }
@@ -127,5 +135,10 @@ export class AuthService {
   private clearSession(): void {
     this.currentUser.set(null);
     this.permissions.set([]);
+  }
+
+  private isServerOrNetworkError(err: unknown): boolean {
+    if (!(err instanceof HttpErrorResponse)) return false;
+    return err.status === 0 || err.status >= 500;
   }
 }

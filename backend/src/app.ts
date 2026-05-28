@@ -37,7 +37,7 @@ import { productPassportRouter } from './modules/product-passports/productPasspo
 import { complianceRuleRouter, complianceCheckRouter } from './modules/compliance-validator/complianceRule.router';
 import { attributeDefinitionRouter } from './modules/attribute-definitions/attributeDefinition.router';
 import { entityAttributeValueRouter } from './modules/entity-attribute-values/entityAttributeValue.router';
-import { readinessRouter } from './modules/readiness/readiness.router';
+
 
 const app = express();
 
@@ -81,8 +81,6 @@ app.use('/api/v1/auth', authRouter);
 // Dashboard
 app.use('/api/v1/dashboard', dashboardRouter);
 
-// Readiness feedback (file-based backlog for AI)
-app.use('/api/v1/readiness', readinessRouter);
 
 // New modules (Quotations → Shipments)
 app.use('/api/v1/directories/quotations', quotationRouter);

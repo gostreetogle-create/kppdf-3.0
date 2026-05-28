@@ -23,3 +23,17 @@ coverage/
 *.tgz
 .aider*
 kppdf-deploy.tar.gz
+kppdf-deploy/
+
+# tools/ — утилиты
+/tools/products_import_export/node_modules/
+/tools/products_import_export/.env
+/tools/products_import_export/output/*
+!/tools/products_import_export/output/.gitkeep
+
+# Одноразовые артефакты (корень)
+login_resp*.txt
+ng.log
+nul
+Для изучения/Перечень документации для разработки изделия.xlsx
+Для изучения/Требования к функционалу ERP.xlsx.xlsx

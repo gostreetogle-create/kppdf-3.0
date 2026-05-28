@@ -112,13 +112,12 @@ backend/src/
 
 ## Статус разработки
 
-| Этап | Описание | Статус |
-|------|----------|--------|
-| 0 | Фундамент (система агентов, opencode) | ✅ |
-| 1 | Backend scaffold (26 модулей, CRUD Factory, seed) | ✅ |
-| 2 | Frontend scaffold (Angular, PrimeNG, pages, routing) | ✅ |
-| 3 | PLM-ядро (заказы, BOM, 18 бизнес-модулей) | ✅ |
-| 4 | ERP-функции (закупки, склад, себестоимость) | ⏳ |
-| 5 | Compliance (проверки по ТЗ и ГОСТ) | ⏳ |
-| 6 | Деплой и документация | ⏳ |
-#### Last updated: May 2026
+Статус модулей и этапов ведется только в `.opencode/project-readiness.yaml`.
+
+Публикация в UI:
+
+```bash
+npm run readiness:sync
+```
+
+Результат синхронизации: `public/project-readiness.json`.

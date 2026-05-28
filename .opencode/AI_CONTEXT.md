@@ -20,10 +20,10 @@ Prod URL:    https://sport-set.ru
 
 | Файл | Назначение |
 |------|-----------|
-| `PROJECT.md` | Полная картина проекта (архитектура, модули, API, roadmap) |
+| `docs/ARCHITECTURE.md` | Полная картина архитектуры и doc-модели |
 | `README.md` | Быстрый старт (установка, запуск, логины) |
 | `AGENTS.md` | **Система агентов — роли, вызовы, правила** |
-| `DESIGN.md` | Дизайн-система Linear (цвета, типографика, компоненты) |
+| `DESIGN.md` | Bridge-док на архитектурную документацию |
 | `.opencode/rules/` | Правила архитектуры (7 файлов) |
 | `.opencode/plans/` | Планы разработки (8 файлов) |
 | `.opencode/golden-samples.ts` | Эталонные UI-паттерны |
@@ -61,7 +61,7 @@ kppdf-3.0/
 ├── deploy/                       ← Docker, nginx, Synology deploy
 ├── .opencode/                    ← Агенты, правила, планы, AI контекст
 ├── .cursor/rules/                ← Bridge для Cursor (краткие rules)
-├── PROJECT.md                    ← Полная документация
+├── docs/ARCHITECTURE.md          ← Полная архитектурная документация
 ├── AGENTS.md                     ← Система агентов
 └── README.md                     ← Быстрый старт
 ```
@@ -256,15 +256,10 @@ NODE_ENV=development
 
 ## 7. Статус разработки
 
-| Этап | Описание | Статус |
-|------|----------|--------|
-| 0 | Фундамент (агенты, opencode) | ✅ |
-| 1 | Backend scaffold (26 модулей, CRUD Factory, seed) | ✅ |
-| 2 | Frontend scaffold (Angular, PrimeNG, страницы, роутинг) | ✅ |
-| 3 | PLM-ядро (заказы, BOM, 18 бизнес-модулей) | 🔄 Базовый CRUD ✅, бизнес-логика ⏳ |
-| 4 | ERP-функции (закупки, склад, себестоимость) | ⏳ Нужно: расчёты, планирование, триггеры |
-| 5 | Compliance (проверки ТЗ/ГОСТ) | ⏳ Нужно: compliance engine, UI отчётов |
-| 6 | Деплой и документация | ⏳ Нужно: CI/CD, докеризация, docs |
+Единственный источник живого статуса модулей и прогресса:
+
+- `.opencode/project-readiness.yaml` (ручное управление)
+- `npm run readiness:sync` -> `public/project-readiness.json`
 
 ---
 

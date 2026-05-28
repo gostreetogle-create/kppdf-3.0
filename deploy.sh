@@ -198,7 +198,7 @@ if [[ "${MODE}" == "local" ]]; then
     --exclude='node_modules' \
     --exclude='.git' \
     --exclude='dist' \
-    backend/ shared/ frontend/ monitoring/ docker-compose.prod.yml deploy.sh 2>&1
+    backend/ shared/ frontend/ deploy/monitoring/ docker-compose.prod.yml deploy.sh 2>&1
   ARCHIVE_SIZE=$(du -h "${ARCHIVE_PATH}" | cut -f1)
   ok "Архив: ${ARCHIVE_NAME} (${ARCHIVE_SIZE})"
 

@@ -1,0 +1,27 @@
+{
+  "name": "products-import-export",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Import Excel/PDF data into Google Sheets with archiving",
+  "scripts": {
+    "start": "node src/import-agent.js",
+    "dry-run": "node src/import-agent.js --dry-run",
+    "seed-test": "node src/seed-test-data.js",
+    "sync-columns": "node src/sync-product-columns.js",
+    "sync-photos": "node src/sync-product-photos.js",
+    "embed-photos": "node src/embed-product-images.js",
+    "import-tovary": "node src/import-tovary-sources.js",
+    "sync-to-mongo": "node src/sync-sheet-to-mongo.js",
+    "normalize-texts": "node src/normalize-product-texts.js",
+    "extract-colors": "node src/extract-product-colors.js",
+    "normalize-categories": "node src/normalize-product-categories.js",
+    "test:categories": "node src/classify-product-category.test.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "googleapis": "^144.0.0",
+    "mongoose": "^8.9.5",
+    "pdf-parse": "^1.1.1",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -12,6 +12,10 @@ import { CdkDrag } from '@angular/cdk/drag-drop';
         'cdkDragDisabled: appKpSortableItemDisabled',
         'cdkDragLockAxis: appKpSortableLockAxis',
       ],
+      outputs: [
+        'cdkDragStarted: appKpSortableItemStarted',
+        'cdkDragEnded: appKpSortableItemEnded',
+      ],
     },
   ],
   host: {

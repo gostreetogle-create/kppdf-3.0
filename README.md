@@ -68,41 +68,50 @@ ng.cmd serve                      # http://localhost:4200
 
 ```
 kppdf-3.0/
-├── src/                          ← Angular-приложение
-│   ├── app/
-│   │   ├── core/                 ← Сервисы (auth, api, directory, notification)
-│   │   ├── features/             ← Страницы (dashboard, directories, modules, …)
-│   │   ├── layout/               ← admin-layout
-│   │   ├── shared/               ← kp-*, crud, services
-│   │   ├── app.config.ts         ← PrimeNG preset + providers
-│   │   └── app.routes.ts         ← Маршруты (ленивая загрузка)
-│   ├── environments/             ← Окружения (dev/prod)
-│   └── styles/                   ← Глобальный SCSS + дизайн-токены
+├── src/                          ← Angular-приложение (core, features, layout, shared, styles)
+├── backend/                      ← Express-сервер (modules, config, middleware, seed, __tests__)
+├── shared/types/                 ← 28 интерфейсов, общих для FE + BE
+├── public/                       ← Статика Angular
 │
-├── backend/                      ← Express-сервер
-│   ├── src/
-│   │   ├── config/               ← Конфигурация + MongoDB
-│   │   ├── middleware/           ← auth JWT + error-handler + validate
-│   │   ├── modules/              ← 8 справочников + auth + dashboard + health
-│   │   ├── types/                ← Типы auth
-│   │   ├── utils/                ← ApiResponse + CRUD Factory
-│   │   ├── __tests__/            ← Unit-тесты
-│   │   ├── app.ts                ← Express app (все роуты)
-│   │   ├── index.ts              ← Точка входа
-│   │   └── seed.ts               ← 40+ записей тестовых данных
-│   └── .env                      ← Переменные окружения
+├── docs/                         ← Вся документация
+│   ├── ARCHITECTURE.md           ← Архитектура и документационная модель
+│   ├── INDEX.md                  ← Карта документации
+│   ├── integrations/yougile/     ← YouGile API, конфигуратор, скрипты
+│   └── archive/analysis/         ← Архивная аналитика (аудиты, анализ, схемы RBAC)
 │
-├── shared/types/                 ← 8 интерфейсов, общих для FE + BE
+├── deploy/                       ← Деплой и инфраструктура
+│   ├── deploy.sh                 ← Деплой-скрипт (Synology)
+│   ├── synology/                 ← Synology/Ubuntu: Deploy, nginx, tunnel, мониторинг
+│   └── monitoring/               ← Дашборд мониторинга (порт 3001)
 │
-├── .opencode/                    ← Агенты, правила, планы разработки
+├── tools/                        ← Утилиты вне основного приложения
+│   ├── products_import_export/   ← Импорт/экспорт товаров (Sheets ↔ MongoDB)
+│   ├── scripts/                  ← restore-quotation-editor.js
+│   ├── yougile-scripts/          ← Готовые .js для конфигуратора YouGile
+│   ├── yougile-sync.ps1          ← PowerShell-синхронизация YouGile
+│   ├── build.sh                  ← Сборка архива (обёртка над deploy.sh)
+│   └── check_ng.sh              ← Проверка Nginx конфигурации
 │
-├── PROJECT.md                    ← Полное описание проекта (картина)
-├── AGENTS.md                     ← Система opencode-агентов
+├── .opencode/                    ← Агенты, правила, планы, FreezeGuard
+├── .cursor/                      ← Cursor rules (bridge)
+│
+├── deploy.sh                     ← Единый скрипт деплоя (локальный + серверный режим)
+├── docker-compose.yml            ← Docker Compose (development)
+├── docker-compose.prod.yml       ← Docker Compose (production)
+├── start.ps1                     ← Запуск dev-окружения (Windows)
+├── stop.ps1                      ← Остановка dev-окружения (Windows)
+├── package.json                  ← Frontend"/"общий проект
+├── angular.json                  ← Angular конфиг
+├── tsconfig.json / tsconfig.app.json / tsconfig.spec.json
+├── eslint.config.js              ← ESLint flat config
+├── proxy.conf.json               ← /api/* → localhost:3000
+├── karma.conf.js                 ← Тестовый раннер
+├── opencode.json                 ← OpenCode AI-агенты
 ├── README.md                     ← ← Вы здесь
-├── eslint.config.js              ← ESLint frontend
-├── angular.json
-├── tsconfig.json
-└── proxy.conf.json               ← /api/* → localhost:3000
+├── AGENTS.md                     ← Система opencode-агентов (FreezeGuard locked)
+├── DEPLOY.md                     ← Инструкция деплоя (canonical)
+├── DESIGN.md                     ← Bridge на архитектурную документацию
+└── PROJECT.md                    ← Bridge на архитектурную документацию (FreezeGuard locked)
 ```
 
 ---
@@ -194,6 +203,13 @@ GET /api/v1/dashboard/stats → счётчики по всем таблицам
 | `@compliance-validator` | Проверки соответствия |
 
 ---
+
+## Source Of Truth
+
+- Статус модулей (проценты, чеклисты, этапы): `.opencode/project-readiness.yaml`
+- Публикация readiness в UI: `npm run readiness:sync` -> `public/project-readiness.json`
+- Архитектура и структура документации: `docs/ARCHITECTURE.md`, `docs/INDEX.md`
+- Деплой (canonical): `DEPLOY.md`
 
 ## Лицензия
 

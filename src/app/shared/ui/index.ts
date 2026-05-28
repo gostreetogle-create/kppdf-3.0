@@ -20,7 +20,6 @@ export { KpBreadcrumbsComponent } from './kp-breadcrumbs.component';
 export type { KpBreadcrumbItem } from './kp-breadcrumbs.component';
 export { KpStatGridComponent } from './kp-stat-grid/kp-stat-grid.component';
 export type { KpStatItem, KpStatSection } from './kp-stat-grid/kp-stat-grid.component';
-export { KpReadinessBarComponent } from './kp-readiness-bar/kp-readiness-bar.component';
 export { KpTableComponent } from './kp-table.component';
 export type { KpColumn, KpSortEvent, KpPageEvent } from './kp-table.component';
 export {
