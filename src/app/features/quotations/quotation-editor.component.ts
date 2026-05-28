@@ -246,8 +246,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
           <app-kp-button
             [icon]="blocksReorderLocked() ? 'pi pi-lock' : 'pi pi-lock-open'"
             [label]="blocksReorderLocked() ? 'Порядок зафиксирован' : 'Порядок открыт'"
-            [severity]="blocksReorderLocked() ? 'secondary' : 'primary'"
-            [outlined]="blocksReorderLocked()"
+            severity="secondary"
+            [outlined]="true"
             size="small"
             (buttonClick)="toggleBlocksReorderLock()"
             [attr.aria-label]="blocksReorderLocked() ? 'Разблокировать перемещение блоков' : 'Зафиксировать порядок блоков'"

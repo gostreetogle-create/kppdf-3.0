@@ -27,7 +27,7 @@ exceptions:
       - backend/src/app.ts
 check_hash: true
 file_hashes:
-  AGENTS.md: 8d756e558308922a7d40e7005476711d43b8ee9211b6c87f404c6b6e35bb0ff9
+  AGENTS.md: 2a7d249ea39d0e4d8d7256af9c86b814e6404d4340f372cae0f6dd8bfc75b661
   PROJECT.md: f7bde2c2fe84ef22ca6a4fcce2522f9ce9ed0da2354770fd503c24ea3a7527da
   eslint.config.js: 2621b39de665a86c601bc3b1be3ba6bf8164c4ef63571b2cf90b9c180d9b3bf7
   backend/eslint.config.js: cf49a94a090cb9f1dbc2b1f510ac4eaa81f184e198f03c3420f311d9fda6c61e

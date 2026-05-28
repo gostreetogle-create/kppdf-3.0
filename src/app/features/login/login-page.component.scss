@@ -343,68 +343,31 @@
 }
 
 /* ════════════════════════════════════════════════════════════
-   BUTTON OVERRIDE — Premium gradient, lift on hover
+   BUTTON COLOR OVERRIDE — branded purple gradient
+   Интеракции (lift, shadow, focus-ring) унаследованы из variant='premium'.
+   Этот блок задаёт ТОЛЬКО цвет — не трогать структуру.
    ════════════════════════════════════════════════════════════ */
 
-:host ::ng-deep .auth__submit-btn {
+:host ::ng-deep .auth__submit-btn.p-button {
   height: 46px;
-  border-radius: var(--kp-button-border-radius);
-  width: 100%;
   background: linear-gradient(135deg, #5e6ad2 0%, #4f5bc7 100%);
-  border: none;
-  color: var(--kp-text-on-primary);
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--kp-font-family);
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    background 180ms ease;
+  border-color: transparent;
 
   .p-button-label {
-    font-weight: 600;
-  }
-
-  .p-button-icon {
     font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
   }
 
-  &:hover:not(:disabled) {
+  &:hover:not(:disabled):not(.p-disabled) {
     background: linear-gradient(135deg, #5e6ad2 0%, #434db8 100%);
-    transform: translateY(-1px);
-    box-shadow:
-      0 12px 28px rgba(94, 106, 210, 0.28),
-      0 4px 12px rgba(94, 106, 210, 0.15);
+    border-color: transparent;
   }
 
-  &:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(94, 106, 210, 0.2);
-  }
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
+  &:disabled,
+  &.p-disabled {
     background: linear-gradient(135deg, #a5b0e0 0%, #8e96cc 100%);
-    box-shadow: none;
-    transform: none;
-  }
-
-  /* Focus ring for keyboard navigation */
-  &:focus-visible {
-    outline: none;
-    box-shadow:
-      0 0 0 4px rgba(94, 106, 210, 0.2),
-      0 12px 28px rgba(94, 106, 210, 0.28);
-  }
-
-  /* Loading spinner color */
-  .p-button-loading-icon {
-    color: rgba(255, 255, 255, 0.8);
+    border-color: transparent;
   }
 }
 
@@ -560,9 +523,8 @@
     font-size: 15px;
   }
 
-  :host ::ng-deep .auth__submit-btn {
+  :host ::ng-deep .auth__submit-btn.p-button {
     height: 44px;
-    font-size: 14px;
   }
 
   .auth__hint {
@@ -625,10 +587,6 @@
   .auth__card,
   .auth__hint {
     animation: none !important;
-  }
-
-  :host ::ng-deep .auth__submit-btn {
-    transition: none !important;
   }
 
   :host ::ng-deep .auth__field .p-inputtext,

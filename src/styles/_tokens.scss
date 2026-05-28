@@ -79,8 +79,8 @@
   --kp-radius-3xl: 24px;
   --kp-radius-full: 9999px;
 
-  /* Buttons — almost square */
-  --kp-button-border-radius: 2px;
+  /* Buttons */
+  --kp-button-border-radius: var(--kp-radius-md);
 
   /* ── Spacing (4px grid) ── */
   --kp-space-1: 4px;
@@ -345,6 +345,12 @@
   --kp-nav-group-directories-bg: rgba(124, 58, 237, 0.12);
   --kp-nav-group-admin-accent: #f87171;
   --kp-nav-group-admin-bg: rgba(220, 38, 38, 0.12);
+
+  /* ── Button — dark-mode overrides ── */
+  --kp-focus-ring: 0 0 0 2px rgba(255,255,255,0.45);
+  --kp-focus-ring-premium: 0 0 0 4px rgba(167,139,250,0.45);
+  --kp-shadow-premium: 0 4px 14px rgba(0,0,0,0.45);
+  --kp-shadow-premium-sm: 0 2px 8px rgba(0,0,0,0.35);
 }
 
 /* ── Sass aliases for component SCSS ── */

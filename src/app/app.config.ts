@@ -69,6 +69,10 @@ const KppdfPreset = definePreset(Aura, {
     },
     button: {
       root: {
+        // ⚠️ Не менять: PrimeNG preset генерирует CSS-токены на этапе сборки,
+        // CSS var() здесь не работает. Фактический borderRadius берётся из
+        // --kp-button-border-radius через !important в kp-button.component.scss.
+        // Значение '8px' должно совпадать с --kp-radius-md в _tokens.scss.
         borderRadius: '8px',
         paddingX: '0.85rem',
         paddingY: '0.5rem',

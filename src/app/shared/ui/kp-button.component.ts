@@ -63,6 +63,13 @@ export class KpButtonComponent {
   readonly block = input(false);
   readonly autoFocus = input(false);
   readonly styleClass = input<string>('');
+  /**
+   * Визуальный вариант кнопки.
+   * - `premium` (default): gradient + lift + shadow для primary; outlined+lift для secondary; red glow для danger.
+   * - `flat`: без lift и shadow; используйте как аварийный opt-out или для toolbar с малой плотностью кнопок.
+   * @see .opencode/rules/ui-manifest.md — матрица severity×variant
+   */
+  readonly variant = input<'premium' | 'flat'>('premium');
   /** Подсказка только для icon-only или когда текст ≠ label кнопки */
   readonly tooltip = input<string>('');
   readonly ariaLabel = input<string>('');
@@ -78,6 +85,31 @@ export class KpButtonComponent {
   @HostBinding('class.kp-button--block-host')
   get isBlockHost(): boolean {
     return this.block();
+  }
+
+  @HostBinding('class.kp-button--variant-premium')
+  get isVariantPremium(): boolean {
+    return this.variant() === 'premium';
+  }
+
+  @HostBinding('class.kp-button--variant-flat')
+  get isVariantFlat(): boolean {
+    return this.variant() === 'flat';
+  }
+
+  @HostBinding('class.kp-button--severity-primary')
+  get isSeverityPrimary(): boolean {
+    return this.severity() === 'primary';
+  }
+
+  @HostBinding('class.kp-button--severity-secondary')
+  get isSeveritySecondary(): boolean {
+    return this.severity() === 'secondary';
+  }
+
+  @HostBinding('class.kp-button--severity-danger')
+  get isSeverityDanger(): boolean {
+    return this.severity() === 'danger';
   }
 
   /** Текст подсказки; пусто, если дублирует видимый label */

@@ -1,0 +1,277 @@
+/* ============================================================
+   KPPDF 3.0 — kp-button premium/flat mixins
+   Матрица severity × variant:
+     primary   + premium → gradient синий + lift + shadow
+     primary   + flat    → solid синий, без lift
+     secondary + premium → outlined + gradient border + lift
+     secondary + flat    → outlined, без lift
+     danger    + premium → solid red + red glow + lift
+     danger    + flat    → solid red, без lift
+   ============================================================ */
+
+// ── Base lift/shadow mixin (параметризован) ──────────────────
+@mixin kp-button-premium-base($enable-lift: true, $enable-shadow: true) {
+  transition:
+    background var(--kp-transition-base),
+    border-color var(--kp-transition-base),
+    color var(--kp-transition-base),
+    box-shadow var(--kp-transition-base),
+    transform var(--kp-transition-base);
+
+  @if $enable-shadow {
+    box-shadow: var(--kp-shadow-premium-sm);
+  }
+
+  &:hover:not(:disabled):not(.p-disabled) {
+    @if $enable-lift {
+      transform: translateY(-1px);
+    }
+    @if $enable-shadow {
+      box-shadow: var(--kp-shadow-premium);
+    }
+  }
+
+  &:active:not(:disabled):not(.p-disabled) {
+    transform: translateY(0);
+    @if $enable-shadow {
+      box-shadow: var(--kp-shadow-xs);
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--kp-focus-ring-premium);
+    @if $enable-lift {
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none !important;
+    transform: none !important;
+  }
+
+  &.p-button-loading {
+    pointer-events: none;
+
+    .p-button-loading-icon {
+      opacity: 1;
+    }
+  }
+}
+
+// ── primary + premium ────────────────────────────────────────
+@mixin kp-button-primary-premium {
+  background: linear-gradient(135deg, var(--kp-primary) 0%, var(--kp-primary-hover) 100%);
+  border-color: transparent;
+  color: var(--kp-text-on-primary);
+
+  @include kp-button-premium-base($enable-lift: true, $enable-shadow: true);
+
+  &:hover:not(:disabled):not(.p-disabled) {
+    background: linear-gradient(135deg, var(--kp-primary-hover) 0%, var(--kp-primary-active) 100%);
+    border-color: transparent;
+  }
+
+  &:active:not(:disabled):not(.p-disabled) {
+    background: var(--kp-primary-active);
+    border-color: transparent;
+  }
+
+  &:disabled,
+  &.p-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    background: var(--kp-primary);
+    border-color: transparent;
+  }
+}
+
+// ── primary + flat ───────────────────────────────────────────
+@mixin kp-button-primary-flat {
+  background: var(--kp-primary);
+  border-color: transparent;
+  color: var(--kp-text-on-primary);
+  transition:
+    background var(--kp-transition-base),
+    border-color var(--kp-transition-base),
+    color var(--kp-transition-base),
+    box-shadow var(--kp-transition-base);
+  transform: none;
+  box-shadow: none;
+
+  &:hover:not(:disabled):not(.p-disabled) {
+    background: var(--kp-primary-hover);
+    border-color: transparent;
+  }
+
+  &:active:not(:disabled):not(.p-disabled) {
+    background: var(--kp-primary-active);
+    border-color: transparent;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--kp-focus-ring);
+  }
+
+  &:disabled,
+  &.p-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+// ── secondary + premium ──────────────────────────────────────
+@mixin kp-button-secondary-premium {
+  background: transparent;
+  border-width: 1.5px;
+  border-color: var(--kp-border-strong);
+  color: var(--kp-text-secondary);
+
+  @include kp-button-premium-base($enable-lift: true, $enable-shadow: false);
+
+  box-shadow: var(--kp-shadow-xs);
+
+  &:hover:not(:disabled):not(.p-disabled) {
+    background: var(--kp-bg-soft);
+    border-color: var(--kp-primary);
+    color: var(--kp-primary);
+    box-shadow: var(--kp-shadow-sm);
+  }
+
+  &:active:not(:disabled):not(.p-disabled) {
+    background: var(--kp-primary-soft);
+    border-color: var(--kp-primary);
+    color: var(--kp-primary-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--kp-focus-ring-premium);
+  }
+
+  &:disabled,
+  &.p-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+// ── secondary + flat ─────────────────────────────────────────
+@mixin kp-button-secondary-flat {
+  background: transparent;
+  border-width: 1px;
+  border-color: var(--kp-border);
+  color: var(--kp-text-secondary);
+  transition:
+    background var(--kp-transition-base),
+    border-color var(--kp-transition-base),
+    color var(--kp-transition-base),
+    box-shadow var(--kp-transition-base);
+  transform: none;
+  box-shadow: none;
+
+  &:hover:not(:disabled):not(.p-disabled) {
+    background: var(--kp-bg-soft);
+    border-color: var(--kp-border-strong);
+    color: var(--kp-text);
+  }
+
+  &:active:not(:disabled):not(.p-disabled) {
+    background: var(--kp-bg-muted);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--kp-focus-ring);
+  }
+
+  &:disabled,
+  &.p-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+// ── danger + premium ─────────────────────────────────────────
+@mixin kp-button-danger-premium {
+  background: var(--kp-danger);
+  border-color: transparent;
+  color: var(--kp-text-on-primary);
+
+  @include kp-button-premium-base($enable-lift: true, $enable-shadow: true);
+
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+
+  &:hover:not(:disabled):not(.p-disabled) {
+    background: var(--kp-danger-hover);
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+  }
+
+  &:active:not(:disabled):not(.p-disabled) {
+    background: var(--kp-danger-hover);
+    border-color: transparent;
+    box-shadow: 0 1px 4px rgba(239, 68, 68, 0.2);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25);
+  }
+
+  &:disabled,
+  &.p-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+// ── danger + flat ────────────────────────────────────────────
+@mixin kp-button-danger-flat {
+  background: var(--kp-danger);
+  border-color: transparent;
+  color: var(--kp-text-on-primary);
+  transition:
+    background var(--kp-transition-base),
+    border-color var(--kp-transition-base),
+    color var(--kp-transition-base),
+    box-shadow var(--kp-transition-base);
+  transform: none;
+  box-shadow: none;
+
+  &:hover:not(:disabled):not(.p-disabled) {
+    background: var(--kp-danger-hover);
+    border-color: transparent;
+  }
+
+  &:active:not(:disabled):not(.p-disabled) {
+    background: var(--kp-danger-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4);
+  }
+
+  &:disabled,
+  &.p-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+// ── Универсальный mixin для глобальных overrides (confirm/paginator) ──
+@mixin kp-button-global-primary-premium {
+  .p-button:not(.p-button-text):not(.p-button-outlined):not(.p-button-secondary):not(.p-button-danger) {
+    @include kp-button-primary-premium;
+    border-radius: var(--kp-button-border-radius);
+  }
+}

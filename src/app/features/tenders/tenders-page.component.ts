@@ -234,7 +234,7 @@ export class TendersPageComponent implements OnInit {
       id: 'create-quotation',
       label: 'Создать КП',
       icon: 'pi pi-file-edit',
-      severity: 'info',
+      severity: 'secondary',
       permission: PERMISSIONS.quotations.create,
       handler: (row) => {
         const id = row['_id'];

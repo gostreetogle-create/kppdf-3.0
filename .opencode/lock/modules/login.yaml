@@ -18,5 +18,5 @@ exceptions: []
 check_hash: true
 file_hashes:
   src/app/features/login/index.ts: 326b6339bb854f04f4901a0b7e14b21df55aea958851d3b3415c43031ba2077b
-  src/app/features/login/login-page.component.scss: d5d7202a92321743e993b217ecb1845650a07eb61c53e923d77a195ce55fe48b
-  src/app/features/login/login-page.component.ts: d51ff7d2119368b523aac8fb5d18ae49cabc88819dbdd9275c9372ff9ad62efa
+  src/app/features/login/login-page.component.scss: f07355e0ca752cd280ed01745cca0eebd0a71ad5c9130662e4de3f3c01af1f80
+  src/app/features/login/login-page.component.ts: aa23b0865971f6d51a3b765f3e43776308f02061c4a783bb1ed4f367bc79473b

@@ -172,7 +172,7 @@ export class QuotationsPageComponent implements OnInit {
       id: 'compose',
       label: 'Оформить документ',
       icon: 'pi pi-file-edit',
-      severity: 'info',
+      severity: 'secondary',
       permission: PERMISSIONS.quotations.edit,
       handler: (row) => {
         const id = row['_id'];

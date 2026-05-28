@@ -51,19 +51,13 @@ core → shared → features → layout
 
 ---
 
-## Readiness Feedback — замечания для AI
+## Readiness — file-only tracking
 
-> **Перед задачами по модулю** — проверить open issues в [`.opencode/readiness-feedback.yaml`](.opencode/readiness-feedback.yaml).
+> UI «Статус реализации» снят с продакшена. Отслеживание — только YAML + backlog.
 
-| Действие | Команда |
-|----------|---------|
-| Список open issues | `npm run readiness:feedback` |
-| Промпты для AI | `npm run readiness:prompt` |
-| Sync YAML → JSON | `node .opencode/lock/readiness-feedback-sync.mjs` |
-
-- **Canonical plan** (%, галочки): `.opencode/project-readiness.yaml` — правит AI после fix.
-- **Feedback** (замечания пользователя): `.opencode/readiness-feedback.yaml` — не в FreezeGuard.
-- Phase 2: UI в диалоге «Статус реализации» + API сохранения.
+- **Backlog (P0–P2, задачи):** [`.opencode/audit/CHECKLIST-BACKLOG.md`](.opencode/audit/CHECKLIST-BACKLOG.md) — канонический список.
+- **Прогресс модулей (%):** [`.opencode/project-readiness.yaml`](.opencode/project-readiness.yaml) — `enabled: false`, правит AI после fix; сверять с [`.opencode/lock/INDEX.yaml`](.opencode/lock/INDEX.yaml).
+- **Замечания пользователя (опционально):** [`.opencode/readiness-feedback.yaml`](.opencode/readiness-feedback.yaml) — не в FreezeGuard, читать вручную при наличии open issues.
 
 ---
 

@@ -97,10 +97,22 @@
 
 ## 3. Кнопки (`app-kp-button`)
 
+### Матрица severity × variant
+
+| severity \ variant | `premium` (default)                          | `flat`                  |
+|--------------------|----------------------------------------------|-------------------------|
+| `primary`          | gradient синий + lift + shadow               | solid синий, без lift   |
+| `secondary`        | outlined + gradient border + lift            | outlined, без lift      |
+| `danger`           | solid red + red glow + lift                  | solid red, без lift     |
+
+- **`variant='premium'` — default**. Не указывать явно, если не нужен opt-out.
+- **`variant='flat'`** — аварийный opt-out для перегруженных toolbar или legacy-контекстов.
+- **`styleClass` нельзя использовать для стилизации** — только для исключений с цветом (пример: login, который переопределяет только gradient-цвет, оставляя интеракции из `premium`).
+
 ### Человеческое правило
 
 - В `features/*` — **только** `<app-kp-button>` (обёртка `shared/ui/kp-button`).
-- **Исключения:** block-controls toggle-панель в `quotation-editor` (`p-button` + локальный SCSS); login submit (`variant` premium через `styleClass="auth__submit-btn"` — см. backlog).
+- **Исключения:** block-controls toggle-панель в `quotation-editor` (`p-button` + локальный SCSS); login submit — `[block]="true" styleClass="auth__submit-btn"` (только цвет, интеракции из `variant='premium'`).
 - ВСЕГДА `size="small"`. Severity: `primary` | `secondary` | `danger`.
 - IconOnly: `severity="secondary"` (edit) / `severity="danger"` (delete); `[rounded]="true"` + `[text]="true"`.
 - Диалоги: «Отмена» — `severity="secondary" [outlined]="true"`; подтверждение — default primary.

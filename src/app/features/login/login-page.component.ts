@@ -67,7 +67,8 @@ import { KpInputComponent, KpPasswordComponent, KpButtonComponent, KpToastCompon
               label="Войти"
               size="small"
               [loading]="loading"
-              styleClass="auth__submit-btn w-full"
+              [block]="true"
+              styleClass="auth__submit-btn"
               (buttonClick)="doLogin()"
             />
           </form>

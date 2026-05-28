@@ -4,6 +4,7 @@
 @use 'tokens' as *;
 @use '../app/shared/styles/form-fields';
 @use '../app/shared/styles/kp-field' as kpField;
+@use '../app/shared/styles/kp-button' as kpBtn;
 
 /* ── Design Tokens ── */
 :root {
@@ -393,13 +394,6 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 /* Paginator controls */
-.p-paginator .p-paginator-first,
-.p-paginator .p-paginator-prev,
-.p-paginator .p-paginator-next,
-.p-paginator .p-paginator-last,
-.p-paginator .p-paginator-page {
-  border-radius: var(--kp-button-border-radius) !important;
-}
 
 /* ── Dialog backdrop ── */
 .p-dialog-mask {
@@ -434,6 +428,41 @@ button { font-family: inherit; cursor: pointer; }
 .p-confirm-dialog {
   .p-dialog-content {
     padding: 1.5rem !important;
+  }
+
+  /* Premium primary button (Accept) */
+  .p-confirm-dialog-accept.p-button:not(.p-button-text):not(.p-button-outlined) {
+    @include kpBtn.kp-button-primary-premium;
+    border-radius: var(--kp-button-border-radius) !important;
+  }
+
+  /* Flat danger button (Reject) */
+  .p-confirm-dialog-reject.p-button:not(.p-button-outlined) {
+    @include kpBtn.kp-button-danger-flat;
+    border-radius: var(--kp-button-border-radius) !important;
+  }
+}
+
+/* ── Paginator premium buttons ── */
+.p-paginator {
+  .p-paginator-first,
+  .p-paginator-prev,
+  .p-paginator-next,
+  .p-paginator-last {
+    @include kpBtn.kp-button-secondary-premium;
+    border-radius: var(--kp-button-border-radius) !important;
+  }
+
+  .p-paginator-page {
+    @include kpBtn.kp-button-secondary-premium;
+    border-radius: var(--kp-button-border-radius) !important;
+    min-width: 2.5rem;
+    height: 2.5rem;
+
+    &.p-highlight {
+      @include kpBtn.kp-button-primary-premium;
+      border-radius: var(--kp-button-border-radius) !important;
+    }
   }
 }
 

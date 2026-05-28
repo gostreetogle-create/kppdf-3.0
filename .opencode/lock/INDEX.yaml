@@ -19,10 +19,10 @@ index:
     status: frozen
     path: modules/roles.yaml
   dashboard:
-    status: frozen
+    status: wip
     path: modules/dashboard.yaml
   directories-page:
-    status: frozen
+    status: wip
     path: modules/directories-page.yaml
   modules-page:
     status: frozen

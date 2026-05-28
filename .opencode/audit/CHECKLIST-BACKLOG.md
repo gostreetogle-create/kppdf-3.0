@@ -26,7 +26,7 @@
 - [ ] EAV в tenders / orders
 - [ ] login MessageService → NotificationService
 - [x] kp-button inline → scss (UniButton: стили в kp-button.component.scss, global 390–425 удалён)
-- [ ] **[AUDIT] kp-button `variant="premium"`** — вынести градиент login из `styleClass="auth__submit-btn"` + `::ng-deep` в API `app-kp-button`. Градиент #5e6ad2 → #4f5bc7, hover lift, disabled — после миграции всех features.
+- [x] **[AUDIT] kp-button `variant="premium"`** — реализован (2026-05-28). Миксины в `_kp-button.scss`, host-классы `kp-button--variant-*/severity-*`, матрица severity×variant задокументирована в `ui-manifest.md`. Login: `[block]="true"` + `styleClass="auth__submit-btn"` только для purple-цвета; интеракции из `variant='premium'`.
 - [ ] chief-architect в opencode.json
 
 ## Новое от 2026-05-28

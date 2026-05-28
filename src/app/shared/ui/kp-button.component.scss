@@ -1,33 +1,37 @@
+@use '../styles/kp-button' as kpBtn;
+
 :host {
   display: inline-flex;
   vertical-align: middle;
 }
 
+// ── Base: border-radius + base transition ────────────────────
 :host ::ng-deep .p-button {
   border-radius: var(--kp-button-border-radius) !important;
   transition:
     background var(--kp-transition-base),
     border-color var(--kp-transition-base),
     color var(--kp-transition-base),
-    box-shadow var(--kp-transition-base);
+    box-shadow var(--kp-transition-base),
+    transform var(--kp-transition-base);
   gap: 6px;
   font-weight: 500;
-}
-
-:host ::ng-deep .p-button:focus-visible {
-  outline: none;
-  box-shadow: var(--kp-focus-ring);
 }
 
 :host ::ng-deep .p-button.p-button-sm {
   gap: 5px;
 }
 
-/* Icon-only (kp-table pattern) */
+// ── Icon-only (kp-table pattern) ─────────────────────────────
 :host ::ng-deep .p-button.p-button-rounded.p-button-text {
   width: 32px;
   height: 32px;
   border-radius: var(--kp-button-border-radius) !important;
+  transform: none;
+  box-shadow: none;
+  transition:
+    background var(--kp-transition-base),
+    color var(--kp-transition-base);
 }
 
 :host ::ng-deep .p-button.p-button-rounded.p-button-text:hover {
@@ -39,7 +43,7 @@
   color: var(--kp-danger) !important;
 }
 
-/* Block variant */
+// ── Block variant ─────────────────────────────────────────────
 :host.kp-button--block-host {
   display: flex;
   width: 100%;
@@ -48,4 +52,46 @@
 :host ::ng-deep .kp-button--block.p-button {
   width: 100%;
   justify-content: center;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  variant=premium + severity матрица
+// ══════════════════════════════════════════════════════════════
+
+// primary + premium (default)
+:host.kp-button--variant-premium.kp-button--severity-primary ::ng-deep .p-button:not(.p-button-text):not(.p-button-outlined) {
+  @include kpBtn.kp-button-primary-premium;
+  border-radius: var(--kp-button-border-radius) !important;
+}
+
+// secondary + premium — только filled-кнопки; [outlined] и [text] не перетираются
+:host.kp-button--variant-premium.kp-button--severity-secondary ::ng-deep .p-button:not(.p-button-text):not(.p-button-outlined) {
+  @include kpBtn.kp-button-secondary-premium;
+  border-radius: var(--kp-button-border-radius) !important;
+}
+
+// danger + premium — только filled-кнопки; [outlined] и [text] не перетираются
+:host.kp-button--variant-premium.kp-button--severity-danger ::ng-deep .p-button:not(.p-button-text):not(.p-button-outlined) {
+  @include kpBtn.kp-button-danger-premium;
+  border-radius: var(--kp-button-border-radius) !important;
+}
+
+// ── variant=flat ──────────────────────────────────────────────
+
+// primary + flat
+:host.kp-button--variant-flat.kp-button--severity-primary ::ng-deep .p-button:not(.p-button-text):not(.p-button-outlined) {
+  @include kpBtn.kp-button-primary-flat;
+  border-radius: var(--kp-button-border-radius) !important;
+}
+
+// secondary + flat — только filled-кнопки
+:host.kp-button--variant-flat.kp-button--severity-secondary ::ng-deep .p-button:not(.p-button-text):not(.p-button-outlined) {
+  @include kpBtn.kp-button-secondary-flat;
+  border-radius: var(--kp-button-border-radius) !important;
+}
+
+// danger + flat — только filled-кнопки
+:host.kp-button--variant-flat.kp-button--severity-danger ::ng-deep .p-button:not(.p-button-text):not(.p-button-outlined) {
+  @include kpBtn.kp-button-danger-flat;
+  border-radius: var(--kp-button-border-radius) !important;
 }

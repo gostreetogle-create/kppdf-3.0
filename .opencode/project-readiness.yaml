@@ -1,0 +1,48 @@
+# KPPDF 3.0 — file-only readiness tracking (UI decommissioned)
+# Canonical backlog: .opencode/audit/CHECKLIST-BACKLOG.md
+
+enabled: false
+updated: 2026-05-28
+
+modules:
+  products:
+    status: frozen
+    percent: 85
+  categories:
+    status: frozen
+    percent: 85
+  counterparties:
+    status: frozen
+    percent: 85
+  users:
+    status: frozen
+    percent: 85
+  roles:
+    status: frozen
+    percent: 85
+  login:
+    status: locked
+    percent: 90
+  quotations:
+    status: wip
+    percent: 70
+  ui-kit:
+    status: wip
+    percent: 60
+  orders:
+    status: wip
+    percent: 40
+  dashboard:
+    status: wip
+    percent: 50
+  directories-page:
+    status: wip
+    percent: 55
+
+phases:
+  plm-core:
+    status: in_progress
+    percent: 55
+  erp:
+    status: planned
+    percent: 10
