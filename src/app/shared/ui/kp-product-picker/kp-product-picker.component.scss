@@ -39,9 +39,9 @@
 .kp-product-picker {
   display: flex;
   flex-direction: column;
-  gap: var(--kp-space-4, 1rem);
+  gap: var(--kp-space-3, 0.75rem);
   flex: 1 1 auto;
-  min-height: min(68vh, 640px);
+  min-height: 0;
   min-width: 0;
 }
 
@@ -49,6 +49,10 @@
   font-size: 0.8125rem;
   color: var(--kp-text-muted, #6b7280);
   margin: 0 0 var(--kp-space-2, 0.5rem);
+
+  strong {
+    color: var(--kp-text, #111827);
+  }
 }
 
 .kp-product-picker__filters {
@@ -76,8 +80,8 @@
 .kp-product-picker__table-wrap {
   overflow: auto;
   flex: 1 1 auto;
-  min-height: min(48vh, 480px);
-  max-height: calc(92vh - 280px);
+  min-height: 220px;
+  max-height: calc(92vh - 320px);
   border: 1px solid var(--kp-border, #e5e7eb);
   border-radius: var(--kp-radius-md, 8px);
 }
@@ -237,78 +241,51 @@
 }
 
 .kp-product-picker__pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--kp-space-3, 0.75rem);
+  flex-shrink: 0;
+}
+
+:host ::ng-deep .kp-product-picker__paginator.p-paginator {
+  width: 100%;
+  justify-content: center;
   flex-wrap: wrap;
-}
-
-.kp-product-picker__pagination-info {
-  font-size: 0.8125rem;
-  color: var(--kp-text-muted, #6b7280);
-}
-
-.kp-product-picker__pagination-actions {
-  display: flex;
-  gap: var(--kp-space-2, 0.5rem);
-}
-
-.kp-product-picker__cart {
-  border-top: 1px solid var(--kp-border, #e5e7eb);
-  padding-top: var(--kp-space-3, 0.75rem);
-  display: flex;
-  flex-direction: column;
-  gap: var(--kp-space-2, 0.5rem);
-}
-
-.kp-product-picker__cart-title {
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.kp-product-picker__cart-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--kp-space-2, 0.5rem);
-  max-height: 120px;
-  overflow-y: auto;
-}
-
-.kp-product-picker__cart-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.5rem;
-  background: var(--kp-surface-muted, #f3f4f6);
-  border-radius: var(--kp-radius-sm, 4px);
-  font-size: 0.8125rem;
-}
-
-.kp-product-picker__cart-remove {
+  gap: 0.25rem;
+  padding: 0.25rem 0;
   border: none;
   background: transparent;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  color: var(--kp-danger, #ef4444);
-  font-size: 1rem;
-
-  &:hover {
-    color: var(--kp-danger-hover, #dc2626);
-  }
 }
 
-.kp-product-picker__cart-footer {
+.kp-product-picker__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--kp-space-3, 0.75rem);
+  width: 100%;
+  flex-wrap: wrap;
 }
 
-.kp-product-picker__cart-total {
+.kp-product-picker__footer-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.375rem 0.75rem;
   font-size: 0.875rem;
+  color: var(--kp-text-secondary, #4b5563);
+  min-width: 0;
+}
+
+.kp-product-picker__footer-total {
   color: var(--kp-text-muted, #6b7280);
+}
+
+.kp-product-picker__footer-hint {
+  color: var(--kp-text-muted, #6b7280);
+}
+
+.kp-product-picker__footer-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--kp-space-2, 0.5rem);
+  margin-left: auto;
 }
 
 .kp-product-picker__skeleton-row td {
@@ -337,10 +314,9 @@
   }
 }
 
-.kp-product-picker__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--kp-space-2, 0.5rem);
+:host ::ng-deep .kp-product-picker__dialog.kp-dialog .p-dialog-footer {
+  background: var(--kp-surface, #fff);
+  box-shadow: 0 -4px 16px rgb(15 23 42 / 0.06);
 }
 
 @media (max-width: 640px) {

@@ -11,6 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { PaginatorModule, type PaginatorState } from 'primeng/paginator';
 
 import type { IProduct } from '../../../../../shared/types/product.interface';
 import { KpDialogComponent } from '../kp-dialog.component';
@@ -34,6 +35,7 @@ import {
   providers: [KpProductPickerService],
   imports: [
     DecimalPipe,
+    PaginatorModule,
     KpDialogComponent,
     KpInputComponent,
     KpSelectComponent,
@@ -50,7 +52,12 @@ import {
       (hide)="onDialogHide()"
     >
       @if (multiple()) {
-        <p class="kp-product-picker__header-meta">Выбрано: {{ cartCount() }}</p>
+        <p class="kp-product-picker__header-meta">
+          Выбрано: <strong>{{ cartCount() }}</strong>
+          @if (cartCount() > 0) {
+            <span>· нажмите «{{ confirmButtonLabel() }}» внизу окна</span>
+          }
+        </p>
       }
 
       <div class="kp-product-picker">
@@ -218,72 +225,51 @@ import {
           }
         </div>
 
-        @if (!picker.loading() && picker.products().length > 0) {
+        @if (!picker.loading() && picker.total() > 0) {
           <div class="kp-product-picker__pagination">
-            <span class="kp-product-picker__pagination-info">{{ pageRangeLabel() }}</span>
-            <div class="kp-product-picker__pagination-actions">
-              <app-kp-button
-                label="Назад"
-                severity="secondary"
-                size="small"
-                [outlined]="true"
-                [disabled]="picker.page() <= 1"
-                (buttonClick)="goPrev()"
-              />
-              <app-kp-button
-                label="Вперёд"
-                severity="secondary"
-                size="small"
-                [outlined]="true"
-                [disabled]="picker.page() >= totalPages()"
-                (buttonClick)="goNext()"
-              />
-            </div>
-          </div>
-        }
-
-        @if (multiple() && cartCount() > 0) {
-          <div class="kp-product-picker__cart">
-            <div class="kp-product-picker__cart-title">Корзина ({{ cartCount() }})</div>
-            <div class="kp-product-picker__cart-list">
-              @for (item of cartList(); track item._id) {
-                <span class="kp-product-picker__cart-chip">
-                  {{ item.name }}
-                  <button
-                    type="button"
-                    class="kp-product-picker__cart-remove"
-                    (click)="removeFromCart(item._id!)"
-                    aria-label="Убрать из корзины"
-                  >×</button>
-                </span>
-              }
-            </div>
-            <div class="kp-product-picker__cart-footer">
-              <span class="kp-product-picker__cart-total">
-                Итого (ориентир): {{ cartTotal() | number:'1.0-0' }} ₽
-              </span>
-            </div>
+            <p-paginator
+              class="kp-product-picker__paginator"
+              [rows]="pageSize"
+              [totalRecords]="picker.total()"
+              [first]="paginationFirst()"
+              [showFirstLastIcon]="true"
+              [showCurrentPageReport]="true"
+              currentPageReportTemplate="Показано {first}–{last} из {totalRecords}"
+              (onPageChange)="onPageChange($event)"
+            />
           </div>
         }
       </div>
 
       <div kpDialogFooter class="kp-product-picker__footer">
-        <app-kp-button
-          label="Отмена"
-          severity="secondary"
-          size="small"
-          [outlined]="true"
-          (buttonClick)="cancel()"
-        />
         @if (multiple()) {
-          <app-kp-button
-            [label]="confirmButtonLabel()"
-            icon="pi pi-check"
-            size="small"
-            [disabled]="cartCount() === 0"
-            (buttonClick)="confirmMulti()"
-          />
+          <div class="kp-product-picker__footer-summary">
+            @if (cartCount() > 0) {
+              <strong>Выбрано: {{ cartCount() }}</strong>
+              <span class="kp-product-picker__footer-total">ориентир {{ cartTotal() | number:'1.0-0' }} ₽</span>
+            } @else {
+              <span class="kp-product-picker__footer-hint">Кликните по строкам, затем подтвердите добавление</span>
+            }
+          </div>
         }
+        <div class="kp-product-picker__footer-actions">
+          <app-kp-button
+            label="Отмена"
+            severity="secondary"
+            size="small"
+            [outlined]="true"
+            (buttonClick)="cancel()"
+          />
+          @if (multiple()) {
+            <app-kp-button
+              [label]="confirmButtonLabel()"
+              icon="pi pi-check"
+              size="large"
+              [disabled]="cartCount() === 0"
+              (buttonClick)="confirmMulti()"
+            />
+          }
+        </div>
       </div>
     </app-kp-dialog>
   `,
@@ -316,6 +302,7 @@ export class KpProductPickerComponent {
   readonly cartProducts = signal<Map<string, IProduct>>(new Map());
 
   readonly skeletonRows = [0, 1, 2, 3, 4, 5];
+  readonly pageSize = PRODUCT_PICKER_PAGE_SIZE;
 
   readonly kindFilterOptions = computed(() => [
     { label: 'Все типы', value: '' },
@@ -343,15 +330,16 @@ export class KpProductPickerComponent {
     this.cartList().reduce((sum, p) => sum + (p.listPrice ?? 0), 0),
   );
 
-  readonly totalPages = computed(() => {
-    const total = this.picker.total();
-    return Math.max(1, Math.ceil(total / PRODUCT_PICKER_PAGE_SIZE));
-  });
+  readonly paginationFirst = computed(
+    () => (this.picker.page() - 1) * PRODUCT_PICKER_PAGE_SIZE,
+  );
 
   readonly confirmButtonLabel = computed(() => {
     const n = this.cartCount();
     const base = this.confirmLabel();
-    return n > 0 ? `${base} ${n}` : base;
+    if (n === 0) return base;
+    const suffix = n === 1 ? 'товар' : n >= 2 && n <= 4 ? 'товара' : 'товаров';
+    return `${base} ${n} ${suffix}`;
   });
 
   private readonly openEffect = effect(() => {
@@ -371,15 +359,6 @@ export class KpProductPickerComponent {
     this.activeOnly();
     this.picker.loadProducts(this.buildFilters(1));
   });
-
-  pageRangeLabel(): string {
-    const total = this.picker.total();
-    if (total === 0) return 'Показано 0 из 0';
-    const page = this.picker.page();
-    const start = (page - 1) * PRODUCT_PICKER_PAGE_SIZE + 1;
-    const end = Math.min(page * PRODUCT_PICKER_PAGE_SIZE, total);
-    return `Показано ${start}–${end} из ${total}`;
-  }
 
   kindLabel(kind: string): string {
     return PRODUCT_KIND_LABELS[kind] ?? kind;
@@ -453,14 +432,12 @@ export class KpProductPickerComponent {
     };
   }
 
-  goPrev(): void {
-    const p = this.picker.page();
-    if (p > 1) this.picker.loadProductsImmediate(this.buildFilters(p - 1));
-  }
-
-  goNext(): void {
-    const p = this.picker.page();
-    if (p < this.totalPages()) this.picker.loadProductsImmediate(this.buildFilters(p + 1));
+  onPageChange(event: PaginatorState): void {
+    const rows = event.rows ?? PRODUCT_PICKER_PAGE_SIZE;
+    const page = Math.floor((event.first ?? 0) / rows) + 1;
+    if (page !== this.picker.page()) {
+      this.picker.loadProductsImmediate(this.buildFilters(page));
+    }
   }
 
   toggleCart(product: IProduct): void {

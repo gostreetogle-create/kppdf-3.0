@@ -129,6 +129,14 @@
       .layout__group-dot { background: var(--kp-nav-group-directories-accent); }
       .layout__group-label { color: color-mix(in srgb, var(--kp-nav-group-directories-accent) 72%, var(--kp-sidebar-text-strong)); }
     }
+
+    &--admin {
+      background: var(--kp-nav-group-admin-bg);
+      border-color: color-mix(in srgb, var(--kp-nav-group-admin-accent) 18%, transparent);
+
+      .layout__group-dot { background: var(--kp-nav-group-admin-accent); }
+      .layout__group-label { color: color-mix(in srgb, var(--kp-nav-group-admin-accent) 72%, var(--kp-sidebar-text-strong)); }
+    }
   }
 
   &__group-label {

@@ -9,9 +9,15 @@ import type { IDocumentTableType } from '../../../../shared/types/documentTableT
 export class DocumentTableTypeOptionsService {
   private readonly api = inject(CrudApiService);
 
-  /** Получить список типов таблиц для указанного docType */
-  load(docType = 'quotation'): Observable<KpSelectOption[]> {
-    return this.api
+  /** Кеш: docType → Observable полных типов (один HTTP-запрос для load + loadFullTypes) */
+  private readonly _fullCache = new Map<string, Observable<IDocumentTableType[]>>();
+
+  /** Общий стрим: фильтрация + сортировка полных типов, один HTTP на docType */
+  private fetchTypes(docType: string): Observable<IDocumentTableType[]> {
+    const cached = this._fullCache.get(docType);
+    if (cached) return cached;
+
+    const stream = this.api
       .list<IDocumentTableType>('/document-table-types', {
         limit: 100,
         page: 1,
@@ -22,14 +28,30 @@ export class DocumentTableTypeOptionsService {
         map((res) =>
           (res.data || [])
             .filter((t) => t.isActive !== false && t.name)
-            .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-            .map((t) => ({
-              label: t.label || t.title || t.name,
-              value: t.name,
-            })),
+            .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
         ),
         shareReplay(1),
       );
+
+    this._fullCache.set(docType, stream);
+    return stream;
+  }
+
+  /** Получить список типов таблиц для указанного docType (из общего кеша с loadFullTypes) */
+  load(docType = 'quotation'): Observable<KpSelectOption[]> {
+    return this.fetchTypes(docType).pipe(
+      map((types) =>
+        types.map((t) => ({
+          label: t.label || t.title || t.name,
+          value: t.name,
+        })),
+      ),
+    );
+  }
+
+  /** Получить полные данные типов таблиц (с dataSource, columns и пр.) — тот же стрим, что и load() */
+  loadFullTypes(docType = 'quotation'): Observable<IDocumentTableType[]> {
+    return this.fetchTypes(docType);
   }
 
   /** Получить полные данные типа таблицы по name */

@@ -633,6 +633,23 @@ async function seed(): Promise<void> {
       sortOrder: 1,
       isActive: true,
     },
+    {
+      name: 'services',
+      label: 'Услуги',
+      title: 'Услуги',
+      docType: 'quotation',
+      columns: [
+        { field: 'sku', header: 'Артикул', type: 'text', width: '100px' },
+        { field: 'name', header: 'Наименование', type: 'text' },
+        { field: 'qty', header: 'Кол-во', type: 'number', width: '80px' },
+        { field: 'unit', header: 'Ед. изм.', type: 'text', width: '70px' },
+        { field: 'price', header: 'Цена', type: 'currency', width: '110px' },
+        { field: 'sum', header: 'Сумма', type: 'currency', width: '110px' },
+      ],
+      dataSource: 'products',
+      sortOrder: 2,
+      isActive: true,
+    },
   ]);
   console.log(`  ✅ Типы таблиц документов: ${docTableTypes.length}`);
 

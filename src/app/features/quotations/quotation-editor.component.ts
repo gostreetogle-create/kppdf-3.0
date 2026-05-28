@@ -10,12 +10,8 @@ import type { IQuotation, IProduct, ITender } from '../../../../shared/types';
 // PrimeNG button — только для block-controls (toggle-панель); остальное через app-kp-button
 /* eslint-disable no-restricted-imports */
 import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
-import { DialogModule } from 'primeng/dialog';
-import { TextareaModule } from 'primeng/textarea';
 import { TagModule } from 'primeng/tag';
 /* eslint-enable no-restricted-imports */
 import { MessageService } from 'primeng/api';
@@ -30,12 +26,41 @@ import {
   KpSplitTextCardComponent,
   KpProductPickerComponent,
   KpButtonComponent,
+  KpDialogComponent,
+  KpInputComponent,
+  KpInputNumberComponent,
+  KpTextareaComponent,
+  KpSelectComponent,
   moveSortableItems,
 } from '../../shared/ui';
-import type { KpSortableDropEvent, KpSelectOption } from '../../shared/ui';
+import type { KpSortableDropEvent, KpSelectOption, ProductPickerFilters } from '../../shared/ui';
 
 // ===== Types =====
+function formatQuotationLabel(number: string | undefined): string {
+  const raw = number?.trim() ?? '';
+  if (!raw) return 'КП';
+  const body = raw.replace(/^КП[\s.\-_№]*/i, '').trim();
+  return body ? `КП №${body}` : raw;
+}
+
 const DEFAULT_TABLE_KIND = 'products';
+
+const FALLBACK_TABLE_BLOCK_OPTIONS: KpSelectOption[] = [
+  { label: 'Товары', value: 'products' },
+  { label: 'Услуги', value: 'services' },
+];
+
+/** Fallback-маппинг типа → productKind для фильтра в пикере (пока productKind не в модели) */
+const PRODUCT_KIND_BY_NAME: Record<string, string> = {
+  products: 'ITEM',
+  services: 'SERVICE',
+};
+
+/** Метаданные для подбора из справочника (загружаются динамически по dataSource типа таблицы) */
+interface PickerKindMeta {
+  label: string;
+  dataSource: string;
+}
 
 interface BlockItemRow {
   item: QuotationItem;
@@ -157,7 +182,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
     type: 'text',
     order: 5,
     content: 'Руководитель: ___________________  (подпись)',
-    settings: { fontSize: 11, fontWeight: 'normal', align: 'right', paddingTop: 20, paddingBottom: 8 },
+    settings: { fontSize: 11, fontWeight: 'normal', align: 'right', paddingTop: 8, paddingBottom: 8 },
   },
 ];
 
@@ -167,12 +192,16 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     NgFor, NgIf, DecimalPipe, NgStyle, FormsModule,
-    ButtonModule, InputTextModule, InputNumberModule, SelectModule, TextareaModule,
-    ToastModule, DialogModule, TagModule,
+    ButtonModule, SelectModule, ToastModule, TagModule,
     KpSortableListDirective, KpSortableItemDirective, KpSortableHandleDirective,
     KpSplitTextCardComponent,
     KpProductPickerComponent,
     KpButtonComponent,
+    KpDialogComponent,
+    KpInputComponent,
+    KpInputNumberComponent,
+    KpTextareaComponent,
+    KpSelectComponent,
   ],
   providers: [MessageService],
   template: `
@@ -188,7 +217,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
             (buttonClick)="goBack()"
           />
           <span class="editor__toolbar-title">
-            {{ isNew() ? 'Новое КП' : 'КП №' + quotation().number }}
+            {{ quotationToolbarTitle() }}
           </span>
           <span class="editor__toolbar-status">
             <p-tag
@@ -489,14 +518,14 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                       class="editor__table-toolbar-actions"
                       (mousedown)="stopTableBlockDrag($event)"
                     >
-                      @if (isProductsTableBlock(block)) {
+                      @if (tableBlockHasPicker(block)) {
                         <app-kp-button
                           icon="pi pi-shopping-cart"
                           size="small"
                           [rounded]="true"
                           [text]="true"
-                          [attr.aria-label]="'Выбрать товары'"
-                          [attr.title]="'Выбрать товары'"
+                          [attr.aria-label]="pickerButtonTitle(block)"
+                          [attr.title]="pickerButtonTitle(block)"
                           (buttonClick)="openProductPicker(i)"
                         />
                       }
@@ -550,12 +579,12 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                           </button>
                         </td>
                         <td>
-                          <p-inputNumber
-                            [(ngModel)]="row.item.qty"
-                            size="small"
-                            class="editor__table-number"
+                          <app-kp-input-number
+                            [value]="row.item.qty"
+                            (valueChange)="setItemQty(row.index, $event)"
                             [min]="0"
-                            (onValueChange)="recalcItem(row.index)"
+                            [useGrouping]="false"
+                            class="editor__table-number"
                             (click)="$event.stopPropagation()"
                             (dblclick)="$event.stopPropagation()"
                           />
@@ -564,14 +593,13 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                           <span class="editor__table-readonly">{{ row.item.unit || 'шт' }}</span>
                         </td>
                         <td>
-                          <p-inputNumber
-                            [(ngModel)]="row.item.price"
-                            size="small"
-                            class="editor__table-number"
+                          <app-kp-input-number
+                            [value]="row.item.price"
+                            (valueChange)="setItemPrice(row.index, $event)"
                             [min]="0"
-                            [minFractionDigits]="2"
-                            [maxFractionDigits]="2"
-                            (onValueChange)="recalcItem(row.index)"
+                            [step]="0.01"
+                            [useGrouping]="false"
+                            class="editor__table-number"
                             (click)="$event.stopPropagation()"
                             (dblclick)="$event.stopPropagation()"
                           />
@@ -609,28 +637,27 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                 <app-kp-button label="Разделитель" icon="pi pi-minus" [text]="true" size="small" (buttonClick)="addBlock('separator')" />
                 <div class="editor__add-menu-table" role="presentation" (buttonClick)="$event.stopPropagation()">
                   <span class="editor__add-menu-label">Таблица</span>
-                  @if (availableTableBlockOptions().length > 0) {
-                    <p-select
-                      [ngModel]="selectedTableKind()"
-                      (ngModelChange)="selectedTableKind.set($event)"
-                      [options]="availableTableBlockOptions()"
-                      optionLabel="label"
-                      optionValue="value"
-                      class="w-full"
-                      size="small"
-                      appendTo="body"
-                    />
-                    <app-kp-button
-                      label="Добавить таблицу"
-                      icon="pi pi-table"
-                      [text]="true"
-                      size="small"
-                      class="w-full"
-                      (buttonClick)="addTableBlock()"
-                    />
-                  } @else {
-                    <p class="editor__add-menu-hint">{{ tableAddMenuHint() }}</p>
-                  }
+                  <p-select
+                    [ngModel]="selectedTableKind()"
+                    (ngModelChange)="selectedTableKind.set($event)"
+                    [options]="availableTableBlockOptions()"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Выберите тип"
+                    class="w-full"
+                    size="small"
+                    appendTo="body"
+                    [disabled]="availableTableBlockOptions().length === 0"
+                  />
+                  <app-kp-button
+                    label="Добавить таблицу"
+                    icon="pi pi-table"
+                    [text]="true"
+                    size="small"
+                    class="w-full"
+                    [disabled]="availableTableBlockOptions().length === 0"
+                    (buttonClick)="addTableBlock()"
+                  />
                 </div>
               </div>
             </div>
@@ -642,20 +669,38 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
           <div class="editor__sidebar-section">
             <h3 class="editor__sidebar-title">Реквизиты</h3>
             <div class="editor__sidebar-field">
-              <label for="qe-field-number">Номер</label>
-              <input id="qe-field-number" pInputText size="small" [(ngModel)]="quotation().number" readonly class="w-full" />
+              <app-kp-input
+                name="qe-field-number"
+                label="Номер"
+                [value]="quotation().number"
+                (valueChange)="patchQuotationField('number', $event)"
+                [readonly]="true"
+              />
             </div>
             <div class="editor__sidebar-field">
-              <label for="qe-field-date">Дата</label>
-              <input id="qe-field-date" pInputText size="small" [(ngModel)]="quotationDate" class="w-full" />
+              <app-kp-input
+                name="qe-field-date"
+                label="Дата"
+                [value]="quotationDate"
+                (valueChange)="quotationDate = $event"
+              />
             </div>
             <div class="editor__sidebar-field">
-              <label for="qe-field-counterparty">Контрагент</label>
-              <input id="qe-field-counterparty" pInputText size="small" [(ngModel)]="quotation().counterpartyId" class="w-full" placeholder="ID контрагента" />
+              <app-kp-input
+                name="qe-field-counterparty"
+                label="Контрагент"
+                [value]="quotation().counterpartyId"
+                (valueChange)="patchQuotationField('counterpartyId', $event)"
+                placeholder="ID контрагента"
+              />
             </div>
             <div class="editor__sidebar-field">
-              <label for="qe-field-valid-until">Действует до</label>
-              <input id="qe-field-valid-until" pInputText size="small" [(ngModel)]="quotationValidUntil" class="w-full" />
+              <app-kp-input
+                name="qe-field-valid-until"
+                label="Действует до"
+                [value]="quotationValidUntil"
+                (valueChange)="quotationValidUntil = $event"
+              />
             </div>
           </div>
 
@@ -685,13 +730,13 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
 
           <div class="editor__sidebar-section">
             <h3 class="editor__sidebar-title">Примечание</h3>
-            <textarea
-              pInputTextarea
-              [(ngModel)]="quotation().notes"
-              rows="4"
-              class="w-full"
+            <app-kp-textarea
+              name="qe-notes"
+              [value]="quotation().notes || ''"
+              (valueChange)="patchQuotationField('notes', $event)"
+              [rows]="4"
               placeholder="Примечание к документу..."
-            ></textarea>
+            />
           </div>
 
           @if (sidebarItemRows().length > 0) {
@@ -791,13 +836,10 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
     </div>
 
     <!-- ═══ Template Dialog ═══ -->
-    <p-dialog
+    <app-kp-dialog
       [(visible)]="showTemplates"
       header="Шаблоны оформления"
-      [modal]="true"
-      [draggable]="false"
-      [resizable]="false"
-      [style]="{ width: '520px', maxWidth: '90vw' }"
+      width="520px"
     >
       <div class="tmpl-list">
         <div class="tmpl-list__header">
@@ -844,24 +886,24 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
           </div>
         </div>
       </div>
-    </p-dialog>
+    </app-kp-dialog>
 
     <!-- ═══ Text Block Editor Dialog ═══ -->
-    <p-dialog
+    <app-kp-dialog
       [(visible)]="showTextEditor"
-      [header]="'Настройки текстового блока'"
-      [modal]="true"
-      [draggable]="false"
-      [resizable]="false"
-      [style]="{ width: '500px', maxWidth: '90vw' }"
+      header="Настройки текстового блока"
+      width="500px"
     >
-      <div class="flex flex-col gap-3">
-        <div class="flex flex-col gap-1">
-          <label for="qe-text-block-title" class="text-sm font-medium">Заголовок</label>
-          <input id="qe-text-block-title" pInputText size="small" [(ngModel)]="editingTextBlock.title" class="w-full" placeholder="Необязательно" />
-        </div>
-        <div class="flex flex-col gap-1">
-          <span class="text-sm font-medium">Колонки</span>
+      <div class="editor__dialog-body">
+        <app-kp-input
+          name="qe-text-block-title"
+          label="Заголовок"
+          [value]="editingTextBlock.title || ''"
+          (valueChange)="editingTextBlock.title = $event"
+          placeholder="Необязательно"
+        />
+        <div class="editor__dialog-field">
+          <span class="editor__dialog-field-label">Колонки</span>
           <div class="flex flex-col gap-2">
             <div
               *ngFor="let cell of editingTextBlock.cells; let ci = index"
@@ -896,51 +938,58 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
             [disabled]="(editingTextBlock.cells?.length ?? 0) >= maxTextCells"
           />
         </div>
-        <div class="flex flex-col gap-1">
-          <label for="qe-text-block-font-size" class="text-xs font-medium">Размер шрифта</label>
-          <p-select
-            inputId="qe-text-block-font-size"
-            [(ngModel)]="editingTextBlock.settings.fontSize"
-            [options]="fontSizes"
-            optionLabel="label"
-            optionValue="value"
-            class="w-full"
-            size="small"
+        <app-kp-select
+          name="qe-text-block-font-size"
+          label="Размер шрифта"
+          [options]="fontSizes"
+          [value]="editingTextBlock.settings.fontSize"
+          (valueChange)="onTextBlockFontSizeChange($event)"
+        />
+        <div class="editor__dialog-field editor__dialog-field--row">
+          <app-kp-input-number
+            name="qe-text-block-padding-top"
+            label="Отступ сверху (px)"
+            [value]="editingTextBlock.settings.paddingTop"
+            (valueChange)="onTextBlockPaddingChange('paddingTop', $event)"
+            [min]="0"
+            [max]="120"
+            [useGrouping]="false"
+          />
+          <app-kp-input-number
+            name="qe-text-block-padding-bottom"
+            label="Отступ снизу (px)"
+            [value]="editingTextBlock.settings.paddingBottom"
+            (valueChange)="onTextBlockPaddingChange('paddingBottom', $event)"
+            [min]="0"
+            [max]="120"
+            [useGrouping]="false"
           />
         </div>
       </div>
-      <ng-template pTemplate="footer">
-        <div class="flex justify-end gap-2">
-          <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showTextEditor = false" />
-          <app-kp-button label="Готово" size="small" (buttonClick)="confirmTextEdit()" />
-        </div>
-      </ng-template>
-    </p-dialog>
+      <div kpDialogFooter class="editor__dialog-footer">
+        <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showTextEditor = false" />
+        <app-kp-button label="Готово" size="small" (buttonClick)="confirmTextEdit()" />
+      </div>
+    </app-kp-dialog>
 
     <!-- ═══ Text Cell Dialog ═══ -->
-    <p-dialog
+    <app-kp-dialog
       [(visible)]="showCellEditor"
-      [header]="'Редактировать колонку'"
-      [modal]="true"
-      [draggable]="false"
-      [resizable]="false"
-      [style]="{ width: '500px', maxWidth: '90vw' }"
+      header="Редактировать колонку"
+      width="500px"
     >
-      <div class="flex flex-col gap-3">
-        <div class="flex flex-col gap-1">
-          <label for="qe-cell-content" class="text-sm font-medium">Текст колонки</label>
-          <textarea
-            id="qe-cell-content"
-            pInputTextarea
-            [(ngModel)]="editingCellContent"
-            rows="8"
-            class="w-full"
-            placeholder="Введите текст (каждая строка — новый абзац)"
-          ></textarea>
-          <span class="text-xs text-soft">Каждая строка = новый абзац</span>
-        </div>
-        <div class="flex flex-col gap-1">
-          <span id="qe-cell-align-label" class="text-xs font-medium">Выравнивание колонки</span>
+      <div class="editor__dialog-body">
+        <app-kp-textarea
+          name="qe-cell-content"
+          label="Текст колонки"
+          [value]="editingCellContent"
+          (valueChange)="editingCellContent = $event"
+          [rows]="8"
+          placeholder="Введите текст (каждая строка — новый абзац)"
+        />
+        <span class="editor__dialog-hint">Каждая строка = новый абзац</span>
+        <div class="editor__dialog-field">
+          <span id="qe-cell-align-label" class="editor__dialog-field-label">Выравнивание колонки</span>
           <div class="editor__align-group" role="group" aria-labelledby="qe-cell-align-label">
             <app-kp-button
               icon="pi pi-align-left"
@@ -969,61 +1018,50 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
           </div>
         </div>
       </div>
-      <ng-template pTemplate="footer">
-        <div class="flex justify-end gap-2">
-          <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showCellEditor = false" />
-          <app-kp-button label="Готово" size="small" (buttonClick)="confirmCellEdit()" />
-        </div>
-      </ng-template>
-    </p-dialog>
+      <div kpDialogFooter class="editor__dialog-footer">
+        <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showCellEditor = false" />
+        <app-kp-button label="Готово" size="small" (buttonClick)="confirmCellEdit()" />
+      </div>
+    </app-kp-dialog>
 
     <!-- ═══ Photo Zoom Dialog ═══ -->
-    <p-dialog
+    <app-kp-dialog
+      class="editor__photo-zoom-dialog"
       [(visible)]="showPhotoZoomDialog"
       header="Фото товара"
-      [modal]="true"
-      [draggable]="false"
-      [resizable]="false"
-      [style]="{ width: 'auto', maxWidth: '95vw' }"
-      styleClass="editor__photo-zoom-dialog"
+      width="auto"
     >
       <img [src]="photoZoomUrl" class="editor__photo-zoom-img" alt="Увеличенное фото товара" />
-      <ng-template pTemplate="footer">
-        <div class="flex justify-end gap-2">
-          <app-kp-button label="Закрыть" severity="secondary" [outlined]="true" size="small" (buttonClick)="showPhotoZoomDialog = false" />
-        </div>
-      </ng-template>
-    </p-dialog>
+      <div kpDialogFooter class="editor__dialog-footer">
+        <app-kp-button label="Закрыть" severity="secondary" [outlined]="true" size="small" (buttonClick)="showPhotoZoomDialog = false" />
+      </div>
+    </app-kp-dialog>
 
     <!-- ═══ Photo URL Dialog ═══ -->
-    <p-dialog
+    <app-kp-dialog
       [(visible)]="showPhotoDialog"
       header="URL фото"
-      [modal]="true"
-      [draggable]="false"
-      [resizable]="false"
-      [style]="{ width: '400px', maxWidth: '90vw' }"
+      width="400px"
     >
-      <div class="flex flex-col gap-3">
-        <label for="qe-photo-url" class="text-sm font-medium">Введите URL изображения товара</label>
-        <input id="qe-photo-url" pInputText size="small" [(ngModel)]="photoDialogUrl" class="w-full" placeholder="https://example.com/photo.jpg" />
+      <app-kp-input
+        name="qe-photo-url"
+        label="URL изображения товара"
+        type="url"
+        [value]="photoDialogUrl"
+        (valueChange)="photoDialogUrl = $event"
+        placeholder="https://example.com/photo.jpg"
+      />
+      <div kpDialogFooter class="editor__dialog-footer">
+        <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showPhotoDialog = false" />
+        <app-kp-button label="Применить" size="small" (buttonClick)="confirmPhoto()" />
       </div>
-      <ng-template pTemplate="footer">
-        <div class="flex justify-end gap-2">
-          <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showPhotoDialog = false" />
-          <app-kp-button label="Применить" size="small" (buttonClick)="confirmPhoto()" />
-        </div>
-      </ng-template>
-    </p-dialog>
+    </app-kp-dialog>
 
     <!-- ═══ Row Actions Dialog ═══ -->
-    <p-dialog
+    <app-kp-dialog
       [(visible)]="showRowActionsDialog"
       header="Действия с товарной позицией"
-      [modal]="true"
-      [draggable]="false"
-      [resizable]="false"
-      [style]="{ width: '420px', maxWidth: '90vw' }"
+      width="420px"
     >
       <div class="editor__row-actions">
         @if (rowActionState(); as state) {
@@ -1069,76 +1107,73 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
           </div>
         }
       </div>
-    </p-dialog>
+    </app-kp-dialog>
 
     <!-- ═══ Separator Padding Dialog ═══ -->
-    <p-dialog
+    <app-kp-dialog
       [(visible)]="showPaddingDialog"
       header="Отступ разделителя"
-      [modal]="true"
-      [draggable]="false"
-      [resizable]="false"
-      [style]="{ width: '350px', maxWidth: '90vw' }"
+      width="350px"
     >
-      <div class="flex flex-col gap-3">
-        <label for="qe-padding-value" class="text-sm font-medium">Отступ сверху (px)</label>
-        <p-inputNumber inputId="qe-padding-value" [(ngModel)]="paddingDialogValue" size="small" [min]="0" [max]="100" class="w-full" />
+      <app-kp-input-number
+        name="qe-padding-value"
+        label="Отступ сверху (px)"
+        [(value)]="paddingDialogValue"
+        [min]="0"
+        [max]="100"
+        [useGrouping]="false"
+      />
+      <div kpDialogFooter class="editor__dialog-footer">
+        <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showPaddingDialog = false" />
+        <app-kp-button label="Готово" size="small" (buttonClick)="confirmPadding()" />
       </div>
-      <ng-template pTemplate="footer">
-        <div class="flex justify-end gap-2">
-          <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showPaddingDialog = false" />
-          <app-kp-button label="Готово" size="small" (buttonClick)="confirmPadding()" />
-        </div>
-      </ng-template>
-    </p-dialog>
+    </app-kp-dialog>
 
     <!-- ═══ Background URL Dialog ═══ -->
-    <p-dialog
+    <app-kp-dialog
       [(visible)]="showBgDialog"
       header="Фоновое изображение"
-      [modal]="true"
-      [draggable]="false"
-      [resizable]="false"
-      [style]="{ width: '450px', maxWidth: '90vw' }"
+      width="450px"
     >
-      <div class="flex flex-col gap-3">
-        <label for="qe-bg-url" class="text-sm font-medium">Введите URL фонового изображения</label>
-        <input id="qe-bg-url" pInputText size="small" [(ngModel)]="bgDialogUrl" class="w-full" placeholder="https://example.com/bg.jpg" />
+      <app-kp-input
+        name="qe-bg-url"
+        label="URL фонового изображения"
+        type="url"
+        [value]="bgDialogUrl"
+        (valueChange)="bgDialogUrl = $event"
+        placeholder="https://example.com/bg.jpg"
+      />
+      <div kpDialogFooter class="editor__dialog-footer">
+        <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showBgDialog = false" />
+        <app-kp-button label="Применить" size="small" (buttonClick)="confirmBg()" />
       </div>
-      <ng-template pTemplate="footer">
-        <div class="flex justify-end gap-2">
-          <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showBgDialog = false" />
-          <app-kp-button label="Применить" size="small" (buttonClick)="confirmBg()" />
-        </div>
-      </ng-template>
-    </p-dialog>
+    </app-kp-dialog>
 
     <!-- ═══ Template Name Dialog ═══ -->
-    <p-dialog
+    <app-kp-dialog
       [(visible)]="showTemplateNameDialog"
       header="Сохранение шаблона"
-      [modal]="true"
-      [draggable]="false"
-      [resizable]="false"
-      [style]="{ width: '400px', maxWidth: '90vw' }"
+      width="400px"
     >
-      <div class="flex flex-col gap-3">
-        <label for="qe-template-name" class="text-sm font-medium">Название шаблона</label>
-        <input id="qe-template-name" pInputText size="small" [(ngModel)]="templateNameValue" class="w-full" placeholder="Мой шаблон" />
+      <app-kp-input
+        name="qe-template-name"
+        label="Название шаблона"
+        [value]="templateNameValue"
+        (valueChange)="templateNameValue = $event"
+        placeholder="Мой шаблон"
+      />
+      <div kpDialogFooter class="editor__dialog-footer">
+        <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showTemplateNameDialog = false" />
+        <app-kp-button label="Сохранить" size="small" (buttonClick)="confirmSaveTemplate()" />
       </div>
-      <ng-template pTemplate="footer">
-        <div class="flex justify-end gap-2">
-          <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showTemplateNameDialog = false" />
-          <app-kp-button label="Сохранить" size="small" (buttonClick)="confirmSaveTemplate()" />
-        </div>
-      </ng-template>
-    </p-dialog>
+    </app-kp-dialog>
 
     <app-kp-product-picker
       [(visible)]="productPickerVisible"
       [multiple]="replaceItemIndex() === null"
-      [pickerTitle]="replaceItemIndex() === null ? 'Выберите товары' : 'Заменить товар'"
-      [selectedIds]="existingProductIds()"
+      [pickerTitle]="productPickerTitle()"
+      [defaultFilters]="productPickerDefaults()"
+      [selectedIds]="productPickerExistingIds()"
       (productsSelected)="onProductsSelected($event)"
       (productSelected)="onProductReplaced($event)"
     />
@@ -1157,6 +1192,11 @@ export class QuotationEditorComponent implements OnInit {
 
   // State
   readonly isNew = signal(false);
+
+  readonly quotationToolbarTitle = computed(() =>
+    this.isNew() ? 'Новое КП' : formatQuotationLabel(this.quotation().number),
+  );
+
   readonly saving = signal(false);
   readonly quotation = signal<IQuotation>({
     number: '',
@@ -1177,9 +1217,11 @@ export class QuotationEditorComponent implements OnInit {
   showTemplates = false;
   showAddMenu = false;
   readonly selectedTableKind = signal<string>('products');
-  readonly tableBlockOptions = signal<KpSelectOption[]>([
-    { label: 'Товары', value: 'products' },
-  ]);
+  readonly tableBlockOptions = signal<KpSelectOption[]>(FALLBACK_TABLE_BLOCK_OPTIONS);
+  /** Метаданные типов таблиц с dataSource (для подстановки из справочника). Предзаполнен фолбэком — API обновит после загрузки. */
+  readonly pickerMetaByKind = signal<Record<string, PickerKindMeta>>({
+    products: { label: 'Товары', dataSource: 'products' },
+  });
   showTextEditor = false;
   showCellEditor = false;
   editingTextIndex = -1;
@@ -1215,12 +1257,45 @@ export class QuotationEditorComponent implements OnInit {
   /** true = порядок блоков зафиксирован, перетаскивание отключено */
   readonly blocksReorderLocked = signal(false);
 
-  readonly existingProductIds = computed(() =>
+  readonly productPickerExistingIds = computed(() =>
     this.items()
-      .filter((item) => (item.tableKind ?? DEFAULT_TABLE_KIND) === DEFAULT_TABLE_KIND)
+      .filter((item) => (item.tableKind ?? DEFAULT_TABLE_KIND) === this.activePickerTableKind())
       .map((i) => i.productId)
       .filter((id): id is string => !!id),
   );
+
+  readonly activePickerTableKind = computed(() => {
+    const replaceIdx = this.replaceItemIndex();
+    if (replaceIdx !== null) {
+      const item = this.items()[replaceIdx];
+      return item?.tableKind ?? DEFAULT_TABLE_KIND;
+    }
+    const blockIndex = this.activeTableBlockIndex();
+    if (blockIndex === null) return DEFAULT_TABLE_KIND;
+    const block = this.blocks()[blockIndex];
+    return block?.type === 'table' ? this.resolveTableKind(block) : DEFAULT_TABLE_KIND;
+  });
+
+  readonly productPickerDefaults = computed((): ProductPickerFilters => {
+    const kind = this.activePickerTableKind();
+    const productKind = PRODUCT_KIND_BY_NAME[kind];
+    return {
+      kind: productKind,
+      activeOnly: true,
+    };
+  });
+
+  readonly productPickerTitle = computed(() => {
+    if (this.replaceItemIndex() !== null) {
+      const item = this.items()[this.replaceItemIndex()!];
+      const kind = item?.tableKind ?? DEFAULT_TABLE_KIND;
+      const label = this.pickerMetaByKind()[kind]?.label ?? 'позицию';
+      return `Заменить ${label.toLowerCase()}`;
+    }
+    const kind = this.activePickerTableKind();
+    const label = this.pickerMetaByKind()[kind]?.label ?? 'позиции';
+    return `Выберите ${label.toLowerCase()}`;
+  });
 
   readonly availableTableBlockOptions = computed(() => {
     const usedKinds = new Set(
@@ -1246,18 +1321,6 @@ export class QuotationEditorComponent implements OnInit {
     return block?.title || this.tableBlockOptions().find((o) => o.value === kind)?.label || 'Позиции';
   });
 
-  readonly tableAddMenuHint = computed(() => {
-    const tables = this.blocks().filter((block) => block.type === 'table');
-    if (tables.length === 0 && this.tableBlockOptions().length === 0) {
-      return 'Типы таблиц загружаются…';
-    }
-    if (tables.length === 0) {
-      return 'Выберите тип и нажмите «Добавить таблицу».';
-    }
-    const labels = tables.map((block) => block.title || this.resolveTableKind(block));
-    return `На листе уже есть: ${labels.join(', ')}. Удалите блок таблицы, чтобы добавить снова.`;
-  });
-
   // ── Prompt-replacement dialog state ──
   showPhotoDialog = false;
   photoDialogIndex = -1;
@@ -1268,7 +1331,7 @@ export class QuotationEditorComponent implements OnInit {
 
   showPaddingDialog = false;
   paddingDialogIndex = -1;
-  paddingDialogValue = 4;
+  paddingDialogValue: number | null = 4;
 
   showBgDialog = false;
   bgDialogUrl = '';
@@ -1409,19 +1472,31 @@ export class QuotationEditorComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (options) => {
-          this.tableBlockOptions.set(options);
-          if (options.length > 0) {
-            this.selectedTableKind.set(String(options[0].value ?? ''));
-          }
+          this.tableBlockOptions.set(this.mergeTableBlockOptions(options));
           this.syncSelectedTableKind();
         },
         error: () => {
-          // Fallback: keep hardcoded 'products' if API fails
-          this.tableBlockOptions.set([
-            { label: 'Товары', value: 'products' },
-          ]);
+          this.tableBlockOptions.set([...FALLBACK_TABLE_BLOCK_OPTIONS]);
           this.selectedTableKind.set('products');
           this.syncSelectedTableKind();
+        },
+      });
+
+    this.tableTypeOptionsService
+      .loadFullTypes('quotation')
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        catchError(() => of([])),
+      )
+      .subscribe({
+        next: (types) => {
+          const meta: Record<string, PickerKindMeta> = {};
+          for (const t of types) {
+            if (t.dataSource && t.name) {
+              meta[t.name] = { label: t.label || t.title || t.name, dataSource: t.dataSource };
+            }
+          }
+          this.pickerMetaByKind.set(meta);
         },
       });
   }
@@ -1520,15 +1595,47 @@ export class QuotationEditorComponent implements OnInit {
     }
   }
 
+  patchQuotationField(key: 'number' | 'counterpartyId' | 'notes', value: string): void {
+    this.quotation.update((q) => ({ ...q, [key]: value }));
+  }
+
+  setItemQty(index: number, qty: number | null): void {
+    this.items.update((items) => {
+      const updated = [...items];
+      updated[index] = { ...updated[index], qty: qty ?? 0 };
+      return updated;
+    });
+    this.recalcItem(index);
+  }
+
+  setItemPrice(index: number, price: number | null): void {
+    this.items.update((items) => {
+      const updated = [...items];
+      updated[index] = { ...updated[index], price: price ?? 0 };
+      return updated;
+    });
+    this.recalcItem(index);
+  }
+
+  onTextBlockFontSizeChange(value: string | number | boolean | null): void {
+    this.editingTextBlock.settings.fontSize = Number(value ?? 11);
+  }
+
+  onTextBlockPaddingChange(field: 'paddingTop' | 'paddingBottom', value: number | null): void {
+    this.editingTextBlock.settings[field] = value ?? 0;
+  }
+
   // ===== Items =====
   openProductPicker(blockIndex: number): void {
     const block = this.blocks()[blockIndex];
     if (!block || block.type !== 'table') return;
-    if (!this.isProductsTableBlock(block)) {
+    if (!this.tableBlockHasPicker(block)) {
+      const kind = this.resolveTableKind(block);
+      const label = this.pickerMetaByKind()[kind]?.label ?? kind;
       this.notification.add({
         severity: 'info',
         summary: 'Подбор позиций',
-        detail: 'Из справочника пока можно добавлять позиции только в таблицу «Товары».',
+        detail: `Для таблицы «${label}» подбор из справочника не настроен (поле dataSource не задано).`,
       });
       return;
     }
@@ -1537,12 +1644,20 @@ export class QuotationEditorComponent implements OnInit {
     this.productPickerVisible.set(true);
   }
 
+  pickerButtonTitle(block: EditorBlock): string {
+    const kind = this.resolveTableKind(block);
+    const meta = this.pickerMetaByKind()[kind];
+    return meta ? `Выбрать ${meta.label.toLowerCase()}` : 'Выбрать позиции';
+  }
+
   resolveTableKind(block: EditorBlock): string {
     return block.tableKind ?? DEFAULT_TABLE_KIND;
   }
 
-  isProductsTableBlock(block: EditorBlock): boolean {
-    return block.type === 'table' && this.resolveTableKind(block) === DEFAULT_TABLE_KIND;
+  tableBlockHasPicker(block: EditorBlock): boolean {
+    if (block.type !== 'table') return false;
+    const kind = this.resolveTableKind(block);
+    return !!this.pickerMetaByKind()[kind];
   }
 
   blockHasTableKind(kind: string): boolean {
@@ -1595,6 +1710,17 @@ export class QuotationEditorComponent implements OnInit {
     }));
   }
 
+  private mergeTableBlockOptions(fromApi: KpSelectOption[]): KpSelectOption[] {
+    const merged = new Map<string, KpSelectOption>();
+    for (const option of FALLBACK_TABLE_BLOCK_OPTIONS) {
+      merged.set(String(option.value ?? ''), option);
+    }
+    for (const option of fromApi) {
+      merged.set(String(option.value ?? ''), option);
+    }
+    return Array.from(merged.values());
+  }
+
   private syncSelectedTableKind(): void {
     const available = this.availableTableBlockOptions();
     if (available.length === 0) return;
@@ -1613,8 +1739,7 @@ export class QuotationEditorComponent implements OnInit {
     ) {
       return;
     }
-    this.replaceItemIndex.set(index);
-    this.productPickerVisible.set(true);
+    this.replaceItem(index);
   }
 
   onTableRowClick(event: MouseEvent, index: number): void {
@@ -2190,14 +2315,21 @@ export class QuotationEditorComponent implements OnInit {
   private normalizeTextBlock(block: EditorBlock): EditorBlock {
     if (block.type !== 'text') return block;
     const fallbackAlign = block.settings.align ?? 'center';
+    const settings = {
+      ...block.settings,
+      paddingTop: block.settings.paddingTop ?? 8,
+      paddingBottom: block.settings.paddingBottom ?? 8,
+    };
     if (block.cells && block.cells.length > 0) {
       return {
         ...block,
+        settings,
         cells: block.cells.map((cell) => this.normalizeCell(cell, fallbackAlign)),
       };
     }
     return {
       ...block,
+      settings,
       cells: [{ content: block.content || '', align: fallbackAlign }],
     };
   }
@@ -2244,7 +2376,7 @@ export class QuotationEditorComponent implements OnInit {
         const updated = [...blocks];
         updated[this.paddingDialogIndex] = {
           ...updated[this.paddingDialogIndex],
-          settings: { ...updated[this.paddingDialogIndex].settings, paddingTop: this.paddingDialogValue },
+          settings: { ...updated[this.paddingDialogIndex].settings, paddingTop: this.paddingDialogValue ?? 0 },
         };
         return updated;
       });

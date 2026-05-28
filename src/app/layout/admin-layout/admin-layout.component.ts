@@ -13,7 +13,7 @@ interface FlatMenuItem {
 }
 
 interface MenuGroup {
-  id: 'sales' | 'production' | 'warehouse' | 'directories';
+  id: 'sales' | 'production' | 'warehouse' | 'directories' | 'admin';
   label: string;
   items: FlatMenuItem[];
 }
@@ -182,6 +182,12 @@ export class AdminLayoutComponent {
       label: 'Справочники',
       items: [
         { label: 'Товары', icon: 'pi pi-box', route: '/products', requiresAny: [PERMISSIONS.products.view] },
+      ],
+    },
+    {
+      id: 'admin',
+      label: 'Администрирование',
+      items: [
         {
           label: 'НСИ',
           icon: 'pi pi-book',
