@@ -11,15 +11,16 @@
 - [x] EAV в products (диалог редактирования)
 
 ## P1 (QuotationEditor — таблицы)
-- [x] **Панель блоков и порядок секций** — rail 280px, форматирование, drag по контенту, замок порядка (по умолчанию открыт), без дублей toolbar/tooltip.
+- [x] **Панель блоков и порядок секций** — rail 280px, форматирование, drag по контенту, замок порядка (по умолчанию открыт), **открытие панели по клику**, цвет фона, drag таблицы.
       Док: [src/app/features/quotations/QUOTATION-EDITOR-BLOCKS.md](../../src/app/features/quotations/QUOTATION-EDITOR-BLOCKS.md).
-- [x] **Добавление таблицы после удаления** — меню «+» → выпадающий список типа таблицы → «Добавить таблицу».
-      Сейчас один тип: **Товары** (`tableKind: 'products'`).
-- [ ] **Настройки типов таблиц документов** (отдельный план) — админка приложения:
-      реестр таблиц (товары, услуги, спецификация…), колонки, источник данных, RBAC.
-      См. [.opencode/audit/plans/quotation-document-tables.md](plans/quotation-document-tables.md).
-- [ ] **QuotationEditor: таблицы из настроек** — выпадающий список типов таблиц из API/конфига, не хардкод.
-- [ ] **Персистенция `tableKind`** — поле в `IDocumentBlock` + Mongoose (сейчас только локально в редакторе).
+- [x] **Добавление таблицы** — меню «+» → тип (Товары / Услуги) → «Добавить таблицу»; несколько типов на листе, позиции по `tableKind`.
+- [x] **Product picker в таблице** — «Выбрать товары/услуги», модалка с paginator и футером «Добавить N товаров» (без chip-корзины).
+      Док: [src/app/shared/ui/kp-product-picker/README.md](../../src/app/shared/ui/kp-product-picker/README.md).
+- [x] **Персистенция `tableKind`** — `shared/types`, Mongoose, нормализация в редакторе.
+- [x] **QuotationEditor: типы таблиц из API** — `/document-table-types` + fallback; админка CRUD.
+- [ ] **Динамические колонки таблицы из конфига типа** — рендер по `IDocumentTableType.columns` (сейчас фиксированная сетка колонок).
+- [ ] **Настройки типов таблиц — доработки** — `productKind` в модели, другие `dataSource` кроме `products`.
+      План: [.opencode/audit/plans/quotation-document-tables.md](plans/quotation-document-tables.md).
 
 ## P2 (опционально)
 - [ ] EAV в tenders / orders
@@ -29,6 +30,7 @@
 - [ ] chief-architect в opencode.json
 
 ## Новое от 2026-05-28
+- [x] **QuotationEditor UX (PLM-126 / 140)** — таблицы `products`+`services`, product picker, заголовок КП без «КП №КП», UI-кит в диалогах, разделитель на экране. Док: [QUOTATION-EDITOR-BLOCKS.md](../../src/app/features/quotations/QUOTATION-EDITOR-BLOCKS.md).
 - [ ] **Товары: недостающие поля (Sheets ↔ MongoDB ↔ UI)** — после импорта 666 позиций из Google Sheets в MongoDB часть колонок не переносится: **Фото URL / Фото JSON**, **Себестоимость**, **Заметки** (и при необходимости явная **Подкатегория**). Нужно: расширить `IProduct` + `product.model.ts`, форму «Товары», `sync-sheet-to-mongo.js`; синхронизировать `shared/types` FE/BE; не ломать существующие 689 записей (миграция fill-empty).
 - [ ] **Деплой обновлённого мониторинга на Synology** — дашборд обновлён (график времени ответа sport-set.ru, фикс `os.uname()` для Windows, добавлен User-Agent для Cloudflare). Нужно задеплоить `deploy/monitoring/server.py` и `monitoring/index.html` на Synology.
 - [ ] **e2e тесты для quotation API** — supertest установлен (`backend/package.json`), тесты не написаны. Нужно создать `backend/src/__tests__/quotation.e2e.test.ts` с CRUD + permissions.

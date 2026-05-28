@@ -30,6 +30,8 @@
 - `docs/integrations/yougile/adding-tasks.md` — деревья CRM / 08, скрипты создания
 - `docs/integrations/yougile/api-reference.md` — YouGile REST API v2 reference (bridge)
 - `docs/integrations/yougile/configurator-scripts.md` — YouGile configurator guide (bridge)
+- `src/app/features/quotations/QUOTATION-EDITOR-BLOCKS.md` — **редактор КП**: блоки, таблицы, product picker (canonical для UX редактора)
+- `src/app/shared/ui/kp-product-picker/README.md` — модалка выбора товаров/услуг
 - `docs/archive/analysis/README.md` — карта архивной аналитики
 - `tools/README.md` — индекс утилит (импорт товаров, YouGile, сборка)
 - `tools/products_import_export/README.md` — импорт/экспорт товаров (Sheets ↔ MongoDB)

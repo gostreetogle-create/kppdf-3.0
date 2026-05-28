@@ -6,16 +6,20 @@
 
 ## Реестр PLM-xxx
 
-**ID карточки = то, что в ссылке YouGile** (`#PLM-126`). Отдельный номер не нужен.
+**ID карточки = hash в ссылке YouGile** (`#PLM-126`). Это то, что вы видите в адресной строке при открытии задачи.
+
+> YouGile также хранит `idTaskCommon` (ID-141) и `idTaskProject` (PLM-139) — они **могут не совпадать** с hash URL. Реестр и скрипты ориентируются **только на `#PLM-xxx` из ссылки**.
 
 | Файл | Назначение |
 |------|------------|
-| `config/yougile-task-registry.yaml` | PLM-xxx → UUID, иерархия `subtasks` |
+| `config/yougile-task-registry.yaml` | PLM-xxx → UUID, section, code, ux |
 | `tools/yougile-registry.js` | show / resolve / repair-links |
+| `tools/sync-plm-checklist.js` | описание + чеклист в YouGile после фикса в коде |
 
 ```bash
 node tools/yougile-registry.js show PLM-126
-node tools/yougile-registry.js resolve PLM-126
+node tools/yougile-registry.js resolve PLM-139
+node tools/sync-plm-checklist.js PLM-139 --done
 node tools/yougile-registry.js repair-links
 ```
 
@@ -114,6 +118,7 @@ await api.put(`/tasks/${parentId}`, {
 
 **Код:** `src/app/features/quotations/quotation-editor.component.ts`
 **UX:** `src/app/features/quotations/QUOTATION-EDITOR-BLOCKS.md`
+**Product picker:** `src/app/shared/ui/kp-product-picker/README.md`
 
 Связанные задачи: **1.4 UI** (список КП), **1.3 API** (CRUD).
 ```

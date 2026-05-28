@@ -1,3 +1,5 @@
+import type { ProductKind } from './product.interface';
+
 /** Тип данных для колонки таблицы */
 export type DocTableColumnType = 'text' | 'number' | 'select' | 'date' | 'image' | 'currency';
 
@@ -28,6 +30,8 @@ export interface IDocumentTableType {
   columns: IDocTableColumn[];
   /** Источник данных (например: products — подстановка из справочника товаров через productPicker) */
   dataSource?: string;
+  /** Тип продукта для точного фильтра в пикере (ITEM / SERVICE / WORK). Если не задан — без фильтра. */
+  productKind?: ProductKind;
   /** Порядок сортировки в выпадающем списке */
   sortOrder?: number;
   /** Размер шрифта по умолчанию */

@@ -55,7 +55,8 @@ Token:    yougile-sync-server/.env (YG_TOKEN) или tools/yougile-sync.ps1
 | `tools/fix-documents-board-visibility.js` | Убрать вложенные задачи с доски |
 | `tools/fix-documents-links.js` | Пересборка `subtasks` модуля 08 |
 | `tools/yougile-restructure.js` | Перестройка колонок |
-| `tools/fix-yougile-descriptions.js` | Массовое обновление описаний |
+| `tools/yougile-registry.js` | Реестр PLM-xxx → UUID: show, resolve, repair-links |
+| `tools/sync-plm-checklist.js` | После фикса в коде: описание + отметка чеклиста в YouGile |
 | `yougile-sync-server` | Polling, % EPIC, snapshot → Google Sheets |
 
 ---

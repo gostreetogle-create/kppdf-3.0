@@ -18,6 +18,12 @@ const DOC_TYPE_OPTIONS: KpSelectOption[] = [
   { label: 'Отгрузка', value: 'shipping' },
 ];
 
+const PRODUCT_KIND_OPTIONS: KpSelectOption[] = [
+  { label: 'Товар (ITEM)', value: 'ITEM' },
+  { label: 'Услуга (SERVICE)', value: 'SERVICE' },
+  { label: 'Работа (WORK)', value: 'WORK' },
+];
+
 const YES_NO: KpSelectOption[] = [
   { label: 'Да', value: 'true' },
   { label: 'Нет', value: 'false' },
@@ -100,6 +106,14 @@ function tableTypeSeverity(value: unknown): string {
             [value]="row['dataSource'] || ''"
             (valueChange)="row['dataSource'] = $event"
           />
+          <app-kp-select
+            label="Тип продукта"
+            name="productKind"
+            placeholder="Фильтр для пикера"
+            [value]="row['productKind'] || ''"
+            (valueChange)="row['productKind'] = $event || undefined"
+            [options]="productKindOptions"
+          />
           <app-kp-textarea
             label="Колонки (JSON)"
             name="columnsJson"
@@ -142,6 +156,7 @@ export class DocumentTableTypesPageComponent {
   readonly store = createDocumentTableTypesStore(this.destroyRef);
   readonly PERMISSIONS = PERMISSIONS;
   readonly docTypeOptions = DOC_TYPE_OPTIONS;
+  readonly productKindOptions = PRODUCT_KIND_OPTIONS;
   readonly yesNoOptions = YES_NO;
   readonly tableTypeSeverity = tableTypeSeverity;
 
@@ -151,6 +166,7 @@ export class DocumentTableTypesPageComponent {
     { field: 'title', header: 'Заголовок', type: 'text', sortable: true },
     { field: 'docType', header: 'Документ', type: 'tag', options: DOC_TYPE_OPTIONS, sortable: true, width: '110px' },
     { field: 'dataSource', header: 'Источник', type: 'text', sortable: true, width: '120px' },
+    { field: 'productKind', header: 'Тип', type: 'tag', options: PRODUCT_KIND_OPTIONS, sortable: true, width: '90px' },
     { field: 'sortOrder', header: 'Порядок', type: 'number', sortable: true, width: '90px' },
     { field: 'isActive', header: 'Активен', type: 'tag', options: YES_NO, width: '90px' },
   ];

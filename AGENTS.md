@@ -250,10 +250,14 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 - Явно в промпте: `@ui-specialist` / `@ux-architect` — если rule не хватило.
 - Примеры: «Действуй по ui-specialist.md — поправь kp-table на tenders»; «По ux-architect — куда в меню положить EAV».
 
-### QuotationEditor — панель блоков (2026-05-27)
+### QuotationEditor — блоки, таблицы, подбор (2026-05-27…28)
 
 - Документация UX: [src/app/features/quotations/QUOTATION-EDITOR-BLOCKS.md](src/app/features/quotations/QUOTATION-EDITOR-BLOCKS.md)
-- Боковая панель справа от A4; перетаскивание блоков при **открытом** замке в шапке; по умолчанию замок открыт.
+- Product picker: [src/app/shared/ui/kp-product-picker/README.md](src/app/shared/ui/kp-product-picker/README.md)
+- Панель блоков справа от A4; **открытие по клику** на блок (не hover); перетаскивание блоков при **открытом** замке в шапке; по умолчанию замок открыт.
+- Таблицы: `tableKind` (`products`, `services`), одна таблица каждого типа; кнопка **«Выбрать товары/услуги»**; позиции в `items[]` с тем же `tableKind`.
+- Подбор: модалка → строки → футер **«Добавить N товаров»** (см. README picker).
+- Заголовок toolbar: `formatQuotationLabel()` — без дубля «КП №КП-…».
 
 ### CRUD: поля-ссылки (`*Id`)
 

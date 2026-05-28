@@ -27,6 +27,7 @@ const documentTableTypeSchema = new Schema<DocumentTableTypeDocument>(
     docType: { type: String, required: true, default: 'quotation' },
     columns: { type: [docTableColumnSchema], default: [] },
     dataSource: { type: String },
+    productKind: { type: String, enum: ['ITEM', 'SERVICE', 'WORK'] },
     sortOrder: { type: Number, default: 0 },
     fontSize: { type: Number, default: 10 },
     isActive: { type: Boolean, default: true },

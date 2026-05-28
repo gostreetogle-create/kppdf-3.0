@@ -18,6 +18,7 @@ import { MessageService } from 'primeng/api';
 
 // Services
 import { CrudApiService } from '../../shared/services/crud-api.service';
+import { CounterpartyOptionsService } from '../../shared/services/counterparty-options.service';
 import { DocumentTableTypeOptionsService } from '../../shared/services/document-table-type-options.service';
 import {
   KpSortableListDirective,
@@ -50,17 +51,29 @@ const FALLBACK_TABLE_BLOCK_OPTIONS: KpSelectOption[] = [
   { label: 'Услуги', value: 'services' },
 ];
 
-/** Fallback-маппинг типа → productKind для фильтра в пикере (пока productKind не в модели) */
-const PRODUCT_KIND_BY_NAME: Record<string, string> = {
-  products: 'ITEM',
-  services: 'SERVICE',
-};
+/** Категории шаблонов документов (PLM-139 / 8.1.1) */
+const TEMPLATE_DOC_TYPE_OPTIONS: KpSelectOption[] = [
+  { label: 'Коммерческое предложение', value: 'quotation' },
+  { label: 'Письмо', value: 'letter' },
+  { label: 'Ответ на письмо', value: 'letter_reply' },
+  { label: 'Договор', value: 'contract' },
+  { label: 'Счёт', value: 'invoice' },
+  { label: 'Отгрузка', value: 'shipping' },
+  { label: 'Акт', value: 'act' },
+  { label: 'Спецификация', value: 'specification' },
+];
 
 /** Метаданные для подбора из справочника (загружаются динамически по dataSource типа таблицы) */
 interface PickerKindMeta {
   label: string;
   dataSource: string;
+  productKind?: string;
 }
+
+const DEFAULT_PICKER_META: Record<string, PickerKindMeta> = {
+  products: { label: 'Товары', dataSource: 'products', productKind: 'ITEM' },
+  services: { label: 'Услуги', dataSource: 'services', productKind: 'SERVICE' },
+};
 
 interface BlockItemRow {
   item: QuotationItem;
@@ -520,10 +533,10 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                     >
                       @if (tableBlockHasPicker(block)) {
                         <app-kp-button
+                          [label]="pickerButtonTitle(block)"
                           icon="pi pi-shopping-cart"
                           size="small"
-                          [rounded]="true"
-                          [text]="true"
+                          [outlined]="true"
                           [attr.aria-label]="pickerButtonTitle(block)"
                           [attr.title]="pickerButtonTitle(block)"
                           (buttonClick)="openProductPicker(i)"
@@ -535,14 +548,14 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                   <table class="editor__table">
                     <thead>
                       <tr>
-                        <th style="width:40px">№</th>
-                        <th style="width:60px">Арт.</th>
-                        <th style="width:60px">Фото</th>
-                        <th>Наименование</th>
-                        <th style="width:70px">Кол-во</th>
-                        <th style="width:50px">Ед.</th>
-                        <th style="width:90px">Цена, ₽</th>
-                        <th style="width:100px">Сумма, ₽</th>
+                        <th class="editor__table-col editor__table-col--idx">№</th>
+                        <th class="editor__table-col editor__table-col--sku">Арт.</th>
+                        <th class="editor__table-col editor__table-col--photo">Фото</th>
+                        <th class="editor__table-col editor__table-col--name">Наименование</th>
+                        <th class="editor__table-col editor__table-col--qty">Кол-во</th>
+                        <th class="editor__table-col editor__table-col--unit">Ед.</th>
+                        <th class="editor__table-col editor__table-col--price">Цена, ₽</th>
+                        <th class="editor__table-col editor__table-col--sum">Сумма, ₽</th>
                       </tr>
                     </thead>
                     <tbody (mousedown)="stopTableBlockDrag($event)">
@@ -686,12 +699,14 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
               />
             </div>
             <div class="editor__sidebar-field">
-              <app-kp-input
+              <app-kp-select
                 name="qe-field-counterparty"
                 label="Контрагент"
-                [value]="quotation().counterpartyId"
-                (valueChange)="patchQuotationField('counterpartyId', $event)"
-                placeholder="ID контрагента"
+                [value]="quotation().counterpartyId || null"
+                (valueChange)="onCounterpartyChange($event)"
+                [options]="counterpartyOptions()"
+                [loading]="counterpartyLoading()"
+                placeholder="Выберите контрагента"
               />
             </div>
             <div class="editor__sidebar-field">
@@ -705,19 +720,75 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
           </div>
 
           <div class="editor__sidebar-section">
-            <h3 class="editor__sidebar-title">Фон документа</h3>
+            <h3 class="editor__sidebar-title">Шаблон оформления</h3>
             <div class="editor__sidebar-field">
-              <app-kp-button
-                [label]="quotationBg ? 'Изменить фон' : 'Загрузить фон'"
-                icon="pi pi-image"
-                severity="secondary"
-                [outlined]="true"
-                size="small"
-                (buttonClick)="showBgInput()"
-                class="w-full"
+              <app-kp-select
+                name="qe-template-category"
+                label="Категория документа"
+                [value]="templateCategory()"
+                (valueChange)="onTemplateCategoryChange($event)"
+                [options]="templateDocTypeOptions"
+                placeholder="Категория"
               />
+            </div>
+            <div class="editor__sidebar-field">
+              <app-kp-select
+                name="qe-template-pick"
+                label="Шаблон"
+                [value]="activeTemplateId() ?? null"
+                (valueChange)="onTemplatePick($event)"
+                [options]="templateSelectOptions()"
+                placeholder="Выберите шаблон"
+              />
+            </div>
+            <app-kp-button
+              label="Управление шаблонами"
+              icon="pi pi-palette"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              (buttonClick)="showTemplates = true"
+              class="w-full"
+            />
+          </div>
+
+          <div class="editor__sidebar-section">
+            <h3 class="editor__sidebar-title">Фон документа</h3>
+            @if (quotationBg) {
+              <div class="editor__bg-preview">
+                <img [src]="quotationBg" alt="Превью фона документа" />
+              </div>
+            }
+            <div
+              class="editor__bg-dropzone"
+              [class.editor__bg-dropzone--active]="bgDragOver()"
+              [class.editor__bg-dropzone--loading]="bgProcessing()"
+              (dragover)="onBgDragOver($event)"
+              (dragleave)="onBgDragLeave($event)"
+              (drop)="onBgDrop($event)"
+            >
+              @if (bgProcessing()) {
+                <i class="pi pi-spinner pi-spin editor__bg-dropzone-icon" aria-hidden="true"></i>
+                <span class="editor__bg-dropzone-text">Загрузка…</span>
+              } @else {
+                <i class="pi pi-cloud-upload editor__bg-dropzone-icon" aria-hidden="true"></i>
+                <span class="editor__bg-dropzone-text">
+                  Перетащите изображение или&nbsp;
+                  <button type="button" class="editor__bg-browse-btn" (click)="bgFileInput.click()">
+                    выберите файл
+                  </button>
+                </span>
+              }
+              <input
+                #bgFileInput
+                type="file"
+                accept="image/*"
+                hidden
+                (change)="onBgFileSelected($event)"
+              />
+            </div>
+            @if (quotationBg) {
               <app-kp-button
-                *ngIf="quotationBg"
                 label="Удалить фон"
                 icon="pi pi-times"
                 severity="danger"
@@ -725,7 +796,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                 size="small"
                 (buttonClick)="removeBackgroundImage()"
               />
-            </div>
+            }
           </div>
 
           <div class="editor__sidebar-section">
@@ -843,6 +914,13 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
     >
       <div class="tmpl-list">
         <div class="tmpl-list__header">
+          <app-kp-select
+            name="qe-tmpl-dialog-category"
+            label="Категория"
+            [value]="templateCategory()"
+            (valueChange)="onTemplateCategoryChange($event)"
+            [options]="templateDocTypeOptions"
+          />
           <app-kp-button
             label="Сохранить как шаблон"
             icon="pi pi-save"
@@ -854,7 +932,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
 
         <div class="tmpl-list__items">
           <div
-            *ngFor="let tmpl of templates(); trackBy: trackByTemplate"
+            *ngFor="let tmpl of templatesForCategory(); trackBy: trackByTemplate"
             class="tmpl-card"
             [class.tmpl-card--active]="activeTemplateId() === tmpl._id"
             (buttonClick)="applyTemplate(tmpl)" (keydown.enter)="applyTemplate(tmpl)" tabindex="0" role="button"
@@ -881,8 +959,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
             </div>
           </div>
 
-          <div *ngIf="templates().length === 0" class="tmpl-list__empty">
-            <p>Нет сохранённых шаблонов</p>
+          <div *ngIf="templatesForCategory().length === 0" class="tmpl-list__empty">
+            <p>Нет шаблонов в категории «{{ templateCategoryLabel() }}»</p>
           </div>
         </div>
       </div>
@@ -1129,26 +1207,6 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
       </div>
     </app-kp-dialog>
 
-    <!-- ═══ Background URL Dialog ═══ -->
-    <app-kp-dialog
-      [(visible)]="showBgDialog"
-      header="Фоновое изображение"
-      width="450px"
-    >
-      <app-kp-input
-        name="qe-bg-url"
-        label="URL фонового изображения"
-        type="url"
-        [value]="bgDialogUrl"
-        (valueChange)="bgDialogUrl = $event"
-        placeholder="https://example.com/bg.jpg"
-      />
-      <div kpDialogFooter class="editor__dialog-footer">
-        <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showBgDialog = false" />
-        <app-kp-button label="Применить" size="small" (buttonClick)="confirmBg()" />
-      </div>
-    </app-kp-dialog>
-
     <!-- ═══ Template Name Dialog ═══ -->
     <app-kp-dialog
       [(visible)]="showTemplateNameDialog"
@@ -1187,6 +1245,7 @@ export class QuotationEditorComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly crudApi = inject(CrudApiService);
+  private readonly counterpartyOptionsService = inject(CounterpartyOptionsService);
   private readonly tableTypeOptionsService = inject(DocumentTableTypeOptionsService);
   private readonly notification = inject(MessageService);
 
@@ -1212,6 +1271,12 @@ export class QuotationEditorComponent implements OnInit {
   readonly blocks = signal<EditorBlock[]>([]);
   readonly templates = signal<DocumentTemplate[]>([]);
   readonly activeTemplateId = signal<string | undefined>(undefined);
+  readonly templateCategory = signal<string>('quotation');
+  readonly templateDocTypeOptions = TEMPLATE_DOC_TYPE_OPTIONS;
+  readonly counterpartyOptions = signal<KpSelectOption[]>([]);
+  readonly counterpartyLoading = signal(true);
+  readonly bgDragOver = signal(false);
+  readonly bgProcessing = signal(false);
 
   // UI State
   showTemplates = false;
@@ -1219,9 +1284,7 @@ export class QuotationEditorComponent implements OnInit {
   readonly selectedTableKind = signal<string>('products');
   readonly tableBlockOptions = signal<KpSelectOption[]>(FALLBACK_TABLE_BLOCK_OPTIONS);
   /** Метаданные типов таблиц с dataSource (для подстановки из справочника). Предзаполнен фолбэком — API обновит после загрузки. */
-  readonly pickerMetaByKind = signal<Record<string, PickerKindMeta>>({
-    products: { label: 'Товары', dataSource: 'products' },
-  });
+  readonly pickerMetaByKind = signal<Record<string, PickerKindMeta>>({ ...DEFAULT_PICKER_META });
   showTextEditor = false;
   showCellEditor = false;
   editingTextIndex = -1;
@@ -1278,7 +1341,7 @@ export class QuotationEditorComponent implements OnInit {
 
   readonly productPickerDefaults = computed((): ProductPickerFilters => {
     const kind = this.activePickerTableKind();
-    const productKind = PRODUCT_KIND_BY_NAME[kind];
+    const productKind = this.pickerMetaByKind()[kind]?.productKind;
     return {
       kind: productKind,
       activeOnly: true,
@@ -1306,6 +1369,21 @@ export class QuotationEditorComponent implements OnInit {
     return this.tableBlockOptions().filter((option) => !usedKinds.has(String(option.value ?? '')));
   });
 
+  readonly templatesForCategory = computed(() =>
+    this.templates().filter((t) => (t.docType || 'quotation') === this.templateCategory()),
+  );
+
+  readonly templateSelectOptions = computed((): KpSelectOption[] =>
+    this.templatesForCategory().map((t) => ({
+      label: t.isDefault ? `${t.name} (по умолчанию)` : t.name,
+      value: t._id as string,
+    })),
+  );
+
+  readonly templateCategoryLabel = computed(() =>
+    TEMPLATE_DOC_TYPE_OPTIONS.find((o) => o.value === this.templateCategory())?.label ?? this.templateCategory(),
+  );
+
   readonly sidebarItemRows = computed((): BlockItemRow[] => {
     const kind = this.sidebarItemsKind();
     if (!kind) return [];
@@ -1332,9 +1410,6 @@ export class QuotationEditorComponent implements OnInit {
   showPaddingDialog = false;
   paddingDialogIndex = -1;
   paddingDialogValue: number | null = 4;
-
-  showBgDialog = false;
-  bgDialogUrl = '';
 
   showTemplateNameDialog = false;
   templateNameValue = '';
@@ -1399,6 +1474,36 @@ export class QuotationEditorComponent implements OnInit {
 
     this.loadTemplates();
     this.loadTableTypeOptions();
+    this.loadCounterpartyOptions();
+  }
+
+  private loadCounterpartyOptions(): void {
+    this.counterpartyOptionsService.load()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.counterpartyLoading.set(false)),
+      )
+      .subscribe({
+        next: (options) => this.counterpartyOptions.set(options),
+        error: () => this.counterpartyOptions.set([]),
+      });
+  }
+
+  onCounterpartyChange(value: string | number | boolean | null): void {
+    this.patchQuotationField('counterpartyId', value ? String(value) : '');
+  }
+
+  onTemplateCategoryChange(value: string | number | boolean | null): void {
+    if (typeof value !== 'string' || !value) return;
+    this.templateCategory.set(value);
+  }
+
+  onTemplatePick(value: string | number | boolean | null): void {
+    if (!value || typeof value !== 'string') return;
+    const tmpl = this.templates().find((t) => t._id === value);
+    if (tmpl) {
+      this.applyTemplate(tmpl);
+    }
   }
 
   private initNewQuotation(): void {
@@ -1490,11 +1595,14 @@ export class QuotationEditorComponent implements OnInit {
       )
       .subscribe({
         next: (types) => {
-          const meta: Record<string, PickerKindMeta> = {};
+          const meta: Record<string, PickerKindMeta> = { ...DEFAULT_PICKER_META };
           for (const t of types) {
-            if (t.dataSource && t.name) {
-              meta[t.name] = { label: t.label || t.title || t.name, dataSource: t.dataSource };
-            }
+            if (!t.name) continue;
+            meta[t.name] = {
+              label: t.label || t.title || t.name,
+              dataSource: t.dataSource || DEFAULT_PICKER_META[t.name]?.dataSource || '',
+              productKind: t.productKind || DEFAULT_PICKER_META[t.name]?.productKind || undefined,
+            };
           }
           this.pickerMetaByKind.set(meta);
         },
@@ -1508,6 +1616,7 @@ export class QuotationEditorComponent implements OnInit {
         tap({
           next: (res) => {
             this.templates.set(res.data || []);
+            this.syncTemplateCategoryFromActive();
 
             const activeId = this.activeTemplateId();
 
@@ -1657,7 +1766,7 @@ export class QuotationEditorComponent implements OnInit {
   tableBlockHasPicker(block: EditorBlock): boolean {
     if (block.type !== 'table') return false;
     const kind = this.resolveTableKind(block);
-    return !!this.pickerMetaByKind()[kind];
+    return !!this.pickerMetaByKind()[kind]?.dataSource;
   }
 
   blockHasTableKind(kind: string): boolean {
@@ -2404,42 +2513,102 @@ export class QuotationEditorComponent implements OnInit {
   }
 
   // ===== Background =====
-  showBgInput(): void {
-    this.bgDialogUrl = this.quotationBg || '';
-    this.showBgDialog = true;
+  onBgDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.bgDragOver.set(true);
   }
 
-  confirmBg(): void {
-    const url = this.bgDialogUrl;
-    if (!url) {
-      this.showBgDialog = false;
+  onBgDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.bgDragOver.set(false);
+  }
+
+  onBgDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.bgDragOver.set(false);
+    const file = event.dataTransfer?.files?.[0];
+    if (file) {
+      void this.processBgFile(file);
+    }
+  }
+
+  onBgFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      void this.processBgFile(file);
+    }
+    input.value = '';
+  }
+
+  private async processBgFile(file: File): Promise<void> {
+    if (!file.type.startsWith('image/')) {
+      this.notification.add({
+        severity: 'warn',
+        summary: 'Неверный формат',
+        detail: 'Выберите файл изображения (JPG, PNG, WebP…)',
+      });
       return;
     }
+    this.bgProcessing.set(true);
+    try {
+      const url = await this.fileToDataUrl(file);
+      this.applyBackgroundUrl(url);
+    } catch {
+      this.notification.add({
+        severity: 'error',
+        summary: 'Ошибка',
+        detail: 'Не удалось прочитать файл',
+      });
+    } finally {
+      this.bgProcessing.set(false);
+    }
+  }
+
+  private fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  private applyBackgroundUrl(url: string): void {
+    if (!url) return;
 
     const activeId = this.activeTemplateId();
     if (activeId) {
       this.crudApi.update('/document-templates', activeId, { backgroundImage: url })
         .pipe(
           takeUntilDestroyed(this.destroyRef),
-          tap(() => this.loadTemplates()),
+          tap(() => {
+            this.loadTemplates();
+            this.notification.add({ severity: 'success', summary: 'Фон обновлён' });
+          }),
         )
         .subscribe();
-    } else {
-      this.crudApi.create<DocumentTemplate>('/document-templates', {
-        name: 'Фон для КП',
-        docType: 'quotation',
-        isDefault: false,
-        backgroundImage: url,
-        blocks: this.blocks(),
-      }).pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap((result: DocumentTemplate) => {
-          this.activeTemplateId.set(result._id);
-          this.loadTemplates();
-        }),
-      ).subscribe();
+      return;
     }
-    this.showBgDialog = false;
+
+    this.crudApi.create<DocumentTemplate>('/document-templates', {
+      name: 'Фон для КП',
+      docType: this.templateCategory(),
+      isDefault: false,
+      backgroundImage: url,
+      blocks: this.blocks(),
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap((result: DocumentTemplate) => {
+        this.activeTemplateId.set(result._id);
+        this.syncTemplateCategoryFromActive();
+        this.loadTemplates();
+        this.notification.add({ severity: 'success', summary: 'Фон загружен' });
+      }),
+    ).subscribe();
   }
 
   removeBackgroundImage(): void {
@@ -2457,12 +2626,24 @@ export class QuotationEditorComponent implements OnInit {
   // ===== Templates =====
   applyTemplate(tmpl: DocumentTemplate): void {
     this.activeTemplateId.set(tmpl._id);
+    if (tmpl.docType) {
+      this.templateCategory.set(tmpl.docType);
+    }
     if (tmpl.blocks && tmpl.blocks.length > 0) {
       this.blocks.set(this.normalizeBlocks(JSON.parse(JSON.stringify(tmpl.blocks))));
     } else {
       this.initDefaultBlocks();
     }
     this.showTemplates = false;
+  }
+
+  private syncTemplateCategoryFromActive(): void {
+    const activeId = this.activeTemplateId();
+    if (!activeId) return;
+    const tmpl = this.templates().find((t) => t._id === activeId);
+    if (tmpl?.docType) {
+      this.templateCategory.set(tmpl.docType);
+    }
   }
 
   showSaveTemplateInput(): void {
@@ -2479,7 +2660,7 @@ export class QuotationEditorComponent implements OnInit {
 
     const template: Partial<DocumentTemplate> & { name: string } = {
       name,
-      docType: 'quotation',
+      docType: this.templateCategory(),
       isDefault: false,
       blocks: this.blocks(),
       backgroundImage: this.quotationBg,
