@@ -30,6 +30,7 @@ import { TenderModel } from './modules/tenders/tender.model';
 import { ProductPassportModel } from './modules/product-passports/productPassport.model';
 import { AttributeDefinitionModel } from './modules/attribute-definitions/attributeDefinition.model';
 import { EntityAttributeValueModel } from './modules/entity-attribute-values/entityAttributeValue.model';
+import { DocumentTableTypeModel } from './modules/document-table-types/documentTableType.model';
 
 async function seed(): Promise<void> {
   console.log('🌱 KPPDF 3.0 — Seed: наполнение БД тестовыми и часто используемыми данными\n');
@@ -611,6 +612,31 @@ async function seed(): Promise<void> {
   console.log(`  ✅ Паспорта изделий: ${passports.length}`);
 
   // ================================================================
+  // 31. ТИПЫ ТАБЛИЦ ДОКУМЕНТОВ
+  // ================================================================
+  await DocumentTableTypeModel.deleteMany({});
+  const docTableTypes = await DocumentTableTypeModel.insertMany([
+    {
+      name: 'products',
+      label: 'Товары',
+      title: 'Товары',
+      docType: 'quotation',
+      columns: [
+        { field: 'sku', header: 'Артикул', type: 'text', width: '100px' },
+        { field: 'name', header: 'Наименование', type: 'text' },
+        { field: 'qty', header: 'Кол-во', type: 'number', width: '80px' },
+        { field: 'unit', header: 'Ед. изм.', type: 'text', width: '70px' },
+        { field: 'price', header: 'Цена', type: 'currency', width: '110px' },
+        { field: 'sum', header: 'Сумма', type: 'currency', width: '110px' },
+      ],
+      dataSource: 'products',
+      sortOrder: 1,
+      isActive: true,
+    },
+  ]);
+  console.log(`  ✅ Типы таблиц документов: ${docTableTypes.length}`);
+
+  // ================================================================
   // ИТОГО
   // ================================================================
   console.log('\n' + '='.repeat(50));
@@ -645,6 +671,7 @@ async function seed(): Promise<void> {
   console.log('Взаимодействия      :', interactions.length);
   console.log('Тендеры             :', tendersCount);
   console.log('Паспорта изделий    :', passports.length);
+  console.log('Типы таблиц         :', docTableTypes.length);
   console.log('');
   // ================================================================
   // 29. ОПРЕДЕЛЕНИЯ АТРИБУТОВ (EAV)

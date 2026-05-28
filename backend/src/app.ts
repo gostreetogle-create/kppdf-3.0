@@ -32,6 +32,7 @@ import { shipmentRouter } from './modules/shipments/shipment.router';
 import { shippingDocRouter } from './modules/shipping-docs/shippingDoc.router';
 import { interactionRouter } from './modules/interactions/interaction.router';
 import { documentTemplateRouter } from './modules/document-templates/documentTemplate.router';
+import { documentTableTypeRouter } from './modules/document-table-types/documentTableType.router';
 import { tenderRouter } from './modules/tenders/tender.router';
 import { productPassportRouter } from './modules/product-passports/productPassport.router';
 import { complianceRuleRouter, complianceCheckRouter } from './modules/compliance-validator/complianceRule.router';
@@ -114,6 +115,9 @@ app.use('/api/v1/compliance', complianceCheckRouter);
 
 // Document Templates
 app.use('/api/v1/document-templates', documentTemplateRouter);
+
+// Document Table Types — настраиваемые типы таблиц для редакторов документов
+app.use('/api/v1/document-table-types', documentTableTypeRouter);
 
 // EAV — Entity-Attribute-Value
 app.use('/api/v1/attributes/definitions', attributeDefinitionRouter);

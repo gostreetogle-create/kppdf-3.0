@@ -6,6 +6,7 @@ export type QuotationDocument = IQuotation & Document;
 const quotationItemSchema = new Schema(
   {
     productId: { type: String },
+    tableKind: { type: String },
     sku: { type: String, default: '' },
     photo: { type: String },
     name: { type: String, required: true },

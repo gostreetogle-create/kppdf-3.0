@@ -21,6 +21,7 @@ const documentBlockSchema = new Schema(
     order: { type: Number, required: true },
     title: { type: String },
     content: { type: String, default: '' },
+    tableKind: { type: String },
     cells: { type: [documentBlockCellSchema], default: undefined },
     settings: {
       fontSize: { type: Number, default: 11 },

@@ -22,6 +22,7 @@ import { MessageService } from 'primeng/api';
 
 // Services
 import { CrudApiService } from '../../shared/services/crud-api.service';
+import { DocumentTableTypeOptionsService } from '../../shared/services/document-table-type-options.service';
 import {
   KpSortableListDirective,
   KpSortableItemDirective,
@@ -31,12 +32,20 @@ import {
   KpButtonComponent,
   moveSortableItems,
 } from '../../shared/ui';
-import type { KpSortableDropEvent } from '../../shared/ui';
+import type { KpSortableDropEvent, KpSelectOption } from '../../shared/ui';
 
 // ===== Types =====
+const DEFAULT_TABLE_KIND = 'products';
+
+interface BlockItemRow {
+  item: QuotationItem;
+  index: number;
+}
+
 interface QuotationItem {
   _id?: string;
   productId?: string;
+  tableKind?: string;
   sku: string;
   photo?: string;
   name: string;
@@ -59,7 +68,7 @@ interface EditorBlock {
   order: number;
   title?: string;
   content: string;
-  tableKind?: QuotationTableKind;
+  tableKind?: string;
   cells?: EditorBlockCell[];
   settings: {
     fontSize: number;
@@ -75,11 +84,20 @@ interface EditorBlock {
 }
 
 const BLOCK_TEXT_COLORS = [
-  { value: '', label: 'Авто' },
+  { value: '', label: 'Авто — цвет документа' },
   { value: '#111827', label: 'Чёрный' },
   { value: '#2563eb', label: 'Синий' },
   { value: '#dc2626', label: 'Красный' },
   { value: '#059669', label: 'Зелёный' },
+] as const;
+
+const BLOCK_BG_COLORS = [
+  { value: '', label: 'Без фона' },
+  { value: '#ffffff', label: 'Белый' },
+  { value: '#fafafa', label: 'Серый' },
+  { value: '#f8fbff', label: 'Голубой' },
+  { value: '#fffef5', label: 'Жёлтый' },
+  { value: '#f8fefb', label: 'Зелёный' },
 ] as const;
 
 interface DocumentTemplate {
@@ -95,19 +113,6 @@ interface DocumentTemplate {
 interface RowActionState {
   index: number;
 }
-
-/** Типы таблиц в редакторе КП (расширяется через настройки приложения — см. backlog). */
-type QuotationTableKind = 'products';
-
-interface QuotationTableBlockOption {
-  kind: QuotationTableKind;
-  label: string;
-  title: string;
-}
-
-const QUOTATION_TABLE_BLOCK_OPTIONS: QuotationTableBlockOption[] = [
-  { kind: 'products', label: 'Товары', title: 'Товары' },
-];
 
 const DEFAULT_BLOCKS: EditorBlock[] = [
   {
@@ -230,6 +235,9 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
             class="editor__canvas"
             [class.editor__canvas--reorder-locked]="blocksReorderLocked()"
             [style.background-image]="getBackgroundCss()"
+            tabindex="0"
+            (click)="onCanvasClick()"
+            (keydown.escape)="onCanvasClick()"
           >
             <!-- Blocks -->
             <div
@@ -252,11 +260,22 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                 [class.editor__block--reorder-locked]="blocksReorderLocked()"
                 [class.editor__block--controls-active]="isBlockControlsVisible(i, block)"
                 [class.editor__block--has-controls]="hasEditableControls(block)"
+                [attr.tabindex]="hasEditableControls(block) ? 0 : null"
+                role="group"
+                (click)="selectBlock(i, $event)"
+                (keydown.enter)="selectBlockKey(i, $event)"
+                (keydown.space)="selectBlockKey(i, $event)"
                 (appKpSortableItemStarted)="onBlockDragStarted(i)"
                 (appKpSortableItemEnded)="onBlockDragEnded()"
               >
-                <!-- Block Controls (hover) — широкая панель навигации -->
-                <div class="editor__block-controls" role="toolbar" [attr.aria-label]="'Настройки блока ' + (i + 1)">
+                <!-- Block Controls — широкая панель навигации (клик по блоку) -->
+                <div
+                  class="editor__block-controls"
+                  role="toolbar"
+                  [attr.aria-label]="'Настройки блока ' + (i + 1)"
+                  tabindex="-1"
+                  (mousedown)="$event.stopPropagation()"
+                >
                   @if (block.type === 'text' || block.type === 'header') {
                     <div class="editor__block-controls-section">
                       <span class="editor__block-controls-label">Выравнивание</span>
@@ -299,10 +318,35 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                             class="editor__color-swatch"
                             [class.editor__color-swatch--active]="blockColorActive(block, c.value)"
                             [class.editor__color-swatch--auto]="!c.value"
+                            [class.editor__color-swatch--light]="!!c.value && isLightSwatchColor(c.value)"
                             [style.background]="c.value || null"
+                            [attr.title]="c.label"
                             [attr.aria-label]="c.label"
                             [attr.aria-pressed]="blockColorActive(block, c.value)"
                             (click)="setBlockColor(i, c.value)"
+                          >
+                            @if (!c.value) {
+                              <span class="editor__color-swatch-label" aria-hidden="true">А</span>
+                            }
+                          </button>
+                        }
+                      </div>
+                    </div>
+                    <div class="editor__block-controls-section">
+                      <span class="editor__block-controls-label">Цвет фона</span>
+                      <div class="editor__block-controls-colors" role="group" aria-label="Цвет фона">
+                        @for (c of blockBgColors; track c.value) {
+                          <button
+                            type="button"
+                            class="editor__color-swatch"
+                            [class.editor__color-swatch--active]="blockBackgroundColorActive(block, c.value)"
+                            [class.editor__color-swatch--none]="!c.value"
+                            [class.editor__color-swatch--light]="!!c.value && isLightSwatchColor(c.value)"
+                            [style.background]="c.value || null"
+                            [attr.title]="c.label"
+                            [attr.aria-label]="c.label"
+                            [attr.aria-pressed]="blockBackgroundColorActive(block, c.value)"
+                            (click)="setBlockBackgroundColor(i, c.value)"
                           ></button>
                         }
                       </div>
@@ -392,10 +436,6 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                   [style.font-weight]="block.settings.fontWeight"
                   [style.padding-top.px]="block.settings.paddingTop"
                   [style.padding-bottom.px]="block.settings.paddingBottom"
-                  (mouseenter)="setActiveBlock(i)"
-                  (mouseleave)="clearActiveBlock(i)"
-                  (focusin)="setActiveBlock(i)"
-                  (focusout)="clearActiveBlock(i)"
                 >
                   <div [innerHTML]="block.content"></div>
                 </div>
@@ -408,10 +448,6 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                   appKpSortableHandle
                   [style.padding-top.px]="block.settings.paddingTop"
                   [style.padding-bottom.px]="block.settings.paddingBottom"
-                  (mouseenter)="setActiveBlock(i)"
-                  (mouseleave)="clearActiveBlock(i)"
-                  (focusin)="setActiveBlock(i)"
-                  (focusout)="clearActiveBlock(i)"
                 >
                   <app-kp-split-text-card
                     [title]="block.title ?? ''"
@@ -430,10 +466,6 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                   appKpSortableHandle
                   [style.padding-top.px]="block.settings.paddingTop"
                   [style.padding-bottom.px]="block.settings.paddingBottom"
-                  (mouseenter)="setActiveBlock(i)"
-                  (mouseleave)="clearActiveBlock(i)"
-                  (focusin)="setActiveBlock(i)"
-                  (focusout)="clearActiveBlock(i)"
                 >
                   <hr class="editor__separator" />
                 </div>
@@ -441,37 +473,33 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                 <!-- Table Block -->
                 <div
                   *ngIf="block.type === 'table'"
-                  class="editor__table-wrapper editor__block-drag-surface"
-                  [class.editor__block-drag-surface--active]="!blocksReorderLocked()"
-                  (mouseenter)="setActiveBlock(i)"
-                  (mouseleave)="clearActiveBlock(i)"
-                  (focusin)="setActiveBlock(i)"
-                  (focusout)="clearActiveBlock(i)"
+                  class="editor__table-wrapper"
                 >
-                  <div class="editor__table-toolbar">
+                  <div
+                    class="editor__table-toolbar editor__block-drag-surface"
+                    [class.editor__block-drag-surface--active]="!blocksReorderLocked()"
+                  >
                     <div class="editor__table-toolbar-left">
-                      <button
-                        type="button"
-                        class="editor__table-drag-handle"
-                        appKpSortableHandle
-                        [disabled]="blocksReorderLocked()"
-                        [attr.aria-label]="'Переместить блок таблицы ' + (i + 1)"
-                        title="Перетащить блок таблицы"
-                      >
-                        <i class="pi pi-grip-vertical" aria-hidden="true"></i>
-                      </button>
+                      <span class="editor__table-grip" aria-hidden="true">
+                        <i class="pi pi-grip-vertical"></i>
+                      </span>
                       <span class="editor__table-title">{{ block.title || 'Таблица' }}</span>
                     </div>
-                    <div class="editor__table-toolbar-actions">
-                      <app-kp-button
-                        icon="pi pi-shopping-cart"
-                        size="small"
-                        [rounded]="true"
-                        [text]="true"
-                        [attr.aria-label]="'Выбрать товары'"
-                        [attr.title]="'Выбрать товары'"
-                        (buttonClick)="openProductPicker()"
-                      />
+                    <div
+                      class="editor__table-toolbar-actions"
+                      (mousedown)="stopTableBlockDrag($event)"
+                    >
+                      @if (isProductsTableBlock(block)) {
+                        <app-kp-button
+                          icon="pi pi-shopping-cart"
+                          size="small"
+                          [rounded]="true"
+                          [text]="true"
+                          [attr.aria-label]="'Выбрать товары'"
+                          [attr.title]="'Выбрать товары'"
+                          (buttonClick)="openProductPicker(i)"
+                        />
+                      }
                     </div>
                   </div>
 
@@ -488,73 +516,75 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                         <th style="width:100px">Сумма, ₽</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody (mousedown)="stopTableBlockDrag($event)">
                       <tr
-                        *ngFor="let item of items(); trackBy: trackByItem; let i = index"
+                        *ngFor="let row of blockItemRows(i); trackBy: trackByBlockItemRow; let localIdx = index"
                         class="editor__table-row"
-                        [class.editor__table-row--selected]="selectedItemIndex() === i"
-                        (click)="onTableRowClick($event, i)"
+                        [class.editor__table-row--selected]="selectedItemIndex() === row.index"
+                        (click)="onTableRowClick($event, row.index)"
                       >
                         <td class="editor__table-idx">
-                          <button type="button" class="editor__table-cell-action" (click)="openRowActions(i)">
-                            {{ i + 1 }}
+                          <button type="button" class="editor__table-cell-action" (click)="openRowActions(row.index)">
+                            {{ localIdx + 1 }}
                           </button>
                         </td>
                         <td>
-                          <button type="button" class="editor__table-cell-action" (click)="openRowActions(i)">
-                            {{ item.sku || '—' }}
+                          <button type="button" class="editor__table-cell-action" (click)="openRowActions(row.index)">
+                            {{ row.item.sku || '—' }}
                           </button>
                         </td>
                         <td>
                           <button
                             type="button"
                             class="editor__table-photo"
-                            (click)="openRowActions(i)"
-                            [attr.aria-label]="'Действия для товара ' + (i + 1)"
+                            (click)="openRowActions(row.index)"
+                            [attr.aria-label]="'Действия для позиции ' + (row.index + 1)"
                           >
-                            <i class="pi pi-image" *ngIf="!item.photo"></i>
-                            <img *ngIf="item.photo" [src]="item.photo" class="editor__table-photo-img" alt="фото" />
+                            <i class="pi pi-image" *ngIf="!row.item.photo"></i>
+                            <img *ngIf="row.item.photo" [src]="row.item.photo" class="editor__table-photo-img" alt="фото" />
                           </button>
                         </td>
                         <td>
-                          <button type="button" class="editor__table-cell-action editor__table-cell-action--wide" (click)="openRowActions(i)">
-                            {{ item.name || 'Без названия' }}
+                          <button type="button" class="editor__table-cell-action editor__table-cell-action--wide" (click)="openRowActions(row.index)">
+                            {{ row.item.name || 'Без названия' }}
                           </button>
                         </td>
                         <td>
                           <p-inputNumber
-                            [(ngModel)]="item.qty"
+                            [(ngModel)]="row.item.qty"
                             size="small"
                             class="editor__table-number"
                             [min]="0"
-                            (onValueChange)="recalcItem(i)"
+                            (onValueChange)="recalcItem(row.index)"
+                            (click)="$event.stopPropagation()"
                             (dblclick)="$event.stopPropagation()"
                           />
                         </td>
                         <td>
-                          <span class="editor__table-readonly">{{ item.unit || 'шт' }}</span>
+                          <span class="editor__table-readonly">{{ row.item.unit || 'шт' }}</span>
                         </td>
                         <td>
                           <p-inputNumber
-                            [(ngModel)]="item.price"
+                            [(ngModel)]="row.item.price"
                             size="small"
                             class="editor__table-number"
                             [min]="0"
                             [minFractionDigits]="2"
                             [maxFractionDigits]="2"
-                            (onValueChange)="recalcItem(i)"
+                            (onValueChange)="recalcItem(row.index)"
+                            (click)="$event.stopPropagation()"
                             (dblclick)="$event.stopPropagation()"
                           />
                         </td>
                         <td class="editor__table-sum">
-                          {{ computeSum(item) | number:'1.2-2' }}
+                          {{ computeSum(row.item) | number:'1.2-2' }}
                         </td>
                       </tr>
                     </tbody>
                     <tfoot>
                       <tr>
                         <td colspan="7" class="editor__table-total-label">Итого:</td>
-                        <td class="editor__table-total">{{ totalSum() | number:'1.2-2' }}</td>
+                        <td class="editor__table-total">{{ blockItemsTotal(block) | number:'1.2-2' }}</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -573,13 +603,14 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
               <div class="editor__add-menu" *ngIf="showAddMenu" (keydown.escape)="showAddMenu = false" tabindex="-1" role="menu">
                 <app-kp-button label="Текстовый блок" icon="pi pi-align-left" [text]="true" size="small" (buttonClick)="addBlock('text')" />
                 <app-kp-button label="Разделитель" icon="pi pi-minus" [text]="true" size="small" (buttonClick)="addBlock('separator')" />
-                <div class="editor__add-menu-table" role="presentation" (buttonClick)="$event.stopPropagation()">
+                <div class="editor__add-menu-table" role="presentation" (buttonClick)="$event.stopPropagation()" *ngIf="availableTableBlockOptions().length > 0">
                   <span class="editor__add-menu-label">Таблица</span>
                   <p-select
-                    [(ngModel)]="selectedTableKind"
-                    [options]="tableBlockOptions"
+                    [ngModel]="selectedTableKind()"
+                    (ngModelChange)="selectedTableKind.set($event)"
+                    [options]="availableTableBlockOptions()"
                     optionLabel="label"
-                    optionValue="kind"
+                    optionValue="value"
                     class="w-full"
                     size="small"
                     appendTo="body"
@@ -655,30 +686,30 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
             ></textarea>
           </div>
 
-          @if (items().length > 0) {
+          @if (sidebarItemRows().length > 0) {
             <div class="editor__sidebar-section">
-              <h3 class="editor__sidebar-title">Товары</h3>
+              <h3 class="editor__sidebar-title">{{ sidebarItemsTitle() }}</h3>
               <ul class="editor__item-nav" role="list">
-                @for (item of items(); track $index; let i = $index) {
+                @for (row of sidebarItemRows(); track row.index) {
                   <li class="editor__item-nav-item" role="listitem">
                     <button
                       type="button"
                       class="editor__item-nav-btn"
-                      [class.editor__item-nav-btn--active]="selectedItemIndex() === i"
-                      (click)="selectItem(i)"
+                      [class.editor__item-nav-btn--active]="selectedItemIndex() === row.index"
+                      (click)="selectItem(row.index)"
                     >
-                      <span class="editor__item-nav-idx">{{ i + 1 }}</span>
-                      @if (item.photo) {
-                        <img [src]="item.photo" alt="" class="editor__item-nav-thumb" />
+                      <span class="editor__item-nav-idx">{{ row.index + 1 }}</span>
+                      @if (row.item.photo) {
+                        <img [src]="row.item.photo" alt="" class="editor__item-nav-thumb" />
                       } @else {
                         <span class="editor__item-nav-thumb editor__item-nav-thumb--empty" aria-hidden="true">
                           <i class="pi pi-image"></i>
                         </span>
                       }
                       <span class="editor__item-nav-text">
-                        <span class="editor__item-nav-name">{{ item.name || 'Без названия' }}</span>
+                        <span class="editor__item-nav-name">{{ row.item.name || 'Без названия' }}</span>
                         <span class="editor__item-nav-meta">
-                          {{ item.qty || 0 }} {{ item.unit || 'шт' }} · {{ computeSum(item) | number:'1.2-2' }} ₽
+                          {{ row.item.qty || 0 }} {{ row.item.unit || 'шт' }} · {{ computeSum(row.item) | number:'1.2-2' }} ₽
                         </span>
                       </span>
                     </button>
@@ -1113,6 +1144,7 @@ export class QuotationEditorComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly crudApi = inject(CrudApiService);
+  private readonly tableTypeOptionsService = inject(DocumentTableTypeOptionsService);
   private readonly notification = inject(MessageService);
 
   // State
@@ -1136,8 +1168,8 @@ export class QuotationEditorComponent implements OnInit {
   // UI State
   showTemplates = false;
   showAddMenu = false;
-  selectedTableKind: QuotationTableKind = 'products';
-  readonly tableBlockOptions = QUOTATION_TABLE_BLOCK_OPTIONS;
+  readonly selectedTableKind = signal<string>('products');
+  readonly tableBlockOptions = signal<KpSelectOption[]>([]);
   showTextEditor = false;
   showCellEditor = false;
   editingTextIndex = -1;
@@ -1146,6 +1178,7 @@ export class QuotationEditorComponent implements OnInit {
   editingCellAlign: 'left' | 'center' | 'right' = 'center';
   readonly maxTextCells = 6;
   readonly blockTextColors = BLOCK_TEXT_COLORS;
+  readonly blockBgColors = BLOCK_BG_COLORS;
   editingTextBlock: EditorBlock = {
     type: 'text',
     order: 0,
@@ -1162,6 +1195,7 @@ export class QuotationEditorComponent implements OnInit {
 
   readonly productPickerVisible = signal(false);
   readonly replaceItemIndex = signal<number | null>(null);
+  readonly activeTableBlockIndex = signal<number | null>(null);
   readonly selectedItemIndex = signal<number | null>(null);
   readonly activeBlockIndex = signal<number | null>(null);
   readonly isDraggingBlock = signal(false);
@@ -1172,8 +1206,35 @@ export class QuotationEditorComponent implements OnInit {
   readonly blocksReorderLocked = signal(false);
 
   readonly existingProductIds = computed(() =>
-    this.items().map((i) => i.productId).filter((id): id is string => !!id),
+    this.items()
+      .filter((item) => (item.tableKind ?? DEFAULT_TABLE_KIND) === DEFAULT_TABLE_KIND)
+      .map((i) => i.productId)
+      .filter((id): id is string => !!id),
   );
+
+  readonly availableTableBlockOptions = computed(() => {
+    const usedKinds = new Set(
+      this.blocks()
+        .filter((block) => block.type === 'table')
+        .map((block) => this.resolveTableKind(block)),
+    );
+    return this.tableBlockOptions().filter((option) => !usedKinds.has(String(option.value ?? '')));
+  });
+
+  readonly sidebarItemRows = computed((): BlockItemRow[] => {
+    const kind = this.sidebarItemsKind();
+    if (!kind) return [];
+    return this.items()
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => (item.tableKind ?? DEFAULT_TABLE_KIND) === kind);
+  });
+
+  readonly sidebarItemsTitle = computed(() => {
+    const kind = this.sidebarItemsKind();
+    if (!kind) return 'Позиции';
+    const block = this.blocks().find((b) => b.type === 'table' && this.resolveTableKind(b) === kind);
+    return block?.title || this.tableBlockOptions().find((o) => o.value === kind)?.label || 'Позиции';
+  });
 
   // ── Prompt-replacement dialog state ──
   showPhotoDialog = false;
@@ -1252,9 +1313,9 @@ export class QuotationEditorComponent implements OnInit {
     }
 
     this.loadTemplates();
+    this.loadTableTypeOptions();
   }
 
-  // ===== Initialization =====
   private initNewQuotation(): void {
     this.quotation.set({
       ...this.quotation(),
@@ -1282,6 +1343,7 @@ export class QuotationEditorComponent implements OnInit {
           if (tender.productName) {
             const item: QuotationItem = {
               sku: '',
+              tableKind: DEFAULT_TABLE_KIND,
               name: tender.productName,
               qty: tender.quantity || 1,
               unit: tender.unit || 'шт',
@@ -1302,7 +1364,7 @@ export class QuotationEditorComponent implements OnInit {
         tap({
           next: (data) => {
             this.quotation.set(data);
-            this.items.set(data.items || []);
+            this.items.set(this.normalizeItems(data.items || []));
             if (data.templateId) {
               this.activeTemplateId.set(data.templateId);
             } else {
@@ -1317,6 +1379,29 @@ export class QuotationEditorComponent implements OnInit {
         catchError(() => of(null)),
       )
       .subscribe();
+  }
+
+  private loadTableTypeOptions(): void {
+    this.tableTypeOptionsService
+      .load('quotation')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (options) => {
+          this.tableBlockOptions.set(options);
+          if (options.length > 0) {
+            this.selectedTableKind.set(String(options[0].value ?? ''));
+          }
+          this.syncSelectedTableKind();
+        },
+        error: () => {
+          // Fallback: keep hardcoded 'products' if API fails
+          this.tableBlockOptions.set([
+            { label: 'Товары', value: 'products' },
+          ]);
+          this.selectedTableKind.set('products');
+          this.syncSelectedTableKind();
+        },
+      });
   }
 
   private loadTemplates(): void {
@@ -1414,9 +1499,87 @@ export class QuotationEditorComponent implements OnInit {
   }
 
   // ===== Items =====
-  openProductPicker(): void {
+  openProductPicker(blockIndex: number): void {
+    const block = this.blocks()[blockIndex];
+    if (!block || block.type !== 'table') return;
+    if (!this.isProductsTableBlock(block)) {
+      this.notification.add({
+        severity: 'info',
+        summary: 'Подбор позиций',
+        detail: 'Из справочника пока можно добавлять позиции только в таблицу «Товары».',
+      });
+      return;
+    }
+    this.activeTableBlockIndex.set(blockIndex);
     this.replaceItemIndex.set(null);
     this.productPickerVisible.set(true);
+  }
+
+  resolveTableKind(block: EditorBlock): string {
+    return block.tableKind ?? DEFAULT_TABLE_KIND;
+  }
+
+  isProductsTableBlock(block: EditorBlock): boolean {
+    return block.type === 'table' && this.resolveTableKind(block) === DEFAULT_TABLE_KIND;
+  }
+
+  blockHasTableKind(kind: string): boolean {
+    return this.blocks().some(
+      (block) => block.type === 'table' && this.resolveTableKind(block) === kind,
+    );
+  }
+
+  blockItemRows(blockIndex: number): BlockItemRow[] {
+    const block = this.blocks()[blockIndex];
+    if (!block || block.type !== 'table') return [];
+    const kind = this.resolveTableKind(block);
+    return this.items()
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => (item.tableKind ?? DEFAULT_TABLE_KIND) === kind);
+  }
+
+  blockItemsTotal(block: EditorBlock): number {
+    if (block.type !== 'table') return 0;
+    const kind = this.resolveTableKind(block);
+    return this.items()
+      .filter((item) => (item.tableKind ?? DEFAULT_TABLE_KIND) === kind)
+      .reduce((acc, item) => acc + (item.qty || 0) * (item.price || 0), 0);
+  }
+
+  trackByBlockItemRow(_index: number, row: BlockItemRow): string {
+    return row.item._id || `${row.item.productId ?? 'row'}-${row.index}`;
+  }
+
+  private sidebarItemsKind(): string | null {
+    const activeBlockIndex = this.activeBlockIndex();
+    if (activeBlockIndex === null) return null;
+    const block = this.blocks()[activeBlockIndex];
+    if (!block || block.type !== 'table') return null;
+    return this.resolveTableKind(block);
+  }
+
+  private tableKindForPicker(): string {
+    const blockIndex = this.activeTableBlockIndex();
+    if (blockIndex === null) return DEFAULT_TABLE_KIND;
+    const block = this.blocks()[blockIndex];
+    return block?.type === 'table' ? this.resolveTableKind(block) : DEFAULT_TABLE_KIND;
+  }
+
+  private normalizeItems(items: QuotationItem[]): QuotationItem[] {
+    return items.map((item, order) => ({
+      ...item,
+      tableKind: item.tableKind ?? DEFAULT_TABLE_KIND,
+      order,
+    }));
+  }
+
+  private syncSelectedTableKind(): void {
+    const available = this.availableTableBlockOptions();
+    if (available.length === 0) return;
+    const current = this.selectedTableKind();
+    if (!available.some((option) => option.value === current)) {
+      this.selectedTableKind.set(String(available[0].value ?? DEFAULT_TABLE_KIND));
+    }
   }
 
   onTableRowDblclick(event: MouseEvent, index: number): void {
@@ -1499,6 +1662,15 @@ export class QuotationEditorComponent implements OnInit {
   }
 
   replaceItem(index: number): void {
+    const item = this.items()[index];
+    const blockIndex = this.blocks().findIndex(
+      (block) =>
+        block.type === 'table'
+        && this.resolveTableKind(block) === (item?.tableKind ?? DEFAULT_TABLE_KIND),
+    );
+    if (blockIndex >= 0) {
+      this.activeTableBlockIndex.set(blockIndex);
+    }
     this.selectItem(index);
     this.replaceItemIndex.set(index);
     this.productPickerVisible.set(true);
@@ -1511,11 +1683,13 @@ export class QuotationEditorComponent implements OnInit {
   }
 
   onProductsSelected(products: IProduct[]): void {
+    const tableKind = this.tableKindForPicker();
     const start = this.items().length;
     this.items.update((items) => [
       ...items,
       ...products.map((p, i) => ({
         productId: p._id,
+        tableKind,
         sku: p.sku,
         photo: p.photos?.[0]?.url,
         name: p.name,
@@ -1629,13 +1803,31 @@ export class QuotationEditorComponent implements OnInit {
 
   addTableBlock(): void {
     this.showAddMenu = false;
-    const option = QUOTATION_TABLE_BLOCK_OPTIONS.find((o) => o.kind === this.selectedTableKind)
-      ?? QUOTATION_TABLE_BLOCK_OPTIONS[0];
+    const options = this.availableTableBlockOptions();
+    const kind = this.selectedTableKind();
+    const option = options.find((o) => o.value === kind) ?? options[0];
+    if (!option) {
+      this.notification.add({
+        severity: 'info',
+        summary: 'Таблицы',
+        detail: 'В документе уже есть все доступные типы таблиц.',
+      });
+      return;
+    }
+    const tableKind = String(option.value ?? '');
+    if (this.blockHasTableKind(tableKind)) {
+      this.notification.add({
+        severity: 'warn',
+        summary: 'Таблица уже есть',
+        detail: `На листе может быть только одна таблица «${option.label}».`,
+      });
+      return;
+    }
     const newBlock: EditorBlock = {
       type: 'table',
       order: this.blocks().length,
-      title: option.title,
-      tableKind: option.kind,
+      title: option.label,
+      tableKind,
       content: '',
       settings: {
         fontSize: 10,
@@ -1646,6 +1838,7 @@ export class QuotationEditorComponent implements OnInit {
       },
     };
     this.blocks.update((blocks) => [...blocks, this.withClientKey(newBlock)]);
+    this.syncSelectedTableKind();
   }
 
   toggleBlocksReorderLock(): void {
@@ -1657,15 +1850,40 @@ export class QuotationEditorComponent implements OnInit {
     return block.type === 'text' || block.type === 'header' || block.type === 'separator' || block.type === 'table';
   }
 
-  setActiveBlock(index: number): void {
-    if (this.blocksReorderLocked() || this.isDraggingBlock()) return;
+  selectBlockKey(index: number, event: Event): void {
+    event.preventDefault();
+    if (this.isDraggingBlock()) return;
     this.activeBlockIndex.set(index);
   }
 
-  clearActiveBlock(index: number): void {
-    if (this.activeBlockIndex() === index) {
-      this.activeBlockIndex.set(null);
+  selectBlock(index: number, event: MouseEvent): void {
+    if (this.isDraggingBlock()) return;
+    const target = event.target as HTMLElement;
+    if (this.shouldIgnoreBlockSelectClick(target)) {
+      event.stopPropagation();
+      return;
     }
+    event.stopPropagation();
+    this.activeBlockIndex.set(index);
+  }
+
+  onCanvasClick(): void {
+    this.activeBlockIndex.set(null);
+  }
+
+  private shouldIgnoreBlockSelectClick(target: HTMLElement): boolean {
+    return !!target.closest(
+      'input, select, textarea, .p-inputnumber, .p-select, .p-inputtext, .editor__table-photo, .editor__table-number',
+    );
+  }
+
+  isLightSwatchColor(value: string): boolean {
+    return value === '#ffffff' || value === '#fafafa' || value === '#f8fbff' || value === '#fffef5' || value === '#f8fefb';
+  }
+
+  /** Не начинать drag блока таблицы при работе с сеткой или кнопками toolbar. */
+  stopTableBlockDrag(event: MouseEvent): void {
+    event.stopPropagation();
   }
 
   isBlockControlsVisible(index: number, block: EditorBlock): boolean {
@@ -1727,6 +1945,23 @@ export class QuotationEditorComponent implements OnInit {
     });
   }
 
+  setBlockBackgroundColor(index: number, value: string): void {
+    if (!this.isValidBlockIndex(index)) return;
+    this.blocks.update((blocks) => {
+      const updated = [...blocks];
+      const block = updated[index];
+      if (!block) return blocks;
+      const settings = { ...block.settings };
+      if (value) {
+        settings.backgroundColor = value;
+      } else {
+        delete settings.backgroundColor;
+      }
+      updated[index] = { ...block, settings };
+      return updated;
+    });
+  }
+
   toggleBlockFontWeight(index: number): void {
     if (!this.isValidBlockIndex(index)) return;
     this.blocks.update((blocks) => {
@@ -1761,6 +1996,10 @@ export class QuotationEditorComponent implements OnInit {
 
   blockColorActive(block: EditorBlock, value: string): boolean {
     return (block.settings.color ?? '') === value;
+  }
+
+  blockBackgroundColorActive(block: EditorBlock, value: string): boolean {
+    return (block.settings.backgroundColor ?? '') === value;
   }
 
   blockBorderActive(block: EditorBlock): boolean {

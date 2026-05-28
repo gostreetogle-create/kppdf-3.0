@@ -31,3 +31,4 @@ export type { IProductPassport } from './productPassport.interface';
 export type { IComplianceRule, IComplianceCheck, IComplianceBatchResult, IComplianceSummary, ComplianceOperator, ComplianceSeverity } from './compliance.interface';
 export type { IAttributeDefinition, AttributeType } from './attributeDefinition.interface';
 export type { IEntityAttributeValue } from './entityAttributeValue.interface';
+export type { IDocumentTableType, IDocTableColumn, DocTableColumnType } from './documentTableType.interface';

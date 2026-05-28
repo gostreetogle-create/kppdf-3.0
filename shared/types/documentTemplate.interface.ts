@@ -15,6 +15,7 @@ export interface IDocumentBlock {
   order: number;
   title?: string;
   content: string;
+  tableKind?: string;
   cells?: IDocumentBlockCell[];
   settings: {
     fontSize?: number;

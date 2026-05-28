@@ -73,6 +73,10 @@ export const routes: Routes = [
         path: 'attribute-definitions',
         loadComponent: () => import('./features/attribute-definitions').then(c => c.AttributeDefinitionsPageComponent),
       },
+      {
+        path: 'document-table-types',
+        loadComponent: () => import('./features/document-table-types').then(c => c.DocumentTableTypesPageComponent),
+      },
     ],
   },
   {

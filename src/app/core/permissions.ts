@@ -57,6 +57,7 @@ const moduleEntries = {
   counters:             { view: 'admin.counters.view',                 create: 'admin.counters.create',                 edit: 'admin.counters.edit',                 delete: 'admin.counters.delete' },
   interactions:         { view: 'office.interactions.view',            create: 'office.interactions.create',            edit: 'office.interactions.edit',            delete: 'office.interactions.delete' },
   'document-templates': { view: 'office.documentTemplates.view',        create: 'office.documentTemplates.create',        edit: 'office.documentTemplates.edit',        delete: 'office.documentTemplates.delete' },
+  'document-table-types': { view: 'admin.documentTableTypes.view',      create: 'admin.documentTableTypes.create',      edit: 'admin.documentTableTypes.edit',      delete: 'admin.documentTableTypes.delete' },
 } satisfies Record<string, PermissionActions>;
 
 // ── Единый PERMISSIONS объект ────────────────────────────────
@@ -106,4 +107,5 @@ export const DIR_PERM_PREFIX: Record<string, string> = {
   'work-types': 'admin.workTypes',
   settings: 'admin.settings',
   attributes: 'admin.attributes',
+  'document-table-types': 'admin.documentTableTypes',
 };
