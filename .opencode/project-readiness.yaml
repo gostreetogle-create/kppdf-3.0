@@ -28,7 +28,7 @@ modules:
     percent: 70
   ui-kit:
     status: wip
-    percent: 60
+    percent: 65
   orders:
     status: wip
     percent: 40
