@@ -49,6 +49,7 @@ const DEFAULT_TABLE_KIND = 'products';
 const FALLBACK_TABLE_BLOCK_OPTIONS: KpSelectOption[] = [
   { label: 'Товары', value: 'products' },
   { label: 'Услуги', value: 'services' },
+  { label: 'Работы', value: 'work' },
 ];
 
 /** Категории шаблонов документов (PLM-139 / 8.1.1) */
@@ -73,6 +74,7 @@ interface PickerKindMeta {
 const DEFAULT_PICKER_META: Record<string, PickerKindMeta> = {
   products: { label: 'Товары', dataSource: 'products', productKind: 'ITEM' },
   services: { label: 'Услуги', dataSource: 'services', productKind: 'SERVICE' },
+  work: { label: 'Работы', dataSource: 'work', productKind: 'WORK' },
 };
 
 interface BlockItemRow {
@@ -1601,7 +1603,7 @@ export class QuotationEditorComponent implements OnInit {
             meta[t.name] = {
               label: t.label || t.title || t.name,
               dataSource: t.dataSource || DEFAULT_PICKER_META[t.name]?.dataSource || '',
-              productKind: t.productKind || DEFAULT_PICKER_META[t.name]?.productKind || undefined,
+              productKind: t.productKind || DEFAULT_PICKER_META[t.name]?.productKind,
             };
           }
           this.pickerMetaByKind.set(meta);

@@ -191,6 +191,8 @@ await api.put(`/tasks/${parentId}`, {
 | `node tools/setup-documents-yougile-module.js` | модуль **08 Документы** (идемпотентно) |
 | `node tools/fix-documents-links.js` | пересборка `subtasks` модуля 08 |
 | `node tools/fix-documents-board-visibility.js` | убрать вложенные 8.x с доски |
+| `node tools/yougile-registry.js resolve PLM-139` | проверить UUID ↔ hash URL |
+| `node tools/sync-plm-checklist.js PLM-139 --done` | описание + чеклист после фикса в коде |
 | `pwsh tools/yougile-sync.ps1 -Action report` | отчёт по задачам |
 
 ---

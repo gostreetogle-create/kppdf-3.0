@@ -652,6 +652,24 @@ async function seed(): Promise<void> {
       sortOrder: 2,
       isActive: true,
     },
+    {
+      name: 'work',
+      label: 'Работы',
+      title: 'Работы',
+      docType: 'quotation',
+      columns: [
+        { field: 'sku', header: 'Артикул', type: 'text', width: '100px' },
+        { field: 'name', header: 'Наименование', type: 'text' },
+        { field: 'qty', header: 'Кол-во', type: 'number', width: '80px' },
+        { field: 'unit', header: 'Ед. изм.', type: 'text', width: '70px' },
+        { field: 'price', header: 'Цена', type: 'currency', width: '110px' },
+        { field: 'sum', header: 'Сумма', type: 'currency', width: '110px' },
+      ],
+      dataSource: 'work',
+      productKind: 'WORK',
+      sortOrder: 3,
+      isActive: true,
+    },
   ]);
   console.log(`  ✅ Типы таблиц документов: ${docTableTypes.length}`);
 
