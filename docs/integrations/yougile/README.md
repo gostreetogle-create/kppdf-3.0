@@ -1,6 +1,17 @@
 # YouGile Integration — KPPDF 3.0
 
-> **Цель:** Зафиксировать все способы взаимодействия с YouGile в проекте — API, конфигуратор, существующие скрипты.
+> Взаимодействие с YouGile: API, оформление задач, скрипты, синхронизация.
+
+---
+
+## С чего начать
+
+| Документ | Для кого |
+|----------|----------|
+| **[conventions.md](conventions.md)** | Правила оформления: названия, доска, `columnId`, `subtasks`, шаблон описания |
+| [adding-tasks.md](adding-tasks.md) | Деревья CRM / 08 Документы, скрипты создания |
+| [api-reference.md](api-reference.md) | REST API v2: эндпоинты, примеры кода |
+| [configurator-scripts.md](configurator-scripts.md) | Конфигуратор в браузере (не используется в проекте) |
 
 ---
 
@@ -9,76 +20,75 @@
 | Способ | Что это | Кто использует |
 |--------|---------|----------------|
 | **REST API v2** | Удалённое управление задачами, колонками, описаниями | Скрипты, сервер, Cursor/AI |
-| **Конфигуратор** | JavaScript-скрипты внутри браузера YouGile (кнопки, хоткеи) | Пользователь в UI YouGile |
+| **Конфигуратор** | JavaScript в браузере YouGile (кнопки, хоткеи) | Пользователь в UI |
 
-Ниже — карта того, что уже реализовано в проекте.
+Основная автоматизация — **REST API**. Конфигуратор в репозитории не используется.
 
 ---
 
-## REST API v2 — автоматизация
-
-### Базовые параметры
+## REST API v2
 
 ```
 Base URL: https://yougile.com/api-v2
 Auth:     Bearer Token (заголовок Authorization)
 Docs:     https://ru.yougile.com/api/docs
-Token:    в .env (yougile-sync-server) или tools/yougile-sync.ps1
+Token:    yougile-sync-server/.env (YG_TOKEN) или tools/yougile-sync.ps1
 ```
 
-### Используемые эндпоинты
+### Эндпоинты
 
-| Метод | Endpoint | Назначение | Где используется |
-|-------|----------|------------|------------------|
-| `GET` | `/boards` | Получить список досок | checkConnection |
-| `GET` | `/columns` | Получить список колонок | yougile-restructure.js |
-| `GET` | `/tasks?limit=N` | Получить все задачи (с пагинацией) | sync, report, snapshot |
-| `GET` | `/tasks/:id` | Получить конкретную задачу | readSubtaskStatus |
-| `PUT` | `/tasks/:id` | Обновить задачу (description, columnId, completed) | sync, mark-done, restructure |
-| `POST` | `/columns` | Создать колонку | restructure |
-| `PUT` | `/columns/:id` | Переименовать колонку | restructure |
+| Метод | Endpoint | Назначение |
+|-------|----------|------------|
+| `GET` | `/boards`, `/columns` | Доски и колонки |
+| `GET` | `/tasks?limit=N&offset=M` | Задачи (пагинация) |
+| `GET` | `/tasks/:id` | Одна задача |
+| `POST` | `/tasks` | Создать задачу |
+| `PUT` | `/tasks/:id` | Обновить (title, description, subtasks, columnId, completed) |
+| `POST` / `PUT` | `/columns` | Колонки |
 
-### Что уже реализовано
+### Инструменты в репозитории
 
-| Инструмент | Язык | Назначение |
-|------------|------|------------|
-| `tools/yougile-sync.ps1` | PowerShell | CLI: report, status, mark-done, sync-from-code, list-done |
-| `tools/yougile-restructure.js` | Node.js | Перестройка колонок досок |
-| `tools/fix-yougile-descriptions.js` | Node.js | Массовое обновление описаний |
-| `tools/sync-yougile-completed.js` | Node.js | Синхронизация completed-статуса |
-| `yougile-sync-server` (отдельный проект) | Node.js/TS | Сервер: sync → readiness snapshot, вебхуки, Google Sheets |
-
-Детально: [API Reference](api-reference.md)
+| Инструмент | Назначение |
+|------------|------------|
+| `tools/yougile-sync.ps1` | CLI: report, status, mark-done, sync-from-code |
+| `tools/setup-documents-yougile-module.js` | Модуль **08 Документы** |
+| `tools/fix-documents-board-visibility.js` | Убрать вложенные задачи с доски |
+| `tools/fix-documents-links.js` | Пересборка `subtasks` модуля 08 |
+| `tools/yougile-restructure.js` | Перестройка колонок |
+| `tools/fix-yougile-descriptions.js` | Массовое обновление описаний |
+| `yougile-sync-server` | Polling, % EPIC, snapshot → Google Sheets |
 
 ---
 
-## Конфигуратор YouGile (опционально)
+## Ключевые правила (кратко)
 
-Встроенный редактор скриптов (Ctrl+~). В проекте **нет** готовых `.js` для вставки — основная автоматизация через REST API.
+Подробно: [conventions.md](conventions.md).
 
-Справка: [Configurator Scripts](configurator-scripts.md)
+1. **На доске «План развития»** — только категории `01`–`08` (у них есть `columnId`).
+2. **EPIC и задачи `N.x`** — создавать **без `columnId`**, иначе появятся отдельными карточками.
+3. **Иерархия** — массив `subtasks` у родителя; `parentTaskId` в API не работает.
+4. **Нумерация** — `N.x` совпадает с номером модуля (`8.1` в «08 Документы», не `1.4.1`).
 
 ---
 
 ## Синхронизация статуса
 
-Сервер `yougile-sync-server` (порт 3002) автоматически:
-1. Читает маппинг `config/mapping.yaml` (модуль → задача YouGile)
-2. Проверяет статус подзадач через API
-3. Обновляет описание EPIC-задачи: `🔵 db-models — готовность: 67%`
-4. Делает снапшот для Google Sheets
+`yougile-sync-server` (порт 3002):
 
-**Период:** Раз в 5 минут (настраивается через `pollIntervalSec`).
+1. Читает `config/mapping.yaml` (модуль → задача YouGile)
+2. Считает % выполнения подзадач EPIC
+3. Обновляет описание: `🔵 db-models — готовность: 67%`
+4. Пишет snapshot в Google Sheets
 
-Детально: [Сервер синхронизации](#) (TODO: отдельный док)
+Период: каждые 5 мин (`pollIntervalSec`).
 
 ---
 
 ## Быстрые ссылки
 
-| Ресурс | URL |
-|--------|-----|
+| Ресурс | URL / ID |
+|--------|----------|
 | YouGile API docs | https://ru.yougile.com/api/docs |
-| Доска «Статус реализации» | ID: `16d98239-919e-43f7-9bf4-a3fbadbdd580` |
-| Доска «СпортИнЮг» | ID: `438ae799-8d02-4b98-b8c3-1d3c5ffc059c` |
-| Доска «Настройки проекта» | ID: `ae0e0a0a-ad7f-497e-96e0-0571b6dd9106` |
+| Доска «Статус реализации» | `16d98239-919e-43f7-9bf4-a3fbadbdd580` |
+| Колонка «План развития» | `59187569-feed-4a67-94ad-e20e7a098be7` |
+| Доска «СпортИнЮг» | `438ae799-8d02-4b98-b8c3-1d3c5ffc059c` |

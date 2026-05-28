@@ -17,12 +17,14 @@ locked_files:
   - src/app/core/dashboard.service.ts
   - backend/src/modules/dashboard/dashboard.router.ts
 exceptions:
-  - reason: "Из проекта удалён модуль Readiness/Статус реализации. Удалены: readiness-showcase, readiness-feedback.service, project-readiness.model. Dashboard и dashboard.service очищены от readiness-ссылок."
-    date: 2026-05-28
+  - reason: >-
+      Из проекта удалён модуль Readiness/Статус реализации. Удалены: readiness-showcase, readiness-feedback.service,
+      project-readiness.model. Dashboard и dashboard.service очищены от readiness-ссылок.
+    date: 2026-05-28T00:00:00.000Z
 check_hash: false
 file_hashes:
   src/app/features/dashboard/dashboard-page.component.scss: 5b77af7d0c3b4e0593b19484f679c9bb9b76822d5058c62a79164bf9b59104ca
-  src/app/features/dashboard/dashboard-page.component.ts: updated
-  src/app/features/dashboard/index.ts: b0307c36a27773f1148ca4eaad1b69f3db4674c9869731acd622d02685029fa4
-  src/app/core/dashboard.service.ts: updated
+  src/app/features/dashboard/dashboard-page.component.ts: 90b757f4fbf52e8177983cb93203343aa40f1f405d2a8854a8aa92d0184c4532
+  src/app/features/dashboard/index.ts: d9cda4cab90c4a83e9a211a6460fe1414b5e6aa37361124f2c757859f9c00ac8
+  src/app/core/dashboard.service.ts: fc903ac143a02ff0f4c3f5b69f4797f80dfb7f2c3af0c387eea4649b90c45cc8
   backend/src/modules/dashboard/dashboard.router.ts: ad66a1039d9d8fb082276d95b17e0a8eb7eb0976a942c749c8373ed2816d8a1b

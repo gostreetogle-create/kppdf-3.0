@@ -12,8 +12,24 @@ const productSchema = new Schema<ProductDocument>(
     categoryId: { type: String },
     status: { type: String, enum: ['active', 'draft', 'archived'], default: 'active' },
     listPrice: { type: Number, default: 0 },
+    costPrice: { type: Number, default: 0 },
     stockQty: { type: Number, default: 0 },
     description: { type: String },
+    notes: { type: String },
+    subcategory: { type: String },
+    photos: {
+      type: [
+        {
+          url: { type: String, required: true },
+          position: {
+            x: { type: Number, default: 50 },
+            y: { type: Number, default: 50 },
+          },
+          scale: { type: Number, default: 1 },
+        },
+      ],
+      default: [],
+    },
     // Технические характеристики (из паспортов изделий)
     height: { type: Number },
     length: { type: Number },

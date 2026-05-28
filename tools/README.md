@@ -12,8 +12,14 @@
 | `yougile-sync.ps1` | PowerShell-синхронизация задач YouGile: mark-done, sync-from-code, отчёты. |
 | `yougile-scripts/` | Готовые `.js` скрипты для конфигуратора YouGile (кнопки, быстрые действия). |
 | `scripts/restore-quotation-editor.js` | Восстановление QuotationEditor после случайного удаления. |
+| `yougile-registry.js` | Реестр **PLM-xxx** → UUID: show, resolve, repair-links |
+| `setup-documents-yougile-module.js` | repair-links (названия не меняет) |
+| `fix-documents-board-visibility.js` | Убрать вложенные задачи реестра с доски |
 | `build.sh` | Сборка деплой-архива (`kppdf-deploy.tar.gz`). Обёртка над `deploy.sh --archive-only`. |
 | `check_ng.sh` | Проверка Nginx конфигурации. |
+
+Правила оформления YouGile: `docs/integrations/yougile/conventions.md`  
+Реестр PLM-xxx: `config/yougile-task-registry.yaml`
 
 ---
 
@@ -36,6 +42,6 @@ pwsh tools/yougile-sync.ps1 -Action status
 
 ## Связанные документы
 
-- `docs/integrations/yougile/` — YouGile API и конфигуратор
+- `docs/integrations/yougile/` — YouGile API, [conventions](docs/integrations/yougile/conventions.md), конфигуратор
 - `DEPLOY.md` — деплой и сборка
 - `README.md` — быстрый старт

@@ -1,17 +1,18 @@
-import { Component, input, output, model, computed, ChangeDetectionStrategy } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { Component, input, output, model, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
 import { EmptyStateComponent } from './empty-state/empty-state.component';
 import { KpButtonComponent } from './kp-button.component';
+import { AuthService } from '../../core/auth.service';
 import type { CrudAction } from '../crud/crud-page.types';
 
 export interface KpColumn {
   field: string;
   header: string;
-  type: 'text' | 'number' | 'tag' | 'boolean' | 'date' | 'select' | 'textarea';
+  type: 'text' | 'number' | 'tag' | 'boolean' | 'date' | 'select' | 'textarea' | 'image';
   width?: string;
   options?: { label: string; value: unknown }[];
   sortable?: boolean;
@@ -41,6 +42,7 @@ export interface KpPageEvent {
     DatePipe, FormsModule,
     TableModule, TagModule, InputTextModule,
     EmptyStateComponent, KpButtonComponent,
+    NgTemplateOutlet,
   ],
   template: `
     <div class="kp-table-panel">
@@ -149,6 +151,11 @@ export interface KpPageEvent {
                     @case ('date') {
                       <span class="kp-table__date">{{ row[col.field] ? (row[col.field] | date:'dd.MM.yyyy') : '—' }}</span>
                     }
+                    @case ('image') {
+                      <ng-container
+                        *ngTemplateOutlet="photoPreview; context: { $implicit: row[col.field] }"
+                      />
+                    }
                     @case ('select') {
                       <span
                         class="kp-table__text"
@@ -199,7 +206,7 @@ export interface KpPageEvent {
                       />
                     }
                     @for (action of extraRowActions(); track action.id) {
-                      @if (!action.visible || action.visible(row)) {
+                      @if (canExecAction(action) && (!action.visible || action.visible(row))) {
                         <app-kp-button
                           [icon]="action.icon || 'pi pi-bolt'"
                           [rounded]="true"
@@ -234,11 +241,27 @@ export interface KpPageEvent {
         </div>
       }
     </div>
+
+    <ng-template #photoPreview let-photos>
+      @if (getFirstPhoto(photos)) {
+        <img
+          class="kp-table__photo-thumb"
+          [src]="getFirstPhoto(photos)"
+          alt="Фото"
+          loading="lazy"
+        />
+      } @else {
+        <span class="kp-table__photo-empty" aria-label="Нет фото">
+          <i class="pi pi-image" aria-hidden="true"></i>
+        </span>
+      }
+    </ng-template>
   `,
   styleUrl: './kp-table.component.scss',
 })
 export class KpTableComponent {
   readonly searchInputId = `kp-search-${Math.random().toString(36).slice(2, 9)}`;
+  private readonly authService = inject(AuthService);
 
   readonly columns = input.required<KpColumn[]>();
   readonly data = input.required<object[]>();
@@ -287,6 +310,21 @@ export class KpTableComponent {
     return 'primary';
   }
 
+  getFirstPhoto(value: unknown): string | null {
+    if (Array.isArray(value) && value.length > 0) {
+      const first = value[0];
+      if (typeof first === 'object' && first !== null && 'url' in first) {
+        return (first as { url: string }).url || null;
+      }
+      if (typeof first === 'string') return (first as string).trim() || null;
+    }
+    if (typeof value === 'string' && value.trim()) {
+      const parts = value.split(/[,;\n]+/).map((s: string) => s.trim()).filter(Boolean);
+      return parts[0] || null;
+    }
+    return null;
+  }
+
   onSortHandler(event: { field?: string; order?: number }): void {
     this.sortChange.emit({
       field: event.field || 'createdAt',
@@ -314,6 +352,11 @@ export class KpTableComponent {
     if (col.maxLines === 2) return false;
     if (col.ellipsis === false) return false;
     return col.type === 'text' || col.type === 'select' || col.type === 'textarea';
+  }
+
+  canExecAction(action: CrudAction<Record<string, unknown>>): boolean {
+    if (!action.permission) return true;
+    return this.authService.hasPermission(action.permission);
   }
 
   cellTitle(col: KpColumn, value: unknown): string | null {

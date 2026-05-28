@@ -14,7 +14,9 @@
     "sync-to-mongo": "node src/sync-sheet-to-mongo.js",
     "normalize-texts": "node src/normalize-product-texts.js",
     "extract-colors": "node src/extract-product-colors.js",
+    "strip-desc-colors": "node src/run-strip-description-colors.js",
     "normalize-categories": "node src/normalize-product-categories.js",
+    "fill-purpose": "node src/fill-product-purpose.js",
     "test:categories": "node src/classify-product-category.test.js"
   },
   "dependencies": {

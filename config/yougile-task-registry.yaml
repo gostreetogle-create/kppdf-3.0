@@ -1,0 +1,93 @@
+# Реестр KPPDF → YouGile
+# Ключ = PLM-xxx из ссылки (https://…/#PLM-126). Названия карточек — любые.
+#
+# Обновлено: 2026-05-28
+version: 2
+plan_column_id: "59187569-feed-4a67-94ad-e20e7a098be7"
+
+tasks:
+  # ── Категории на «План развития» ──
+  PLM-109:
+    uuid: "500b7fa5-000f-47f4-880d-25603ccf05ca"
+    kind: category
+
+  PLM-110:
+    uuid: "97f62f09-9e81-432a-8367-69c409d2f8da"
+    kind: category
+
+  PLM-111:
+    uuid: "339b68df-e80e-44db-bb0b-e8bead773dc0"
+    kind: category
+
+  PLM-112:
+    uuid: "56d1a590-a03a-4b4e-bab9-340b29877358"
+    kind: category
+
+  PLM-113:
+    uuid: "368000c1-90b1-4878-a353-fc8c71f8a4f8"
+    kind: category
+
+  PLM-114:
+    uuid: "90531306-0d03-4697-bf04-f972d954483f"
+    kind: category
+
+  PLM-115:
+    uuid: "c1027733-abaf-4492-905a-710b95b907cf"
+    kind: category
+
+  PLM-127:
+    uuid: "97ed060c-6cf5-4bc9-bde0-ec19b0d9a7a4"
+    kind: category
+
+  PLM-116:
+    uuid: "7894be0a-c09a-47fa-8296-64c9d4539a18"
+    kind: category
+
+  # ── 08 Документы (дерево) ──
+  PLM-142:
+    uuid: "30c99a9e-28b5-41d8-a15b-718004858498"
+    kind: epic
+    parent: PLM-127
+
+  PLM-126:
+    uuid: "0b443b7c-1b83-4ca7-9f41-837d939eb573"
+    kind: task
+    parent: PLM-142
+    route: "/quotations/:id"
+    code: "src/app/features/quotations/quotation-editor.component.ts"
+
+  PLM-141:
+    uuid: "776dc6ad-af05-47e8-9a8a-df9f0573c37c"
+    kind: subtask
+    parent: PLM-126
+
+  PLM-140:
+    uuid: "fe94f325-ac19-40c1-a960-1adc39b4f0b1"
+    kind: subtask
+    parent: PLM-126
+
+  PLM-139:
+    uuid: "a21dc767-de79-4a1a-b923-444b7a24f13e"
+    kind: subtask
+    parent: PLM-126
+
+  PLM-138:
+    uuid: "128447f1-f02d-4bd5-939c-64e4d516eee2"
+    kind: task
+    parent: PLM-142
+
+  PLM-137:
+    uuid: "c7dd4f0b-eef0-47b5-b4f0-d9f8ef232b7d"
+    kind: task
+    parent: PLM-142
+    route: "/documents"
+
+hierarchy:
+  PLM-127: [PLM-142]
+  PLM-142: [PLM-126, PLM-138, PLM-137]
+  PLM-126: [PLM-141, PLM-140, PLM-139]
+
+crm_ui_list:
+  uuid: "06d40196-f328-4236-a946-8ec4caed143c"
+  plm: PLM-24
+  exclude_child: PLM-126

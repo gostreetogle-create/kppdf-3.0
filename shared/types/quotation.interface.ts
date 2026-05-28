@@ -4,6 +4,7 @@ export interface IQuotation {
   _id?: string;
   number: string;
   counterpartyId: string;
+  tenderId?: string;
   date?: string;
   validUntil?: string;
   statusId: string;

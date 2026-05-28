@@ -1,6 +1,6 @@
 # YouGile Configurator Scripts
 
-> Справка по конфигуратору YouGile. Готовые скрипты KPPDF в репозитории **не используются** — автоматизация через REST API и `yougile-sync-server`.
+> Справка по конфигуратору YouGile. Готовые скрипты KPPDF в репозитории **не используются** — автоматизация через REST API и `yougile-sync-server`. Правила оформления карточек: [conventions.md](conventions.md).
 
 ---
 

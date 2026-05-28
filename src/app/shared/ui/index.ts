@@ -2,6 +2,7 @@ export { EmptyStateComponent } from './empty-state/empty-state.component';
 export { PageLayoutComponent } from './page-layout/page-layout.component';
 export { KpButtonComponent } from './kp-button.component';
 export { KpInputComponent } from './kp-input.component';
+export { KpPhotoUploaderComponent } from './kp-photo-uploader.component';
 export { KpPasswordComponent } from './kp-password.component';
 export { KpSelectComponent } from './kp-select.component';
 export type { KpSelectOption } from './kp-select.component';

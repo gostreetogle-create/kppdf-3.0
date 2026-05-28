@@ -148,6 +148,19 @@ Base URL: https://yougile.com/api-v2
 
 **Используется в:** `updateTask()`, `mark-done`, `sync-from-code`, restructure
 
+**Создание задачи:** `POST /tasks`
+
+| Тип | Тело запроса |
+|-----|--------------|
+| Категория на доске | `{ "title", "description", "columnId" }` |
+| EPIC / задача / подзадача | `{ "title", "description" }` — **без** `columnId` |
+
+Правила оформления: [conventions.md](conventions.md).
+
+**Иерархия:** только через массив **`subtasks`** у родительской задачи (`PUT /tasks/:parentId` с `{ "subtasks": ["uuid-1", "uuid-2"] }`). Поле `parentTaskId` в `PUT /tasks/:id` **не поддерживается** (400).
+
+**Видимость на доске:** задача отображается в колонке, если у неё задан `columnId`. Вложенные задачи создаются **без** `columnId`. Сбросить `columnId` через PUT нельзя (`null` / `""` → 400) — пересоздать задачу или `tools/fix-documents-board-visibility.js`.
+
 ---
 
 ## Типовые сценарии
@@ -189,6 +202,37 @@ while (true) {
 }
 ```
 
+### 5. Создать вложенную задачу (по conventions)
+
+```javascript
+const PLAN_COLUMN = "59187569-feed-4a67-94ad-e20e7a098be7";
+
+// Категория — на доске
+const category = await api.post("/tasks", {
+  title: "08 Документы",
+  description: "Модуль документов…",
+  columnId: PLAN_COLUMN,
+});
+
+// EPIC — без columnId, не попадёт на доску
+const epic = await api.post("/tasks", {
+  title: "[EPIC #DOCS] Редакторы и печатные формы",
+  description: "…",
+});
+
+await api.put(`/tasks/${category.id}`, { subtasks: [epic.id] });
+
+// Задача 8.1 — тоже без columnId
+const task = await api.post("/tasks", {
+  title: "8.1 Редактор документа КП",
+  description: "**Маршрут:** `/quotations/:id`\n…",
+});
+
+await api.put(`/tasks/${epic.id}`, { subtasks: [task.id] });
+```
+
+См. [conventions.md](conventions.md) — чеклист и типичные ошибки.
+
 ---
 
 ## Ограничения
@@ -199,6 +243,8 @@ while (true) {
 | Лимит задач на запрос | 100 (пагинация через offset) |
 | Подзадачи | API возвращает `string[]` (ID), не объекты |
 | Описание | Markdown поддерживается |
+| `columnId` | Optional при POST; нельзя сбросить через PUT |
+| `parentTaskId` | Не поддерживается (400) |
 
 ## Обработка ошибок
 

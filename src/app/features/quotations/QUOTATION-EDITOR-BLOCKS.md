@@ -111,5 +111,7 @@
 ## Связанные документы
 
 - [AGENTS.md](../../../AGENTS.md) — инвариант P0: не удалять QuotationEditor.
+- [docs/integrations/yougile/conventions.md](../../../docs/integrations/yougile/conventions.md) — правила оформления YouGile
+- [docs/integrations/yougile/adding-tasks.md](../../../docs/integrations/yougile/adding-tasks.md) — карточка **8.1 Редактор документа КП** (08 Документы → EPIC #DOCS)
 - [.opencode/audit/plans/quotation-document-tables.md](../../../.opencode/audit/plans/quotation-document-tables.md) — план таблиц в документе.
 - [.opencode/audit/CHECKLIST-BACKLOG.md](../../../.opencode/audit/CHECKLIST-BACKLOG.md) — backlog.

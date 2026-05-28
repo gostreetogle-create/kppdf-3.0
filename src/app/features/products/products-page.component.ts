@@ -7,6 +7,7 @@ import {
   KpInputNumberComponent,
   KpSelectComponent,
   KpTextareaComponent,
+  KpPhotoUploaderComponent,
   type KpSelectOption,
   type KpColumn,
 } from '../../shared/ui';
@@ -50,6 +51,7 @@ function productSeverity(value: unknown): string {
     KpInputNumberComponent,
     KpSelectComponent,
     KpTextareaComponent,
+    KpPhotoUploaderComponent,
     AttributesEditorComponent,
   ],
   template: `
@@ -128,6 +130,17 @@ function productSeverity(value: unknown): string {
                       [useGrouping]="false"
                     />
                     <app-kp-input-number
+                      label="Себестоимость"
+                      name="costPrice"
+                      placeholder="0"
+                      [value]="row['costPrice'] ?? 0"
+                      (valueChange)="row['costPrice'] = $event"
+                      [min]="0"
+                      [useGrouping]="false"
+                    />
+                  </div>
+                  <div class="form-row--equal">
+                    <app-kp-input-number
                       label="Остаток"
                       name="stockQty"
                       placeholder="0"
@@ -162,6 +175,13 @@ function productSeverity(value: unknown): string {
                     (valueChange)="row['categoryId'] = $event"
                     [options]="categoryOptions()"
                   />
+                  <app-kp-input
+                    label="Подкатегория"
+                    name="subcategory"
+                    placeholder="Например: Уличные тренажёры"
+                    [value]="row['subcategory'] || ''"
+                    (valueChange)="row['subcategory'] = $event"
+                  />
                   <app-kp-textarea
                     label="Описание"
                     name="description"
@@ -169,6 +189,18 @@ function productSeverity(value: unknown): string {
                     [value]="row['description'] || ''"
                     (valueChange)="row['description'] = $event"
                     [rows]="5"
+                  />
+                  <app-kp-textarea
+                    label="Заметки"
+                    name="notes"
+                    placeholder="Внутренние заметки (не видны клиенту)"
+                    [value]="row['notes'] || ''"
+                    (valueChange)="row['notes'] = $event"
+                    [rows]="3"
+                  />
+                  <app-kp-photo-uploader
+                    label="Фото"
+                    [(photos)]="row['photos']"
                   />
                 </div>
               </section>
@@ -188,6 +220,7 @@ function productSeverity(value: unknown): string {
         </div>
       </ng-template>
     </app-kp-crud-page>
+
   `,
 })
 export class ProductsPageComponent implements OnInit {
@@ -199,8 +232,10 @@ export class ProductsPageComponent implements OnInit {
   readonly categoryOptions = signal<KpSelectOption[]>([]);
 
   readonly columns = signal<KpColumn[]>([
+    { field: 'photos', header: 'Фото', type: 'image', width: '60px' },
     { field: 'sku', header: 'Артикул', type: 'text', sortable: true, width: '110px' },
     { field: 'name', header: 'Наименование', type: 'text', sortable: true },
+    { field: 'subcategory', header: 'Подкатегория', type: 'text', sortable: true, width: '130px' },
     {
       field: 'kind',
       header: 'Тип',
@@ -212,6 +247,7 @@ export class ProductsPageComponent implements OnInit {
     { field: 'unit', header: 'Ед. изм.', type: 'text', sortable: true, width: '90px' },
     { field: 'categoryId', header: 'Категория', type: 'select', sortable: true, options: [] },
     { field: 'listPrice', header: 'Цена', type: 'number', sortable: true, width: '100px' },
+    { field: 'costPrice', header: 'Себест.', type: 'number', sortable: true, width: '100px' },
     { field: 'stockQty', header: 'Остаток', type: 'number', sortable: true, width: '100px' },
     {
       field: 'status',

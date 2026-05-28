@@ -41,8 +41,18 @@ const productSchema = new mongoose.Schema(
     categoryId: { type: String },
     status: { type: String, enum: ["active", "draft", "archived"], default: "active" },
     listPrice: { type: Number, default: 0 },
+    costPrice: { type: Number, default: 0 },
     stockQty: { type: Number, default: 0 },
     description: { type: String },
+    notes: { type: String },
+    subcategory: { type: String },
+    photos: { type: [
+      {
+        url: { type: String, required: true },
+        position: { x: { type: Number, default: 50 }, y: { type: Number, default: 50 } },
+        scale: { type: Number, default: 1 },
+      },
+    ], default: [] },
     height: { type: Number },
     length: { type: Number },
     width: { type: Number },
@@ -145,6 +155,7 @@ function sheetRowToProduct(row, col) {
       unit: cell(row, col.get("Ед. изм.")) || "шт",
       status: parseStatus(cell(row, col.get("Статус")), isActive),
       listPrice: parseNumber(cell(row, col.get("Цена"))) ?? 0,
+      costPrice: parseNumber(cell(row, col.get("Себестоимость"))) ?? 0,
       stockQty: parseNumber(cell(row, col.get("Остаток"))) ?? 0,
       description: cell(row, col.get("Описание")) || undefined,
       height: parseNumber(cell(row, col.get("Высота"))),
@@ -154,6 +165,9 @@ function sheetRowToProduct(row, col) {
       materials: cell(row, col.get("Материалы")) || undefined,
       installation: cell(row, col.get("Монтаж")) || undefined,
       purpose: cell(row, col.get("Назначение")) || undefined,
+      subcategory: cell(row, col.get("Подкатегория")) || undefined,
+      notes: cell(row, col.get("Заметки")) || undefined,
+      photos: (() => { const raw = cell(row, col.get("Фото")); if (!raw) return undefined; return raw.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean).map(url => ({ url })); })(),
       isActive,
     },
   };
@@ -309,6 +323,12 @@ async function main() {
       const patch = mergeFillEmpty(existing.toObject(), incoming);
       if (categoryId && existing.categoryId !== categoryId) {
         patch.categoryId = categoryId;
+      }
+      if (incoming.purpose && incoming.purpose !== existing.purpose) {
+        patch.purpose = incoming.purpose;
+      }
+      if (incoming.description && incoming.description !== existing.description) {
+        patch.description = incoming.description;
       }
       if (Object.keys(patch).length === 0) {
         stats.skipped += 1;

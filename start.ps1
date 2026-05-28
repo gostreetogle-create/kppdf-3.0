@@ -4,7 +4,9 @@
 
 .EXAMPLE
   .\start.ps1
-  Docker MongoDB + backend + frontend + браузер.
+  .\dev.ps1
+  .\start.cmd
+  Docker MongoDB + backend + frontend + YouGile sync + браузер.
 
 .EXAMPLE
   .\start.ps1 -SkipDocker
@@ -20,15 +22,21 @@ param(
   [switch]$Reseed
 )
 
+# Быстрый запуск (скопируйте):  .\start.cmd   или   .\s.cmd   или   .\dev.ps1
+# Двойной щелчок: START-DEV.bat
+# Опечатка start.ps1с в PowerShell:  cmd /c .\start.ps1с
+
 $ErrorActionPreference = 'Continue'
 
 $Root = $PSScriptRoot
+$YougileDir = Join-Path (Split-Path $Root -Parent) 'yougile-sync-server'
 & node (Join-Path $Root '.opencode/lock/setup-githooks.mjs') 2>$null
 $BackendDir = Join-Path $Root 'backend'
 $MongoDb = 'kppdf30'
 $MongoUri = "mongodb://localhost:27017/$MongoDb"
 $HealthUrl = 'http://localhost:3000/api/v1/health'
 $FrontUrl = 'http://localhost:4200'
+$YougileHealthUrl = 'http://localhost:3002/api/health'
 $SessionFile = Join-Path $Root '.kppdf-dev.session.json'
 
 # ── Helpers ───────────────────────────────────────────────────
@@ -50,7 +58,7 @@ function Stop-LingeringDevProcesses {
 
   try {
     Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue |
-      Where-Object { $_.CommandLine -match 'tsx|ng serve|backend/dev\.js|npm run dev' } |
+      Where-Object { $_.CommandLine -match 'tsx|ng serve|backend/dev\.js|npm run dev|yougile-sync-server' } |
       ForEach-Object {
         Write-Host "  stop node (PID $($_.ProcessId))" -ForegroundColor Yellow
         Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
@@ -66,6 +74,7 @@ function Stop-PreviousDevSessions {
       $session = Get-Content $SessionFile -Raw | ConvertFrom-Json
       Stop-DevProcess -ProcessId ([int]$session.backendWindowPid) -Label 'backend window'
       Stop-DevProcess -ProcessId ([int]$session.frontendWindowPid) -Label 'frontend window'
+      Stop-DevProcess -ProcessId ([int]$session.yougileWindowPid) -Label 'yougile sync window'
     } catch {
       Write-Host '  session file unreadable, skip' -ForegroundColor DarkYellow
     }
@@ -73,15 +82,17 @@ function Stop-PreviousDevSessions {
   }
 
   Stop-Port -Port 3000
+  Stop-Port -Port 3002
   Stop-Port -Port 4200
   Stop-LingeringDevProcesses
   Start-Sleep -Milliseconds 400
 }
 
-function Save-DevSession([int]$BackendWindowPid, [int]$FrontendWindowPid) {
+function Save-DevSession([int]$BackendWindowPid, [int]$FrontendWindowPid, [int]$YougileWindowPid) {
   @{
     backendWindowPid  = $BackendWindowPid
     frontendWindowPid = $FrontendWindowPid
+    yougileWindowPid  = $YougileWindowPid
     startedAt         = (Get-Date).ToString('o')
   } | ConvertTo-Json | Set-Content $SessionFile -Encoding UTF8
 }
@@ -267,6 +278,43 @@ function Invoke-Seed {
   return $ok
 }
 
+function Ensure-YougileEnv {
+  if (-not (Test-Path $YougileDir)) {
+    Write-Host "  yougile-sync-server not found: $YougileDir" -ForegroundColor Red
+    return $false
+  }
+
+  $envFile = Join-Path $YougileDir '.env'
+  $example = Join-Path $YougileDir '.env.example'
+  if (-not (Test-Path $envFile)) {
+    if (Test-Path $example) {
+      Copy-Item $example $envFile
+      Write-Host "  created yougile-sync-server/.env (fill YG_API_TOKEN)" -ForegroundColor Yellow
+    } else {
+      Write-Host "  missing yougile-sync-server/.env" -ForegroundColor Red
+      return $false
+    }
+  } else {
+    Write-Host "  yougile-sync-server/.env OK" -ForegroundColor Green
+  }
+
+  return $true
+}
+
+function Start-YougileSync {
+  if (-not (Test-Path $YougileDir)) {
+    Write-Host "  skip YouGile sync (folder missing)" -ForegroundColor DarkYellow
+    return 0
+  }
+
+  $proc = Start-Process -WindowStyle Normal -FilePath 'powershell' -ArgumentList @(
+    '-NoExit', '-NoProfile', '-Command',
+    "`$Host.UI.RawUI.WindowTitle = 'YouGile Sync'; Set-Location '$YougileDir'; Write-Host 'YouGile sync: http://localhost:3002/api/health' -ForegroundColor Cyan; npm run dev"
+  ) -PassThru
+  Write-Host "  yougile-sync-server npm run dev (window PID $($proc.Id))" -ForegroundColor Green
+  return $proc.Id
+}
+
 function Start-Backend([bool]$UseMemory) {
   if ($UseMemory) {
     $proc = Start-Process -WindowStyle Normal -FilePath 'node' -ArgumentList 'backend/dev.js' -WorkingDirectory $Root -PassThru
@@ -295,6 +343,7 @@ function Show-Ready {
   Write-Host ""
   Write-Host "====== KPPDF 3.0 ready ======" -ForegroundColor Cyan
   Write-Host "  http://localhost:4200" -ForegroundColor White
+  Write-Host "  YouGile sync: http://localhost:3002/api/health" -ForegroundColor White
   Write-Host "  login: admin / admin123" -ForegroundColor White
   Write-Host "=============================" -ForegroundColor Cyan
   Start-Process $FrontUrl
@@ -306,25 +355,32 @@ Write-Host ""
 Write-Host "========== KPPDF 3.0 ==========" -ForegroundColor Cyan
 Write-Host ""
 
-Write-Step '[1/6] Close previous dev windows'
+Write-Step '[1/7] Close previous dev windows'
 Stop-PreviousDevSessions
 Write-Host ""
 
-Write-Step "[2/6] Dependencies"
+Write-Step "[2/7] Dependencies"
 Ensure-NodeModules -Dir $Root -Label 'Frontend'
 Ensure-NodeModules -Dir $BackendDir -Label 'Backend'
+if (Test-Path $YougileDir) {
+  Ensure-NodeModules -Dir $YougileDir -Label 'YouGile sync'
+  Ensure-YougileEnv | Out-Null
+} else {
+  Write-Host "  YouGile sync folder missing: $YougileDir" -ForegroundColor DarkYellow
+}
 Ensure-EnvFile
 Write-Host ""
 
-Write-Step "[3/6] Ports"
+Write-Step "[3/7] Ports"
 Stop-Port -Port 3000
+Stop-Port -Port 3002
 Stop-Port -Port 4200
 Write-Host ""
 
 $useMemory = $false
 $mongoOk = $false
 
-Write-Step "[4/6] Database"
+Write-Step "[4/7] Database"
 if ($SkipDocker) {
   Write-Host "  MongoMemoryServer (dev.js)" -ForegroundColor Yellow
   $useMemory = $true
@@ -345,21 +401,29 @@ if ($mongoOk -and -not $useMemory -and ($Reseed -or (Test-DbEmpty))) {
 }
 Write-Host ""
 
-Write-Step "[5/6] Start services"
+Write-Step "[5/7] Start services"
 $backendWindowPid = Start-Backend -UseMemory $useMemory
+$yougileWindowPid = Start-YougileSync
 $frontendWindowPid = Start-Frontend
-Save-DevSession -BackendWindowPid $backendWindowPid -FrontendWindowPid $frontendWindowPid
+Save-DevSession -BackendWindowPid $backendWindowPid -FrontendWindowPid $frontendWindowPid -YougileWindowPid $yougileWindowPid
 Write-Host ""
 
-Write-Step "[6/6] Wait + browser"
+Write-Step "[6/7] Wait services"
 $backendOk = Wait-Http -Url $HealthUrl -Label 'Backend' -Seconds 90
+$yougileOk = Wait-Http -Url $YougileHealthUrl -Label 'YouGile sync' -Seconds 60
 $frontOk = $false
 if ($backendOk) {
   $frontOk = Wait-Http -Url $FrontUrl -Label 'Frontend' -Seconds 180
 }
+Write-Host ""
+
+Write-Step "[7/7] Browser"
 
 Write-Host ""
 if ($backendOk) {
+  if (-not $yougileOk) {
+    Write-Host 'YouGile sync not ready — check window (YG_API_TOKEN in yougile-sync-server/.env).' -ForegroundColor Yellow
+  }
   if (-not $frontOk) {
     Write-Host 'Frontend still compiling - opening browser anyway.' -ForegroundColor Yellow
   }

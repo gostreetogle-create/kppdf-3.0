@@ -24,7 +24,10 @@
 - `deploy/synology/RUNBOOK.md` — Synology/Ubuntu runtime runbook (bridge)
 - `deploy/synology/INSTALL.md` — Synology/Ubuntu installation specifics (bridge)
 - `.opencode/lock/README.md` — FreezeGuard процессы и различие с readiness (bridge)
-- `docs/integrations/yougile/README.md` — YouGile: API, конфигуратор, скрипты (bridge)
+- `docs/integrations/yougile/README.md` — YouGile: обзор интеграции (bridge)
+- `docs/integrations/yougile/conventions.md` — **правила оформления** + реестр PLM-xxx
+- `config/yougile-task-registry.yaml` — реестр PLM-xxx → UUID YouGile
+- `docs/integrations/yougile/adding-tasks.md` — деревья CRM / 08, скрипты создания
 - `docs/integrations/yougile/api-reference.md` — YouGile REST API v2 reference (bridge)
 - `docs/integrations/yougile/configurator-scripts.md` — YouGile configurator guide (bridge)
 - `docs/archive/analysis/README.md` — карта архивной аналитики

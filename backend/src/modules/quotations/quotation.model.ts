@@ -22,6 +22,7 @@ const quotationSchema = new Schema<QuotationDocument>(
   {
     number: { type: String, required: true, unique: true },
     counterpartyId: { type: String, required: true },
+    tenderId: { type: String },
     date: { type: Date, default: Date.now },
     validUntil: { type: Date },
     statusId: { type: String, required: true, default: 'draft' },

@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, tap, catchError, finalize } from 'rxjs';
 
-import type { IQuotation, IProduct } from '../../../../shared/types';
+import type { IQuotation, IProduct, ITender } from '../../../../shared/types';
 
 // PrimeNG button — только для block-controls (toggle-панель); остальное через app-kp-button
 /* eslint-disable no-restricted-imports */
@@ -1243,6 +1243,10 @@ export class QuotationEditorComponent implements OnInit {
     if (id === 'new') {
       this.isNew.set(true);
       this.initNewQuotation();
+      const tenderId = this.route.snapshot.queryParamMap.get('tenderId');
+      if (tenderId) {
+        this.prefillFromTender(tenderId);
+      }
     } else if (id) {
       this.loadQuotation(id);
     }
@@ -1258,6 +1262,37 @@ export class QuotationEditorComponent implements OnInit {
       date: new Date().toISOString(),
       statusId: 'draft',
     });
+  }
+
+  private prefillFromTender(tenderId: string): void {
+    this.crudApi.getById<ITender>('/directories/tenders', tenderId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        catchError(() => of(null)),
+      )
+      .subscribe({
+        next: (tender) => {
+          if (!tender) return;
+          this.quotation.update(q => ({
+            ...q,
+            tenderId: tender._id,
+            counterpartyId: tender.companyId,
+            notes: [q.notes, `Тендер: ${tender.number} — ${tender.subject || 'Без темы'}`].filter(Boolean).join('\n'),
+          }));
+          if (tender.productName) {
+            const item: QuotationItem = {
+              sku: '',
+              name: tender.productName,
+              qty: tender.quantity || 1,
+              unit: tender.unit || 'шт',
+              price: 0,
+              sum: 0,
+              order: 0,
+            };
+            this.items.set([item]);
+          }
+        },
+      });
   }
 
   private loadQuotation(id: string): void {
@@ -1482,6 +1517,7 @@ export class QuotationEditorComponent implements OnInit {
       ...products.map((p, i) => ({
         productId: p._id,
         sku: p.sku,
+        photo: p.photos?.[0]?.url,
         name: p.name,
         qty: 1,
         unit: p.unit,
@@ -1509,6 +1545,7 @@ export class QuotationEditorComponent implements OnInit {
         ...updated[idx],
         productId: product._id,
         sku: product.sku,
+        photo: product.photos?.[0]?.url,
         name: product.name,
         unit: product.unit,
         price: product.listPrice ?? 0,

@@ -2,7 +2,7 @@
 .SYNOPSIS
   KPPDF 3.0 - Stop all processes and optionally stop Docker
 .DESCRIPTION
-  1. Kills processes on ports 3000 (backend) and 4200 (frontend)
+  1. Kills processes on ports 3000 (backend), 3002 (YouGile sync), 4200 (frontend)
   2. Optionally stops Docker MongoDB container
 .PARAMETER Ports
   Ports to free. Default: @(3000, 4200).
@@ -17,7 +17,7 @@
 #>
 
 param(
-  [int[]]$Ports = @(3000, 4200),
+  [int[]]$Ports = @(3000, 3002, 4200),
   [switch]$StopDocker
 )
 
@@ -76,7 +76,7 @@ $sessionFile = Join-Path $PSScriptRoot '.kppdf-dev.session.json'
 if (Test-Path $sessionFile) {
   try {
     $session = Get-Content $sessionFile -Raw | ConvertFrom-Json
-    foreach ($prop in @('backendWindowPid', 'frontendWindowPid')) {
+    foreach ($prop in @('backendWindowPid', 'frontendWindowPid', 'yougileWindowPid')) {
       $windowPid = [int]$session.$prop
       if ($windowPid -gt 0) {
         $proc = Get-Process -Id $windowPid -ErrorAction SilentlyContinue
@@ -91,7 +91,12 @@ if (Test-Path $sessionFile) {
 }
 
 foreach ($port in $Ports) {
-  $label = if ($port -eq 3000) { "Backend" } elseif ($port -eq 4200) { "Frontend" } else { "Process on :$port" }
+  $label = switch ($port) {
+    3000 { 'Backend' }
+    3002 { 'YouGile sync' }
+    4200 { 'Frontend' }
+    default { "Process on :$port" }
+  }
   Kill-ProcessOnPort -Port $port -Name $label
 }
 
@@ -105,7 +110,7 @@ if ($ngProcs) {
 # Detect tsx watch processes via WMI
 try {
   $tsxNodes = Get-WmiObject Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { $_.CommandLine -match 'tsx' }
+    Where-Object { $_.CommandLine -match 'tsx|yougile-sync-server' }
   if ($tsxNodes) {
     $tsxPids = $tsxNodes | ForEach-Object { $_.ProcessId }
     foreach ($pid in $tsxPids) {

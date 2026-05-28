@@ -6,6 +6,7 @@ import {
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { KpCrudPageComponent } from '../../shared/crud/kp-crud-page.component';
@@ -22,6 +23,7 @@ import { CounterpartyOptionsService } from '../../shared/services/counterparty-o
 import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createTendersStore } from './tenders.store';
 import { PERMISSIONS } from '../../core/permissions';
+import type { CrudAction } from '../../shared/crud/crud-page.types';
 
 const TENDER_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Новый', value: 'new' },
@@ -63,6 +65,7 @@ function tenderSeverity(value: unknown): string {
       [columns]="columns()"
       [permissions]="PERMISSIONS.tenders"
       [severityFn]="tenderSeverity"
+      [extraRowActions]="extraActions"
       createLabel="Создать тендер"
       dialogWidth="min(920px, 96vw)"
     >
@@ -223,6 +226,24 @@ export class TendersPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
   readonly tenderSeverity = tenderSeverity;
   readonly statusOptions = TENDER_STATUS_OPTIONS;
+
+  private readonly router = inject(Router);
+
+  readonly extraActions: CrudAction<Record<string, unknown>>[] = [
+    {
+      id: 'create-quotation',
+      label: 'Создать КП',
+      icon: 'pi pi-file-edit',
+      severity: 'info',
+      permission: PERMISSIONS.quotations.create,
+      handler: (row) => {
+        const id = row['_id'];
+        if (typeof id === 'string' && id) {
+          void this.router.navigate(['/quotations/new'], { queryParams: { tenderId: id } });
+        }
+      },
+    },
+  ];
 
   readonly companyOptions = signal<KpSelectOption[]>([]);
 

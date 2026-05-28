@@ -19,6 +19,7 @@ import {
   type KpColumn,
 } from '../../shared/ui';
 import { CounterpartyOptionsService } from '../../shared/services/counterparty-options.service';
+import { TenderOptionsService } from '../../shared/services/tender-options.service';
 import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createQuotationsStore } from './quotations.store';
 import { PERMISSIONS } from '../../core/permissions';
@@ -108,6 +109,14 @@ function quotationSeverity(value: unknown): string {
                   [options]="statusOptions"
                   [required]="true"
                 />
+                <app-kp-select
+                  label="Тендер"
+                  name="tenderId"
+                  placeholder="Связанный тендер"
+                  [value]="row['tenderId'] || ''"
+                  (valueChange)="row['tenderId'] = $event"
+                  [options]="tenderOptions()"
+                />
               </div>
             </section>
           </div>
@@ -175,9 +184,11 @@ export class QuotationsPageComponent implements OnInit {
   ];
 
   readonly counterpartyOptions = signal<KpSelectOption[]>([]);
+  readonly tenderOptions = signal<KpSelectOption[]>([]);
 
   readonly columns = signal<KpColumn[]>([
     { field: 'number', header: 'Номер', type: 'text', sortable: true, width: '140px' },
+    { field: 'tenderId', header: 'Тендер', type: 'select', sortable: true, width: '160px', options: [] },
     {
       field: 'counterpartyId',
       header: 'Контрагент',
@@ -201,6 +212,7 @@ export class QuotationsPageComponent implements OnInit {
   readonly store = createQuotationsStore(inject(DestroyRef));
 
   private readonly counterpartyOptionsService = inject(CounterpartyOptionsService);
+  private readonly tenderOptionsService = inject(TenderOptionsService);
   private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
@@ -210,6 +222,14 @@ export class QuotationsPageComponent implements OnInit {
       .subscribe((options) => {
         this.counterpartyOptions.set(options);
         patchCrudColumnOptions(this.columns, 'counterpartyId', options);
+      });
+
+    this.tenderOptionsService
+      .load()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((options) => {
+        this.tenderOptions.set(options);
+        patchCrudColumnOptions(this.columns, 'tenderId', options);
       });
   }
 }

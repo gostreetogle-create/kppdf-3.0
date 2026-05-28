@@ -34,7 +34,6 @@ function isBarrierNetByUnit(unit) {
 function matchKeywords(text, keywordMap, fallback) {
   const t = normalizeText(text);
   for (const [subcategory, keywords] of Object.entries(keywordMap)) {
-    if (subcategory === fallback) continue;
     for (const kw of keywords) {
       const pattern = kw.startsWith("^") ? new RegExp(kw, "i") : new RegExp(kw, "i");
       if (pattern.test(t)) return subcategory;
@@ -43,22 +42,29 @@ function matchKeywords(text, keywordMap, fallback) {
   return fallback;
 }
 
+function defaultSubcategoryFor(category) {
+  return taxonomy.defaultSubcategories?.[category] || category;
+}
+
 function resolveSubcategory(category, subcategoryHint, name, description, sku) {
   const text = `${name} ${description} ${sku}`;
   if (subcategoryHint) return subcategoryHint;
 
   if (category === "Воркаут") {
-    return matchKeywords(text, taxonomy.workoutSubcategoryKeywords, "Прочее");
+    return matchKeywords(text, taxonomy.workoutSubcategoryKeywords, defaultSubcategoryFor(category));
   }
   if (category === "Малые архитектурные формы") {
-    return matchKeywords(text, taxonomy.mafSubcategoryKeywords, "Прочее");
+    return matchKeywords(text, taxonomy.mafSubcategoryKeywords, defaultSubcategoryFor(category));
   }
   if (category === "Спортивное оборудование") {
     const sport = matchKeywords(text, taxonomy.sportSubcategoryKeywords, null);
     if (sport) return sport;
     if (/^SpW|^МФ/i.test(sku)) return "Минифутбол / Гандбол";
     if (/футбол/i.test(text) && !/мини/i.test(text)) return "Футбол";
-    return "Сетки для ворот";
+    return defaultSubcategoryFor(category);
+  }
+  if (category === "Прочее") {
+    return defaultSubcategoryFor(category);
   }
   return category;
 }
@@ -68,7 +74,7 @@ function validatePair(category, subcategory) {
   if (allowedSet.has(key)) return { category, subcategory };
   const fallback = taxonomy.allowedPairs.find((p) => p.category === category);
   if (fallback) return { category: fallback.category, subcategory: fallback.subcategory };
-  return { category: "Прочее", subcategory: "Прочее" };
+  return { category: "Прочее", subcategory: "Крепёж" };
 }
 
 function applyRule(rule, name, description, sku) {
@@ -110,7 +116,7 @@ function classifyPrProduct(sku, name, description) {
   }
 
   return applyRule(
-    { id: "pr_default_maf", category: "Малые архитектурные формы", subcategory: "Прочее" },
+    { id: "pr_default_maf", category: "Малые архитектурные формы", subcategory: null },
     name,
     description,
     code,
@@ -246,7 +252,7 @@ function classifyProduct(input) {
   const legacyCategory = String(input.legacyCategory || "");
 
   if (!sku && !name) {
-    return { category: "Прочее", subcategory: "Прочее", ruleId: "empty" };
+    return { category: "Прочее", subcategory: "Крепёж", ruleId: "empty" };
   }
 
   const bySku = classifyBySku(sku, name, description, unit);
@@ -258,7 +264,7 @@ function classifyProduct(input) {
   const byLegacy = classifyByLegacy(legacyCategory, name, description, sku);
   if (byLegacy) return byLegacy;
 
-  return { category: "Прочее", subcategory: "Прочее", ruleId: "fallback" };
+  return { category: "Прочее", subcategory: "Крепёж", ruleId: "fallback" };
 }
 
 module.exports = { classifyProduct, classifyPrProduct, taxonomy, validatePair, normalizeSku };
