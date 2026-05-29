@@ -45,3 +45,5 @@ export {
 } from './kp-product-picker';
 export type { ProductPickerFilters } from './kp-product-picker';
 export { KpPlaceholderPickerComponent } from './kp-placeholder-picker';
+export { KpDocumentBlockEditorComponent } from './kp-document-block-editor/kp-document-block-editor.component';
+export type { DocCanvasMode, DocCanvasBlock } from './kp-document-block-editor/kp-document-block-editor.types';

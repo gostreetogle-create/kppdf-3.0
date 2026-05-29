@@ -3,15 +3,54 @@
 > **YouGile:** [PLM-126](https://yougile.com/team/0bdbccb0610e/#PLM-126) (редактор) · [PLM-139](https://yougile.com/team/0bdbccb0610e/#PLM-139) (8.1.1 шаблоны) · [PLM-140](https://yougile.com/team/0bdbccb0610e/#PLM-140) (8.1.2 таблицы)  
 > Маршрут: `/quotations/:id` · компонент: `quotation-editor.component.ts`  
 > Реестр: `config/yougile-task-registry.yaml`  
-> Последнее обновление: **2026-05-29** (разделитель, фон A4, шаблоны, рамки) · `ng build` OK
+> Последнее обновление: **2026-05-29** (canvas shell mode, layout fix, CSS vars) · `ng build` OK
 
-Документ фиксирует UX и технические решения редактора коммерческого предложения: панель блоков, таблицы разных типов, product picker, диалоги на UI-ките.
+Документ фиксирует UX и технические решения редактора коммерческого предложения: панель блоков, таблицы разных типов, product picker, диалоги на UI-ките, архитектура shared-канваса.
 
 ---
 
 ## Цель
 
 Удобное редактирование листа A4: настройка блоков без дублирования UI, несколько таблиц (товары + услуги), понятный подбор позиций из справочника, единый UI-кит в формах.
+
+---
+
+## Shared canvas shell mode (2026-05-29)
+
+QE делегирует A4-оболочку + фон компоненту `app-kp-document-block-editor` из `shared/ui/`.
+
+```
+<app-kp-document-block-editor
+  mode="instance"
+  [showBlocks]="false"
+  [backgroundImage]="quotationBg()"
+  (backgroundChange)="onBackgroundChange($event)">
+  <!-- QE блоки проецируются через ng-content -->
+  <div class="editor__blocks" ...>
+    @for (block of blocks(); ...) { ... }
+  </div>
+</app-kp-document-block-editor>
+```
+
+**Что ушло в shared canvas:**
+- A4-лист (белый, тени, размер 210×297mm)
+- Фон документа (dropzone, preview, remove)
+- CSS-переменные: `--kp-a4-padding-x`, `--kp-block-rail-width` (280px), `--kp-block-rail-gap` (12px)
+- Shell-layout: flex:1, overflow-y:auto, bg-soft, центрирование A4, padding-right под rail
+
+**Что осталось в QE (не тронуто):**
+- Бизнес-логика: `EditorBlock[]`, `QuotationItem[]`, `blocks()`, `items()`
+- Рендер блоков (header, text/split-card, separator, table)
+- Block controls (выравнивание, цвет, жирность, рамки)
+- FAB «Добавить блок»
+- Drag-and-drop через `KpSortableListDirective`
+- Product picker, инлайн-редактирование qty/price
+- Все диалоги (text editor, cell editor, padding, фото, row actions)
+
+**Инкременты (план):**
+1. ✅ A4-оболочка + фон (2026-05-29)
+2. ⬜ Block controls → shared canvas
+3. ⬜ Рендер не-табличных блоков → shared canvas
 
 ---
 
@@ -109,12 +148,15 @@
 
 ---
 
-## Затронутые файлы (2026-05-28)
+## Затронутые файлы (2026-05-28…29)
 
 | Файл | Изменения |
 |------|-----------|
-| `quotation-editor.component.ts` | tableKind, picker meta, заголовок КП, UI-кит в диалогах |
-| `quotation-editor.component.scss` | separator, FAB, dialog, text-card width |
+| `quotation-editor.component.ts` | tableKind, picker meta, заголовок КП, UI-кит в диалогах, **canvas shell mode** (–80 строк bg-методов) |
+| `quotation-editor.component.scss` | separator, FAB, dialog, text-card width, **–156 строк мёртвых canvas-правил** |
+| `kp-document-block-editor/*` | **Новый shared-компонент** — A4-канвас, drag-drop, FAB, bg-dropzone, block controls, mode='template'\|'instance' |
+| `document-template-editor.component.ts` | **Переписан на shared-канвас** — textarea → визуальный A4 (–120 строк) |
+| `kp-breadcrumbs.component.ts` | **ObjectId fix** — EDITOR_ROUTES + OBJECT_ID_RE → «Редактирование» |
 | `kp-product-picker/*` | row click, paginator, footer, без cart chips |
 | `document-table-type-options.service.ts` | `loadFullTypes`, кеш |
 | `backend/src/seed.ts` | типы таблиц `products`, `services`, `work` |

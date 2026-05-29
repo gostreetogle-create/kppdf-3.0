@@ -26,6 +26,7 @@ import {
   KpSelectComponent,
   KpTagComponent,
   KpToastComponent,
+  KpDocumentBlockEditorComponent,
   moveSortableItems,
 } from '../../shared/ui';
 import type { KpSortableDropEvent, KpSelectOption, ProductPickerFilters } from '../../shared/ui';
@@ -221,6 +222,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
     KpSelectComponent,
     KpTagComponent,
     KpToastComponent,
+    KpDocumentBlockEditorComponent,
   ],
   providers: [MessageService],
   template: `
@@ -277,26 +279,17 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
 
       <!-- ═══ Main Layout: A4 Canvas + Right Panel ═══ -->
       <div class="editor__body">
-        <!-- A4 Canvas -->
-        <div class="editor__canvas-wrapper">
+        <!-- A4 Canvas (shared shell: page + background, blocks projected via ng-content) -->
+        <app-kp-document-block-editor
+          #canvas
+          mode="instance"
+          [showBlocks]="false"
+          [backgroundImage]="quotationBg()"
+          (backgroundChange)="onBackgroundChange($event)"
+        >
+          <!-- Blocks (projected into canvas A4 page) -->
           <div
-            class="editor__canvas"
-            [class.editor__canvas--reorder-locked]="blocksReorderLocked()"
-            tabindex="0"
-            (click)="onCanvasClick()"
-            (keydown.escape)="onCanvasClick()"
-          >
-            @if (quotationBg(); as bgUrl) {
-              <img
-                class="editor__canvas-bg"
-                [src]="bgUrl"
-                alt=""
-                aria-hidden="true"
-              />
-            }
-            <!-- Blocks -->
-            <div
-              class="editor__blocks"
+            class="editor__blocks"
               appKpSortableList
               [appKpSortableListData]="blocks()"
               [appKpSortableListDisabled]="blocksReorderLocked()"
@@ -690,8 +683,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
               </div>
             </div>
 
-            <!-- Add Block FAB -->
-            <div class="editor__add-fab">
+          <!-- Add Block FAB -->
+          <div class="editor__add-fab">
               <app-kp-button
                 icon="pi pi-plus"
                 [rounded]="true"
@@ -726,9 +719,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                   />
                 </div>
               </div>
-            </div>
           </div>
-        </div>
+        </app-kp-document-block-editor>
 
         <!-- Side info panel -->
         <aside class="editor__sidebar">
@@ -785,8 +777,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
               />
             </div>
             <p class="editor__sidebar-hint">
-              Один фон на весь лист A4 (все «страницы» прокручиваются вместе). Выберите шаблон в списке «Шаблон» — фон появится на листе.
-              Превью ниже — целая картинка (шапка и подвал на одном файле). Если заголовок уже на фоне — скройте блок заголовка.
+              Один фон на весь лист A4. Перетащите изображение в область ниже холста или выберите файл.
+              Если заголовок уже на фоне — скройте блок заголовка.
             </p>
             @if (hiddenHeaderBlockIndex() >= 0) {
               <app-kp-button
@@ -797,54 +789,6 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                 size="small"
                 styleClass="w-full"
                 (buttonClick)="toggleHeaderHidden(hiddenHeaderBlockIndex())"
-              />
-            }
-            @if (quotationBg()) {
-              <div class="editor__bg-preview">
-                <img [src]="quotationBg()" alt="Превью фона документа" />
-              </div>
-            }
-            <div
-              class="editor__bg-dropzone"
-              [class.editor__bg-dropzone--active]="bgDragOver()"
-              [class.editor__bg-dropzone--loading]="bgProcessing()"
-              (dragover)="onBgDragOver($event)"
-              (dragleave)="onBgDragLeave($event)"
-              (drop)="onBgDrop($event)"
-            >
-              @if (bgProcessing()) {
-                <i class="pi pi-spinner pi-spin editor__bg-dropzone-icon" aria-hidden="true"></i>
-                <span class="editor__bg-dropzone-text">Загрузка…</span>
-              } @else {
-                <i class="pi pi-cloud-upload editor__bg-dropzone-icon" aria-hidden="true"></i>
-                <span class="editor__bg-dropzone-text">
-                  Перетащите изображение или&nbsp;
-                  <app-kp-button
-                    label="выберите файл"
-                    variant="flat"
-                    [text]="true"
-                    size="small"
-                    styleClass="editor__bg-browse-btn"
-                    (buttonClick)="bgFileInput.click()"
-                  />
-                </span>
-              }
-              <input
-                #bgFileInput
-                type="file"
-                accept="image/*"
-                hidden
-                (change)="onBgFileSelected($event)"
-              />
-            </div>
-            @if (quotationBg()) {
-              <app-kp-button
-                label="Удалить фон"
-                icon="pi pi-times"
-                severity="danger"
-                [text]="true"
-                size="small"
-                (buttonClick)="removeBackgroundImage()"
               />
             }
             <div class="editor__sidebar-actions">
@@ -1321,10 +1265,7 @@ export class QuotationEditorComponent implements OnInit {
   readonly activeTemplateId = signal<string | undefined>(undefined);
   readonly counterpartyOptions = signal<KpSelectOption[]>([]);
   readonly counterpartyLoading = signal(true);
-  readonly bgDragOver = signal(false);
-  readonly bgProcessing = signal(false);
-
-  /** true = блоки загружены из templateSnapshot, не перезаписывать из шаблона */
+  /** true = блоки загружены из designSnapshot/templateSnapshot — не перезаписывать из шаблона */
   #blocksFromSnapshot = false;
 
   // UI State
@@ -1500,18 +1441,8 @@ export class QuotationEditorComponent implements OnInit {
   }
 
   readonly quotationBg = computed(() => {
-    const id = this.activeTemplateId();
-    if (!id) return undefined;
-    return this.templates().find((t) => t._id === id)?.backgroundImage;
+    return this.quotation().designSnapshot?.backgroundImage;
   });
-
-  private patchActiveTemplateBackground(url: string | undefined): void {
-    const id = this.activeTemplateId();
-    if (!id) return;
-    this.templates.update((list) =>
-      list.map((t) => (t._id === id ? { ...t, backgroundImage: url } : t)),
-    );
-  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -1628,8 +1559,14 @@ export class QuotationEditorComponent implements OnInit {
           next: (data) => {
             this.quotation.set(data);
             this.items.set(this.normalizeItems(data.items || []));
-            // Priority: templateSnapshot > templateId > isDefault > DEFAULT_BLOCKS
-            if (data.templateSnapshot && Array.isArray(data.templateSnapshot) && data.templateSnapshot.length > 0) {
+            // Priority: designSnapshot > templateSnapshot > templateId > isDefault > DEFAULT_BLOCKS
+            if (data.designSnapshot?.blocks && Array.isArray(data.designSnapshot.blocks) && data.designSnapshot.blocks.length > 0) {
+              this.blocks.set(this.normalizeBlocks(JSON.parse(JSON.stringify(data.designSnapshot.blocks))));
+              this.#blocksFromSnapshot = true;
+              if (data.templateId) {
+                this.activeTemplateId.set(data.templateId);
+              }
+            } else if (data.templateSnapshot && Array.isArray(data.templateSnapshot) && data.templateSnapshot.length > 0) {
               this.blocks.set(this.normalizeBlocks(JSON.parse(JSON.stringify(data.templateSnapshot))));
               this.#blocksFromSnapshot = true;
               if (data.templateId) {
@@ -1742,6 +1679,7 @@ export class QuotationEditorComponent implements OnInit {
   // ===== Save =====
   save(): void {
     const q = this.quotation();
+    const blocksSnapshot = JSON.parse(JSON.stringify(this.blocks()));
     const data = {
       ...q,
       items: this.items().map((item, i) => ({
@@ -1750,7 +1688,11 @@ export class QuotationEditorComponent implements OnInit {
         sum: (item.qty || 0) * (item.price || 0),
       })),
       templateId: this.activeTemplateId(),
-      templateSnapshot: JSON.parse(JSON.stringify(this.blocks())),
+      templateSnapshot: blocksSnapshot,
+      designSnapshot: {
+        blocks: blocksSnapshot,
+        backgroundImage: this.quotation().designSnapshot?.backgroundImage,
+      },
       total: this.totalSum(),
     };
 
@@ -2673,116 +2615,19 @@ export class QuotationEditorComponent implements OnInit {
     return { ...block, clientKey: this.nextBlockClientKey() };
   }
 
-  // ===== Background =====
-  onBgDragOver(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.bgDragOver.set(true);
-  }
-
-  onBgDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.bgDragOver.set(false);
-  }
-
-  onBgDrop(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.bgDragOver.set(false);
-    const file = event.dataTransfer?.files?.[0];
-    if (file) {
-      void this.processBgFile(file);
-    }
-  }
-
-  onBgFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) {
-      void this.processBgFile(file);
-    }
-    input.value = '';
-  }
-
-  private async processBgFile(file: File): Promise<void> {
-    if (!file.type.startsWith('image/')) {
-      this.notification.add({
-        severity: 'warn',
-        summary: 'Неверный формат',
-        detail: 'Выберите файл изображения (JPG, PNG, WebP…)',
-      });
-      return;
-    }
-    this.bgProcessing.set(true);
-    try {
-      const url = await this.fileToDataUrl(file);
-      this.applyBackgroundUrl(url);
-    } catch {
-      this.notification.add({
-        severity: 'error',
-        summary: 'Ошибка',
-        detail: 'Не удалось прочитать файл',
-      });
-    } finally {
-      this.bgProcessing.set(false);
-    }
-  }
-
-  private fileToDataUrl(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
-      reader.readAsDataURL(file);
-    });
-  }
-
-  private applyBackgroundUrl(url: string): void {
-    if (!url) return;
-
-    const activeId = this.activeTemplateId();
-    if (activeId) {
-      this.patchActiveTemplateBackground(url);
-      this.crudApi.update('/document-templates', activeId, { backgroundImage: url })
-        .pipe(
-          takeUntilDestroyed(this.destroyRef),
-          tap(() => {
-            this.loadTemplates();
-            this.notification.add({ severity: 'success', summary: 'Фон обновлён' });
-          }),
-        )
-        .subscribe();
-      return;
-    }
-
-    this.crudApi.create<DocumentTemplate>('/document-templates', {
-      name: 'Фон для КП',
-      docType: 'quotation',
-      isDefault: false,
-      backgroundImage: url,
-      blocks: this.blocks(),
-    }).pipe(
-      takeUntilDestroyed(this.destroyRef),
-      tap((result: DocumentTemplate) => {
-        this.activeTemplateId.set(result._id);
-        this.templates.update((list) => [...list, { ...result, backgroundImage: url }]);
-        this.loadTemplates();
-        this.notification.add({ severity: 'success', summary: 'Фон загружен' });
-      }),
-    ).subscribe();
-  }
-
-  removeBackgroundImage(): void {
-    const activeId = this.activeTemplateId();
-    if (activeId) {
-      this.patchActiveTemplateBackground(undefined);
-      this.crudApi.update('/document-templates', activeId, { backgroundImage: undefined })
-        .pipe(
-          takeUntilDestroyed(this.destroyRef),
-          tap(() => this.loadTemplates()),
-        )
-        .subscribe();
+  // ===== Background (delegated to shared canvas via backgroundChange output) =====
+  onBackgroundChange(url: string | undefined): void {
+    this.quotation.update((q) => ({
+      ...q,
+      designSnapshot: {
+        blocks: q.designSnapshot?.blocks ?? this.blocks(),
+        backgroundImage: url,
+      },
+    }));
+    if (url) {
+      this.notification.add({ severity: 'success', summary: 'Фон применён', detail: 'Сохраните КП для фиксации фона' });
+    } else {
+      this.notification.add({ severity: 'info', summary: 'Фон убран', detail: 'Сохраните КП для фиксации' });
     }
   }
 

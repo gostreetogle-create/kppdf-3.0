@@ -2,7 +2,7 @@
 # Canonical backlog: .opencode/audit/CHECKLIST-BACKLOG.md
 
 enabled: false
-updated: 2026-05-28
+updated: 2026-05-29
 
 modules:
   products:
@@ -25,18 +25,21 @@ modules:
     percent: 90
   quotations:
     status: wip
-    percent: 70
+    percent: 78
   ui-kit:
     status: wip
-    percent: 65
-  orders:
+    percent: 90
+  document-templates:
     status: wip
+    percent: 75
+  orders:
+    status: frozen
     percent: 40
   dashboard:
     status: wip
     percent: 50
   directories-page:
-    status: wip
+    status: frozen
     percent: 55
 
 phases:

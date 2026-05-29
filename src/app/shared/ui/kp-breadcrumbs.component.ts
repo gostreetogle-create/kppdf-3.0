@@ -50,6 +50,24 @@ const ROUTE_PARENTS: Record<string, string> = {
   'document-table-types': 'documents',
 };
 
+/**
+ * Маршруты-редакторы: если последний сегмент URL — ID документа,
+ * а предыдущий сегмент есть в этом списке — показать «Редактирование» вместо ID.
+ */
+const EDITOR_ROUTES = new Set([
+  'document-templates',
+  'quotations',
+  'orders',
+  'tenders',
+  'work-orders',
+  'purchase-orders',
+  'shipments',
+  'product-passports',
+]);
+
+/** ObjectId: 24 hex символа */
+const OBJECT_ID_RE = /^[a-f0-9]{24}$/;
+
 @Component({
   selector: 'app-kp-breadcrumbs',
   standalone: true,
@@ -127,8 +145,15 @@ export class KpBreadcrumbsComponent implements OnInit {
       const label = ROUTE_LABELS[segment] ?? this.humanizeSegment(segment);
       const isLast = i === segments.length - 1;
 
+      // Если последний сегмент — ObjectId в маршруте-редакторе → «Редактирование»
+      const prevSegment = i > 0 ? segments[i - 1] : null;
+      const displayLabel =
+        isLast && prevSegment && EDITOR_ROUTES.has(prevSegment) && OBJECT_ID_RE.test(segment)
+          ? 'Редактирование'
+          : label;
+
       items.push({
-        label,
+        label: displayLabel,
         routerLink: isLast ? undefined : cumulative,
       });
     }

@@ -1,0 +1,419 @@
+<!-- ═══ A4 Canvas ═══ -->
+<div class="kp-doc-canvas-wrapper">
+  <div
+    class="kp-doc-canvas"
+    [class.kp-doc-canvas--reorder-locked]="reorderLocked()"
+    tabindex="0"
+    (click)="onCanvasClick()"
+    (keydown.escape)="onCanvasClick()"
+  >
+    <!-- Background Image (always shown) -->
+    @if (backgroundImage(); as bgUrl) {
+      <img
+        class="kp-doc-canvas-bg"
+        [src]="bgUrl"
+        alt=""
+        aria-hidden="true"
+      />
+    }
+
+    <!-- Shell mode: content projection from parent, no blocks -->
+    @if (isShell()) {
+      <ng-content></ng-content>
+    }
+
+    <!-- Blocks + FAB (only when showBlocks) -->
+    @if (showBlocks()) {
+      <div
+        class="kp-doc-canvas-blocks"
+        appKpSortableList
+        [appKpSortableListData]="blocks()"
+        [appKpSortableListDisabled]="reorderLocked() || !isTemplate()"
+        (appKpSortableListDropped)="onBlockDropped($event)"
+      >
+        <div
+          *ngFor="let block of blocks(); trackBy: trackByBlock; let i = index"
+          appKpSortableItem
+          [appKpSortableItemData]="block"
+          [appKpSortableItemDisabled]="reorderLocked() || !isTemplate()"
+          [appKpSortableLockAxis]="'y'"
+          class="kp-doc-canvas-block"
+          [class.kp-doc-canvas-block--table]="block.type === 'table'"
+          [class.kp-doc-canvas-block--header]="block.type === 'header'"
+          [class.kp-doc-canvas-block--separator]="block.type === 'separator'"
+          [class.kp-doc-canvas-block--reorder-locked]="reorderLocked() || !isTemplate()"
+          [class.kp-doc-canvas-block--controls-active]="isBlockControlsVisible(i, block)"
+          [attr.tabindex]="isTemplate() && hasEditableControls(block) ? 0 : null"
+          role="group"
+          (click)="selectBlock(i, $event)"
+          (keydown.enter)="selectBlockKey(i, $event)"
+          (keydown.space)="selectBlockKey(i, $event)"
+          (appKpSortableItemStarted)="onBlockDragStarted(i)"
+          (appKpSortableItemEnded)="onBlockDragEnded()"
+        >
+          <!-- Block Controls — visible in template mode only -->
+          @if (isTemplate()) {
+            <div
+              class="kp-doc-canvas-block-controls"
+              role="toolbar"
+              [attr.aria-label]="'Настройки блока ' + (i + 1)"
+              tabindex="-1"
+              (mousedown)="$event.stopPropagation()"
+            >
+              @if (block.type === 'text' || block.type === 'header') {
+                <!-- Alignment -->
+                <div class="kp-doc-canvas-block-controls-section">
+                  <span class="kp-doc-canvas-block-controls-label">Выравнивание</span>
+                  <div class="kp-doc-canvas-block-controls-align" role="group" aria-label="Выравнивание блока">
+                    <app-kp-button
+                      icon="pi pi-align-left"
+                      [rounded]="false"
+                      [outlined]="block.settings.align !== 'left'"
+                      [severity]="block.settings.align === 'left' ? 'primary' : 'secondary'"
+                      size="small"
+                      styleClass="kp-doc-canvas-block-controls-chip"
+                      variant="flat"
+                      (buttonClick)="setBlockAlign(i, 'left')"
+                    />
+                    <app-kp-button
+                      icon="pi pi-align-center"
+                      [rounded]="false"
+                      [outlined]="block.settings.align !== 'center'"
+                      [severity]="block.settings.align === 'center' ? 'primary' : 'secondary'"
+                      size="small"
+                      styleClass="kp-doc-canvas-block-controls-chip"
+                      variant="flat"
+                      (buttonClick)="setBlockAlign(i, 'center')"
+                    />
+                    <app-kp-button
+                      icon="pi pi-align-right"
+                      [rounded]="false"
+                      [outlined]="block.settings.align !== 'right'"
+                      [severity]="block.settings.align === 'right' ? 'primary' : 'secondary'"
+                      size="small"
+                      styleClass="kp-doc-canvas-block-controls-chip"
+                      variant="flat"
+                      (buttonClick)="setBlockAlign(i, 'right')"
+                    />
+                  </div>
+                </div>
+
+                <!-- Text Color -->
+                <div class="kp-doc-canvas-block-controls-section">
+                  <span class="kp-doc-canvas-block-controls-label">Цвет текста</span>
+                  <div class="kp-doc-canvas-block-controls-colors" role="group" aria-label="Цвет текста">
+                    @for (c of blockTextColors; track c.value) {
+                      <button
+                        type="button"
+                        class="kp-doc-canvas-color-swatch"
+                        [class.kp-doc-canvas-color-swatch--active]="blockColorActive(block, c.value)"
+                        [class.kp-doc-canvas-color-swatch--auto]="!c.value"
+                        [class.kp-doc-canvas-color-swatch--light]="!!c.value && isLightSwatchColor(c.value)"
+                        [style.background]="c.value || null"
+                        [attr.title]="c.label"
+                        [attr.aria-label]="c.label"
+                        [attr.aria-pressed]="blockColorActive(block, c.value)"
+                        (click)="setBlockColor(i, c.value)"
+                      >
+                        @if (!c.value) {
+                          <span class="kp-doc-canvas-color-swatch-label" aria-hidden="true">А</span>
+                        }
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <!-- Background Color -->
+                <div class="kp-doc-canvas-block-controls-section">
+                  <span class="kp-doc-canvas-block-controls-label">Цвет фона</span>
+                  <div class="kp-doc-canvas-block-controls-colors" role="group" aria-label="Цвет фона">
+                    @for (c of blockBgColors; track c.value) {
+                      <button
+                        type="button"
+                        class="kp-doc-canvas-color-swatch"
+                        [class.kp-doc-canvas-color-swatch--active]="blockBackgroundColorActive(block, c.value)"
+                        [class.kp-doc-canvas-color-swatch--none]="!c.value"
+                        [class.kp-doc-canvas-color-swatch--light]="!!c.value && isLightSwatchColor(c.value)"
+                        [style.background]="c.value || null"
+                        [attr.title]="c.label"
+                        [attr.aria-label]="c.label"
+                        [attr.aria-pressed]="blockBackgroundColorActive(block, c.value)"
+                        (click)="setBlockBackgroundColor(i, c.value)"
+                      ></button>
+                    }
+                  </div>
+                </div>
+
+                <!-- Bold + Border -->
+                <div class="kp-doc-canvas-block-controls-row">
+                  <app-kp-button
+                    icon="pi pi-bold"
+                    [rounded]="false"
+                    [outlined]="block.settings.fontWeight !== 'bold'"
+                    [severity]="block.settings.fontWeight === 'bold' ? 'primary' : 'secondary'"
+                    size="small"
+                    variant="flat"
+                    (buttonClick)="toggleBlockFontWeight(i)"
+                    styleClass="kp-doc-canvas-block-controls-btn--wide"
+                  />
+                  <app-kp-button
+                    icon="pi pi-stop"
+                    [rounded]="false"
+                    [outlined]="!blockBorderActive(block)"
+                    [severity]="blockBorderActive(block) ? 'primary' : 'secondary'"
+                    size="small"
+                    variant="flat"
+                    (buttonClick)="cycleBlockBorder(i)"
+                    styleClass="kp-doc-canvas-block-controls-btn--wide"
+                  />
+                </div>
+
+                <!-- Placeholder -->
+                <div class="kp-doc-canvas-block-controls-row kp-doc-canvas-block-controls-row--full">
+                  <app-kp-button
+                    icon="pi pi-tag"
+                    label="Плейсхолдер"
+                    [rounded]="false"
+                    [outlined]="true"
+                    severity="secondary"
+                    size="small"
+                    variant="flat"
+                    (buttonClick)="placeholderRequested.emit()"
+                    styleClass="kp-doc-canvas-block-controls-btn--wide"
+                  />
+                </div>
+              }
+
+              <!-- Delete -->
+              <div class="kp-doc-canvas-block-controls-row kp-doc-canvas-block-controls-row--full">
+                <app-kp-button
+                  icon="pi pi-trash"
+                  [rounded]="false"
+                  [outlined]="true"
+                  severity="danger"
+                  size="small"
+                  variant="flat"
+                  (buttonClick)="removeBlock(i)"
+                  [disabled]="blocks().length <= 1"
+                  styleClass="kp-doc-canvas-block-controls-btn--wide"
+                />
+              </div>
+            </div>
+          }
+
+          <!-- ═══ Block Content ═══ -->
+
+          <!-- Header -->
+          @if (block.type === 'header' && !block.settings.hidden) {
+            <div
+              class="kp-doc-canvas-block-content kp-doc-canvas-block-drag-surface"
+              [class.kp-doc-canvas-block-drag-surface--active]="isTemplate() && !reorderLocked()"
+              appKpSortableHandle
+              [ngStyle]="blockVisualStyles(block)"
+              [style.text-align]="block.settings.align"
+              [style.font-size.px]="block.settings.fontSize"
+              [style.font-weight]="block.settings.fontWeight"
+              [style.padding-top.px]="block.settings.paddingTop"
+              [style.padding-bottom.px]="block.settings.paddingBottom"
+            >
+              <div [innerHTML]="block.content"></div>
+            </div>
+          }
+
+          <!-- Text / Split Card -->
+          @if (block.type === 'text') {
+            <div
+              class="kp-doc-canvas-block-content kp-doc-canvas-text-card kp-doc-canvas-block-drag-surface"
+              [class.kp-doc-canvas-block-drag-surface--active]="isTemplate() && !reorderLocked()"
+              appKpSortableHandle
+              [style.padding-top.px]="block.settings.paddingTop"
+              [style.padding-bottom.px]="block.settings.paddingBottom"
+            >
+              <app-kp-split-text-card
+                [title]="block.title ?? ''"
+                [cells]="getCells(block)"
+                [settings]="block.settings"
+                [maxColumns]="maxTextCells"
+              />
+            </div>
+          }
+
+          <!-- Separator -->
+          @if (block.type === 'separator') {
+            <div
+              class="kp-doc-canvas-block-content kp-doc-canvas-block-drag-surface"
+              [class.kp-doc-canvas-block-drag-surface--active]="isTemplate() && !reorderLocked()"
+              appKpSortableHandle
+              [style.padding-top.px]="block.settings.paddingTop"
+              [style.padding-bottom.px]="block.settings.paddingBottom"
+            >
+              @if (isTemplate()) {
+                <span class="kp-doc-canvas-separator-grip" aria-hidden="true">
+                  <i class="pi pi-arrows-v"></i>
+                </span>
+              }
+              <hr class="kp-doc-canvas-separator" />
+            </div>
+          }
+
+          <!-- Table Block (template mode — structure only, no items) -->
+          @if (block.type === 'table') {
+            <div class="kp-doc-canvas-table-wrapper">
+              <div
+                class="kp-doc-canvas-table-toolbar kp-doc-canvas-block-drag-surface"
+                [class.kp-doc-canvas-block-drag-surface--active]="isTemplate() && !reorderLocked()"
+              >
+                <div class="kp-doc-canvas-table-toolbar-left">
+                  <span class="kp-doc-canvas-table-grip" aria-hidden="true">
+                    <i class="pi pi-grip-vertical"></i>
+                  </span>
+                  <span class="kp-doc-canvas-table-title">{{ block.title || 'Таблица' }}</span>
+                </div>
+              </div>
+
+              <table class="kp-doc-canvas-table">
+                <thead>
+                  <tr>
+                    <th class="kp-doc-canvas-table-col--idx">№</th>
+                    <th class="kp-doc-canvas-table-col--sku">Арт.</th>
+                    <th class="kp-doc-canvas-table-col--name">Наименование</th>
+                    <th class="kp-doc-canvas-table-col--qty">Кол-во</th>
+                    <th class="kp-doc-canvas-table-col--unit">Ед.</th>
+                    <th class="kp-doc-canvas-table-col--price">Цена, ₽</th>
+                    <th class="kp-doc-canvas-table-col--sum">Сумма, ₽</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="kp-doc-canvas-table-idx">1</td>
+                    <td colspan="6" class="kp-doc-canvas-table-placeholder">
+                      @if (isTemplate()) {
+                        Позиции добавляются при создании документа
+                      } @else {
+                        Нет позиций
+                      }
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Add Block FAB — template mode only -->
+      @if (isTemplate() && showAddFab()) {
+        <div class="kp-doc-canvas-add-fab">
+          <app-kp-button
+            icon="pi pi-plus"
+            [rounded]="true"
+            size="large"
+            severity="primary"
+            styleClass="kp-doc-canvas-add-fab-btn"
+            [attr.aria-label]="'Добавить блок'"
+            [attr.title]="'Добавить блок'"
+            (buttonClick)="showAddMenu.update(v => !v)"
+          />
+          @if (showAddMenu()) {
+            <div class="kp-doc-canvas-add-menu" (keydown.escape)="showAddMenu.set(false)" tabindex="-1" role="menu">
+              <app-kp-button
+                label="Текстовый блок"
+                icon="pi pi-align-left"
+                [text]="true"
+                size="small"
+                (buttonClick)="addBlock('text'); showAddMenu.set(false)"
+              />
+              <app-kp-button
+                label="Разделитель"
+                icon="pi pi-minus"
+                [text]="true"
+                size="small"
+                (buttonClick)="addBlock('separator'); showAddMenu.set(false)"
+              />
+              <div class="kp-doc-canvas-add-menu-table" role="presentation" (click)="$event.stopPropagation()">
+                <span class="kp-doc-canvas-add-menu-label">Таблица</span>
+                <app-kp-select
+                  name="kpdce-add-table-kind"
+                  [value]="selectedTableKind()"
+                  (valueChange)="onAddTableKindChange($event)"
+                  [options]="availableTableBlockOptions()"
+                  placeholder="Выберите тип"
+                  [disabled]="availableTableBlockOptions().length === 0"
+                />
+                <app-kp-button
+                  label="Добавить таблицу"
+                  icon="pi pi-table"
+                  [text]="true"
+                  size="small"
+                  [disabled]="availableTableBlockOptions().length === 0"
+                  (buttonClick)="addTableBlock(); showAddMenu.set(false)"
+                />
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Background Dropzone — template mode only, only when blocks are shown -->
+  @if (showBlocks() && isTemplate() && showBgDropzone()) {
+    <div class="kp-doc-canvas-bg-section">
+      <h3 class="kp-doc-canvas-bg-title">Фон документа</h3>
+      <p class="kp-doc-canvas-bg-hint">
+        Один фон на весь лист A4. Перетащите изображение или выберите файл.
+        Если заголовок уже на фоне — скройте блок заголовка.
+      </p>
+      @if (backgroundImage()) {
+        <div class="kp-doc-canvas-bg-preview">
+          <img [src]="backgroundImage()" alt="Превью фона документа" />
+        </div>
+      }
+      <div
+        class="kp-doc-canvas-bg-dropzone"
+        [class.kp-doc-canvas-bg-dropzone--active]="bgDragOver()"
+        [class.kp-doc-canvas-bg-dropzone--loading]="bgProcessing()"
+        (dragover)="onBgDragOver($event)"
+        (dragleave)="onBgDragLeave($event)"
+        (drop)="onBgDrop($event)"
+      >
+        @if (bgProcessing()) {
+          <i class="pi pi-spinner pi-spin kp-doc-canvas-bg-dropzone-icon" aria-hidden="true"></i>
+          <span class="kp-doc-canvas-bg-dropzone-text">Загрузка…</span>
+        } @else {
+          <i class="pi pi-cloud-upload kp-doc-canvas-bg-dropzone-icon" aria-hidden="true"></i>
+          <span class="kp-doc-canvas-bg-dropzone-text">
+            Перетащите изображение или&nbsp;
+            <app-kp-button
+              label="выберите файл"
+              variant="flat"
+              [text]="true"
+              size="small"
+              styleClass="kp-doc-canvas-bg-browse-btn"
+              (buttonClick)="bgFileInput.click()"
+            />
+          </span>
+        }
+        <input
+          #bgFileInput
+          type="file"
+          accept="image/*"
+          hidden
+          (change)="onBgFileSelected($event)"
+        />
+      </div>
+      @if (backgroundImage()) {
+        <div class="kp-doc-canvas-bg-actions">
+          <app-kp-button
+            label="Удалить фон"
+            icon="pi pi-times"
+            severity="danger"
+            [text]="true"
+            size="small"
+            (buttonClick)="removeBackground()"
+          />
+        </div>
+      }
+    </div>
+  }
+</div>

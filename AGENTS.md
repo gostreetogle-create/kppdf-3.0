@@ -215,6 +215,34 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 
 ---
 
+## 📸 Design Snapshot Immutability (v3.3)
+
+> **Снапшот дизайна экземпляра документа НЕ обновляется при изменении мастер-шаблона.**
+
+### Правила
+
+- ✅ **Единственный источник блоков и фона экземпляра — `designSnapshot`** (`IDocumentDesignSnapshot { blocks, backgroundImage }`).
+- ✅ **`templateId` — только audit trail**, не используется для live-подгрузки блоков или фона после save.
+- 🔴 **Запрещён автоматический re-sync снапшота из мастер-шаблона** — изменение `DocumentTemplate.blocks` или `.backgroundImage` не влияет на уже созданные экземпляры.
+- 🔴 **Запрещена live-подгрузка `quotationBg()` по `templateId`** — только `designSnapshot.backgroundImage`.
+- 🔴 **Запрещён `applyBackgroundUrl()` → API `/document-templates`** из QE — фон пишется в `designSnapshot` экземпляра.
+
+### Приоритет загрузки блоков
+
+1. `designSnapshot.blocks` — основной источник (v3.3)
+2. `templateSnapshot` (устаревшее, обратная совместимость)
+3. `templateId` → blocks из шаблона (только для старых КП без снапшота)
+4. `isDefault` → применить шаблон по умолчанию
+5. `DEFAULT_BLOCKS` — жёсткий fallback
+
+### Единственный способ обновить снапшот
+
+Явное действие пользователя «Применить шаблон» (P1, с confirm-диалогом). Никакой автоматики.
+
+> **Документация:** [docs/DOCUMENT-TEMPLATES-BL.md](docs/DOCUMENT-TEMPLATES-BL.md)
+
+---
+
 ## 🤖 Система агентов (OpenCode + Cursor)
 
 > **Важно:** Агенты **не запускаются сами** при каждом коммите. Они — инструкции для AI в OpenCode (`opencode.json`) и ориентиры в Cursor (`AGENTS.md`). Качество UI зависит от явного вызова нужного агента и от соблюдения чеклистов в `.opencode/`.

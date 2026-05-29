@@ -6,7 +6,7 @@ export type { IRole } from './role.interface';
 export type { IEntityStatus } from './entity-status.interface';
 export type { IWorkType } from './work-type.interface';
 export type { ISetting } from './setting.interface';
-export type { IQuotation } from './quotation.interface';
+export type { IQuotation, IDocumentDesignSnapshot } from './quotation.interface';
 export type { IOrder } from './order.interface';
 export type { IBom } from './bom.interface';
 export type { IOperation } from './operation.interface';

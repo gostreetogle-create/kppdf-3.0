@@ -32,6 +32,7 @@ const quotationSchema = new Schema<QuotationDocument>(
     notes: { type: String },
     isActive: { type: Boolean, default: true },
     templateId: { type: String },
+    designSnapshot: { type: Schema.Types.Mixed },
     templateSnapshot: { type: Schema.Types.Mixed },
     items: { type: [quotationItemSchema], default: [] },
   },

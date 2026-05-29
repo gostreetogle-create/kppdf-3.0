@@ -2,7 +2,19 @@
 
 > **Дата:** 2026-05-29
 > **Источник:** `.opencode/audit/UI-CONSISTENCY-PLAN.md`
-> **P0 выполнено:** kp-search, kp-tag, kp-tab-group созданы и интегрированы в kp-table + kp-product-picker
+> **P0 выполнено:** kp-search, kp-tag, kp-tab-group, kp-paginator созданы и интегрированы
+
+---
+
+## ✅ Canvas migration (2026-05-29 сессия 2)
+
+- [x] **Шаг 1:** `kp-document-block-editor` — shared A4-канвас с mode='template'|'instance'
+- [x] **Шаг 2:** `document-template-editor` → визуальный A4-редактор (–170 строк SCSS)
+- [x] **Шаг 3 Инкремент 1:** QE shell mode — A4-оболочка + фон на shared-канвасе (–80 строк QE)
+- [x] **Layout fix:** shell-режим (flex:1, центрирование, rail), CSS vars, host-класс
+- [x] **Багфиксы:** ObjectId в хлебных крошках → «Редактирование»; NG0951 → setTimeout(0)
+- [ ] **Инкремент 2:** перенести block controls в shared canvas
+- [ ] **Инкремент 3:** перенести рендер не-табличных блоков в shared canvas
 
 ---
 
@@ -28,7 +40,7 @@
 - [ ] `@ui-auditor` checklist (15 пунктов) на 5 CRUD-страницах
 
 ### FreezeGuard
-- 🧊 `directories-page` (wip — можно)
+- 🧊 `directories-page` (frozen — нужна разморозка)
 - 🧊 `modules-page` (frozen — нужна разморозка)
 - 🧊 `products-page` (frozen — нужна разморозка)
 
