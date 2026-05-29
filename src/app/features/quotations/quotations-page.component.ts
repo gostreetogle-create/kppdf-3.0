@@ -23,6 +23,7 @@ import { TenderOptionsService } from '../../shared/services/tender-options.servi
 import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createQuotationsStore } from './quotations.store';
 import { PERMISSIONS } from '../../core/permissions';
+import { quotationSeverity as _quotationSeverity } from '../../shared/utils/status-severity.util';
 import type { CrudAction } from '../../shared/crud/crud-page.types';
 
 const QUOTATION_STATUS_OPTIONS: KpSelectOption[] = [
@@ -33,18 +34,6 @@ const QUOTATION_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Отклонено', value: 'rejected' },
   { label: 'Просрочено', value: 'expired' },
 ];
-
-function quotationSeverity(value: unknown): string {
-  const map: Record<string, string> = {
-    draft: 'warn',
-    sent: 'info',
-    accepted: 'success',
-    confirmed: 'success',
-    rejected: 'danger',
-    expired: 'secondary',
-  };
-  return map[String(value)] || 'info';
-}
 
 @Component({
   selector: 'app-quotations-page',
@@ -162,7 +151,7 @@ function quotationSeverity(value: unknown): string {
 })
 export class QuotationsPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
-  readonly quotationSeverity = quotationSeverity;
+  readonly quotationSeverity = _quotationSeverity;
   readonly statusOptions = QUOTATION_STATUS_OPTIONS;
 
   private readonly router = inject(Router);

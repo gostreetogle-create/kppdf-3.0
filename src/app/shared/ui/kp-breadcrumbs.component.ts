@@ -32,6 +32,22 @@ const ROUTE_LABELS: Record<string, string> = {
   'purchase-orders': 'Закупки',
   shipments: 'Отгрузки',
   'attribute-definitions': 'Атрибуты',
+  'document-templates': 'Шаблоны документов',
+  'document-table-types': 'Типы таблиц',
+};
+
+/**
+ * Родительские маршруты для построения цепочки хлебных крошек.
+ * Если у сегмента URL есть родитель, breadcrumb родителя вставляется перед ним.
+ *
+ * Пример: /quotations → Главная / Документы / Ком. предложения
+ */
+const ROUTE_PARENTS: Record<string, string> = {
+  quotations: 'documents',
+  orders: 'documents',
+  tenders: 'documents',
+  'document-templates': 'documents',
+  'document-table-types': 'documents',
 };
 
 @Component({
@@ -98,6 +114,16 @@ export class KpBreadcrumbsComponent implements OnInit {
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
       cumulative += `/${segment}`;
+
+      // Вставить breadcrumb родительского маршрута (если есть и ещё не добавлен)
+      const parent = ROUTE_PARENTS[segment];
+      if (parent && !items.some((item) => item.routerLink === `/${parent}`)) {
+        items.push({
+          label: ROUTE_LABELS[parent] ?? this.humanizeSegment(parent),
+          routerLink: `/${parent}`,
+        });
+      }
+
       const label = ROUTE_LABELS[segment] ?? this.humanizeSegment(segment);
       const isLast = i === segments.length - 1;
 

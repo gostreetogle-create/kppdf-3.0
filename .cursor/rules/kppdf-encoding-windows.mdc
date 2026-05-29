@@ -1,0 +1,30 @@
+---
+description: Кодировки Windows — UTF-8 BOM для .ps1, LF для .sh, UTF-8 для .ts
+globs: "**/*.ps1,**/*.psm1,deploy/**/*.sh,start.ps1,stop.ps1"
+alwaysApply: false
+---
+
+# Кодировки Windows (KPPDF)
+
+> Канон: [.opencode/rules/encoding-windows.md](../../.opencode/rules/encoding-windows.md)
+
+## При правке `*.ps1`
+
+1. **UTF-8 с BOM** — обязательно (Windows PowerShell 5.1).
+2. После сохранения: `npm run ps1:bom -- path/to/file.ps1` затем `npm run ps1:check`.
+3. Русский текст — в **одинарных** кавычках; разделители только ASCII: `-`, `->` (не `—`, `→`).
+4. Не ломать парсер: docker/go `{{if` — через конкатенацию, не одна хрупкая строка.
+5. `Start-Process -Command` с кириллицей — here-string `@"..."@`.
+
+## При правке `*.sh` для деплоя
+
+- Окончания строк **LF**; перед деплоем с Windows — `sed -i 's/\r$//' ...` (см. DEPLOY.md).
+
+## При правке `.ts` на Windows
+
+- Только **UTF-8**, не UTF-16; после правок — `ng build`.
+
+## Запрещено
+
+- Коммитить `.ps1` с кириллицей без BOM.
+- Предлагать пользователю чинить кодировку вручную без `npm run ps1:bom`.

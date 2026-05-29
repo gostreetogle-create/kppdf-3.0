@@ -1,0 +1,10 @@
+# Автоснимок YouGile — источник статуса задач для AI
+# Обновляется: .github/workflows/yougile-snapshot.yml (каждые 2 ч)
+# НЕ редактировать вручную — статус меняется в YouGile.
+#
+# Первый экспорт: запустите `node tools/yougile-export-snapshot.js`
+# или дождитесь GitHub Action после настройки secret YOUGILE_TOKEN.
+
+updated_at: ""
+board: "KPPDF — сейчас"
+tasks: []

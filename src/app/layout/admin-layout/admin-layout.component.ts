@@ -206,6 +206,12 @@ export class AdminLayoutComponent {
           route: '/document-table-types',
           requiresAny: [PERMISSIONS['document-table-types'].view],
         },
+        {
+          label: 'Шаблоны документов',
+          icon: 'pi pi-file',
+          route: '/document-templates',
+          requiresAny: [PERMISSIONS['document-templates'].view],
+        },
       ],
     },
   ];

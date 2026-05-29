@@ -1,7 +1,14 @@
 module: orders
 label: Заказы
-status: wip
+status: frozen
+frozen_since: 2026-05-29T00:00:00.000Z
 level: module
-locked_files: []
-check_hash: false
-file_hashes: {}
+locked_files:
+  - src/app/features/orders/index.ts
+  - src/app/features/orders/orders-page.component.ts
+  - src/app/features/orders/orders.store.ts
+check_hash: true
+file_hashes:
+  src/app/features/orders/index.ts: 0cf1f41306ab0bab3a3d09b25329499dba9a5205e10651ae626f623929db7e76
+  src/app/features/orders/orders-page.component.ts: 03815e6cbdb7fc3c63fe8dca26ab0db34212d6aeb0e08ff067eda6c4d8164f62
+  src/app/features/orders/orders.store.ts: a172dfa5fa920dc25ad7626b617bcdddd5c1f7f98a0e5c441ac8c6f57f0b0dc9

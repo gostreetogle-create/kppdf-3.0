@@ -27,13 +27,17 @@ export interface IDocumentBlock {
     paddingTop?: number;
     paddingBottom?: number;
     columns?: number;
+    hidden?: boolean;
   };
 }
 
 export interface IDocumentTemplate {
   _id?: string;
   name: string;
-  organizationId?: string;
+  description?: string;
+  tags?: string[];
+  /** Counterparty._id с role='company' — организация, от лица которой формируется документ */
+  organizationId: string;
   docType: DocType;
   isDefault: boolean;
   isActive: boolean;

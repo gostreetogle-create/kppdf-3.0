@@ -17,10 +17,10 @@ locked_files:
 exceptions: []
 check_hash: true
 file_hashes:
-  src/app/features/modules/index.ts: 8dcde78bcf4e30cd8477524cf6e607e414157b502b09d5842de9b8656670c931
+  src/app/features/modules/index.ts: 49279a5b9ef8df4264ebccd21f3b8f023e01a9132a786c76f83bde6e89b047aa
   src/app/features/modules/module-dynamic-form.component.ts: a3fc27239cc33f4cdd6d487ffd1ac8085cc18594d1fc21df46a89aaa6fc27ab7
   src/app/features/modules/module-severity.util.ts: 73506969c8528b7fe1fbe4ed77feeb3f4a4aabcfac64bfeb61dda2246d04b860
-  src/app/features/modules/modules-page.component.scss: 9ccd08b1d8bc633705547d94f4585b070844e920e2b3fa488bed584cb30ab36d
-  src/app/features/modules/modules-page.component.ts: bf63ea3c23ca70fa07f874dfde92922d02d98eb5f7263974c5305342ded65242
-  src/app/features/modules/modules.config.ts: d3c54be75dc42b1f0dc55cc6844b28cc6d81a329237472fe4a9d03e82c6b2ae5
+  src/app/features/modules/modules-page.component.scss: ec47aaa52b123bae0a04186c4f2dba2669229bc75207dd0a09c1c60f5421ed13
+  src/app/features/modules/modules-page.component.ts: 8ef37b9cae7dc192becb15d943fa342397c075e225747874b6ff9cdd1bfa3391
+  src/app/features/modules/modules.config.ts: 738f148112dd66511c08d7f8b6d5443a76f933d27a46ae4319eebdb19eaa34fd
   src/app/features/modules/modules.store.ts: 9ad8cc7a545916cb7418511ab41088d66d7253ec1acbf0162982372c9ad3677b

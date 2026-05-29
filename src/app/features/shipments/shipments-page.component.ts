@@ -21,6 +21,7 @@ import { OrderOptionsService } from '../../shared/services/order-options.service
 import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createShipmentsStore } from './shipments.store';
 import { PERMISSIONS } from '../../core/permissions';
+import { shipmentSeverity as _shipmentSeverity } from '../../shared/utils/status-severity.util';
 
 const SHIPMENT_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Подготовка', value: 'preparing' },
@@ -28,16 +29,6 @@ const SHIPMENT_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Доставлено', value: 'delivered' },
   { label: 'Отменено', value: 'cancelled' },
 ];
-
-function shipmentSeverity(value: unknown): string {
-  const map: Record<string, string> = {
-    preparing: 'warn',
-    shipped: 'info',
-    delivered: 'success',
-    cancelled: 'danger',
-  };
-  return map[String(value)] || 'info';
-}
 
 @Component({
   selector: 'app-shipments-page',
@@ -145,7 +136,7 @@ function shipmentSeverity(value: unknown): string {
 })
 export class ShipmentsPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
-  readonly shipmentSeverity = shipmentSeverity;
+  readonly shipmentSeverity = _shipmentSeverity;
   readonly statusOptions = SHIPMENT_STATUS_OPTIONS;
 
   readonly orderOptions = signal<KpSelectOption[]>([]);

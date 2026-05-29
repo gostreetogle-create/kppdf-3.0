@@ -12,7 +12,7 @@ import { ShipmentOptionsService } from '../../shared/services/shipment-options.s
 import { WorkOrderOptionsService } from '../../shared/services/work-order-options.service';
 import { OperationOptionsService } from '../../shared/services/operation-options.service';
 import { KpCrudPageComponent } from '../../shared/crud/kp-crud-page.component';
-import { KpButtonComponent, type KpSelectOption } from '../../shared/ui';
+import { KpTabGroupComponent, type KpSelectOption, type KpTabOption } from '../../shared/ui';
 import type { CrudPermissions } from '../../shared/crud/crud-page.types';
 import {
   MODULE_CONFIGS,
@@ -25,7 +25,7 @@ import {
   type ColumnRef,
 } from './modules.config';
 import { createModuleStores, type ModuleStores } from './modules.store';
-import { moduleSeverity } from './module-severity.util';
+import { moduleSeverity } from '../../shared/utils/status-severity.util';
 import { ModuleDynamicFormComponent } from './module-dynamic-form.component';
 
 interface DepartmentGroup {
@@ -49,7 +49,7 @@ function modulePermissions(key: ModuleKey): CrudPermissions {
   selector: 'app-modules-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KpCrudPageComponent, KpButtonComponent, ModuleDynamicFormComponent],
+  imports: [KpCrudPageComponent, KpTabGroupComponent, ModuleDynamicFormComponent],
   template: `
     <div class="page">
       <div class="page__header">
@@ -62,19 +62,12 @@ function modulePermissions(key: ModuleKey): CrudPermissions {
             <i [class]="group.icon + ' mod-dept__icon'"></i>
             <span class="mod-dept__label">{{ group.label }}</span>
           </div>
-          <div class="mod-dept__tabs">
-            @for (mod of group.modules; track mod.key) {
-              <app-kp-button
-                [label]="mod.label"
-                [icon]="mod.icon"
-                [severity]="activeKey() === mod.key ? 'primary' : 'secondary'"
-                [outlined]="activeKey() !== mod.key"
-                (buttonClick)="selectModule(mod.key)"
-                size="small"
-                styleClass="mod-dept__btn"
-              />
-            }
-          </div>
+          <app-kp-tab-group
+            [options]="tabOptions(group)"
+            [activeTab]="activeKey()"
+            (tabChange)="selectModule($event)"
+            [ariaLabel]="group.label"
+          />
         </div>
       }
 
@@ -216,8 +209,12 @@ export class ModulesPageComponent implements OnInit {
     return labels[key] ?? 'Создать';
   }
 
-  selectModule(key: ModuleKey): void {
-    if (this.activeKey() === key) return;
+  tabOptions(group: DepartmentGroup): KpTabOption[] {
+    return group.modules.map((m) => ({ label: m.label, value: m.key, icon: m.icon }));
+  }
+
+  selectModule(key: string): void {
+    if (!this.isModuleKey(key) || this.activeKey() === key) return;
     this.activeKey.set(key);
     this.stores[key].setSearch('');
     this.stores[key].load();

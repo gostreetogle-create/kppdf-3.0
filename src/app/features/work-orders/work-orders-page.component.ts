@@ -23,6 +23,7 @@ import { ProductOptionsService } from '../../shared/services/product-options.ser
 import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createWorkOrdersStore } from './work-orders.store';
 import { PERMISSIONS } from '../../core/permissions';
+import { workOrderSeverity as _workOrderSeverity } from '../../shared/utils/status-severity.util';
 
 const WORK_ORDER_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Ожидает', value: 'pending' },
@@ -35,20 +36,6 @@ const YES_NO_OPTIONS: KpSelectOption[] = [
   { label: 'Да', value: 'true' },
   { label: 'Нет', value: 'false' },
 ];
-
-function workOrderSeverity(value: unknown): string {
-  const map: Record<string, string> = {
-    pending: 'secondary',
-    in_progress: 'warn',
-    completed: 'success',
-    cancelled: 'danger',
-    new: 'info',
-    on_hold: 'secondary',
-    true: 'success',
-    false: 'secondary',
-  };
-  return map[String(value)] || 'info';
-}
 
 @Component({
   selector: 'app-work-orders-page',
@@ -197,7 +184,7 @@ function workOrderSeverity(value: unknown): string {
 })
 export class WorkOrdersPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
-  readonly workOrderSeverity = workOrderSeverity;
+  readonly workOrderSeverity = _workOrderSeverity;
   readonly statusOptions = WORK_ORDER_STATUS_OPTIONS;
   readonly yesNoOptions = YES_NO_OPTIONS;
 

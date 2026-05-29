@@ -22,6 +22,7 @@ import { QuotationOptionsService } from '../../shared/services/quotation-options
 import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createOrdersStore } from './orders.store';
 import { PERMISSIONS } from '../../core/permissions';
+import { orderSeverity as _orderSeverity } from '../../shared/utils/status-severity.util';
 
 const ORDER_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Черновик', value: 'draft' },
@@ -30,17 +31,6 @@ const ORDER_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Выполнен', value: 'completed' },
   { label: 'Отменён', value: 'cancelled' },
 ];
-
-function orderSeverity(value: unknown): string {
-  const map: Record<string, string> = {
-    draft: 'warn',
-    confirmed: 'info',
-    in_progress: 'warn',
-    completed: 'success',
-    cancelled: 'danger',
-  };
-  return map[String(value)] || 'info';
-}
 
 @Component({
   selector: 'app-orders-page',
@@ -156,7 +146,7 @@ function orderSeverity(value: unknown): string {
 })
 export class OrdersPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
-  readonly orderSeverity = orderSeverity;
+  readonly orderSeverity = _orderSeverity;
   readonly statusOptions = ORDER_STATUS_OPTIONS;
 
   readonly counterpartyOptions = signal<KpSelectOption[]>([]);

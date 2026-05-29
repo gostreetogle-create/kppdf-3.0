@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
 import { ApiService } from '../../core/api.service';
 import { NotificationService } from '../../core/notification.service';
 import {
+  EmptyStateComponent,
   KpButtonComponent,
   KpCheckboxComponent,
   KpDatepickerComponent,
@@ -43,6 +44,7 @@ interface AttributeField {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
+    EmptyStateComponent,
     KpButtonComponent,
     KpCheckboxComponent,
     KpDatepickerComponent,

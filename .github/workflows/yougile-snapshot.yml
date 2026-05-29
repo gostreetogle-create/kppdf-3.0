@@ -1,0 +1,35 @@
+name: YouGile Snapshot
+
+on:
+  schedule:
+    - cron: "0 */2 * * *"  # каждые 2 часа
+  workflow_dispatch:        # ручной запуск
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Export snapshot from YouGile
+        env:
+          YOUGILE_TOKEN: ${{ secrets.YOUGILE_TOKEN }}
+        run: node tools/yougile-export-snapshot.js
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "kppdf-bot"
+          git config user.email "bot@kppdf.local"
+          git add .opencode/yougile-snapshot.yaml
+          if git diff --cached --quiet; then
+            echo "No changes to snapshot"
+          else
+            git commit -m "chore: update yougile-snapshot.yaml [skip ci]"
+            git push
+          fi

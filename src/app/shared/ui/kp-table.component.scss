@@ -44,33 +44,6 @@
   border-radius: var(--kp-radius-full);
 }
 
-.kp-table__search {
-  position: relative;
-}
-
-.kp-table__search input {
-  padding-left: 2.25rem !important;
-  border-radius: var(--kp-radius-md);
-  border: 1px solid var(--kp-border);
-  transition: border-color var(--kp-transition-fast), box-shadow var(--kp-transition-fast);
-}
-
-.kp-table__search input:focus {
-  border-color: var(--kp-primary);
-  box-shadow: var(--kp-focus-ring-premium, 0 0 0 3px rgba(37, 99, 235, 0.1));
-  outline: none;
-}
-
-.kp-table__search i {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--kp-text-muted);
-  font-size: var(--kp-font-size-sm);
-  pointer-events: none;
-}
-
 .kp-table__loading {
   display: flex;
   align-items: center;
@@ -237,7 +210,7 @@
   height: 20px;
   border-radius: 50%;
   background: rgba(220, 38, 38, 0.85);
-  color: #fff;
+  color: var(--kp-text-on-primary);
   border: none;
   display: flex;
   align-items: center;
@@ -296,11 +269,6 @@
   .kp-table__toolbar-right {
     margin-left: 0;
     width: 100%;
-  }
-
-  .kp-table__search {
-    flex: 1;
-    min-width: 0;
   }
 
   :host ::ng-deep .kp-table__datatable .p-datatable-table {

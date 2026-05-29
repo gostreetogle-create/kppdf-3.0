@@ -1,0 +1,15 @@
+.kp-tab-group {
+  display: inline-flex;
+  gap: var(--kp-space-1);
+  padding: var(--kp-space-1);
+  border-radius: var(--kp-radius-md, 8px);
+  background: var(--kp-bg-soft);
+}
+
+.kp-tab-group ::ng-deep .p-button {
+  border-radius: var(--kp-radius-sm, 6px) !important;
+  min-height: 32px !important;
+  padding: 0.35rem 0.875rem !important;
+  font-size: var(--kp-font-size-sm, 12px) !important;
+  font-weight: var(--kp-font-weight-medium, 500) !important;
+}

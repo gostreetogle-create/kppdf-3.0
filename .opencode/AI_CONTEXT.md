@@ -27,6 +27,11 @@ Prod URL:    https://sport-set.ru
 | `.opencode/rules/` | Правила архитектуры (7 файлов) |
 | `.opencode/plans/` | Планы разработки (8 файлов) |
 | `.opencode/golden-samples.ts` | Эталонные UI-паттерны |
+| `.opencode/rules/encoding-windows.md` | **Кодировки: .ps1 BOM, .sh LF, .ts UTF-8** |
+| `.opencode/yougile-snapshot.yaml` | **Живой статус задач из YouGile** (автоснимок) |
+| `.opencode/audit/ONBOARDING.md` | **Единая точка входа** для людей и AI |
+| `src/app/shared/placeholder/` | **Плейсхолдеры: реестр токенов + resolve-сервис** |
+| `src/app/shared/ui/kp-placeholder-picker/` | **UI-пикер токенов {{...}} для шаблонов** |
 | `.opencode/readiness-feedback.yaml` | **Open issues пользователя для AI** (не FreezeGuard) |
 | `opencode.json` | Конфигурация opencode |
 
@@ -39,7 +44,7 @@ kppdf-3.0/
 │   │   ├── core/                 ← ApiService, AuthService, guards, interceptors
 │   │   ├── features/             ← Dashboard, Directories, Modules, Login, …
 │   │   ├── layout/               ← admin-layout
-│   │   ├── shared/               ← CrudApiService, kp-*, crud
+│   │   ├── shared/               ← CrudApiService, kp-*, crud, placeholder/
 │   │   ├── app.config.ts         ← PrimeNG preset KppdfPreset
 │   │   └── app.routes.ts         ← Маршруты (lazy loading)
 │   ├── environments/             ← environment.ts / environment.prod.ts
@@ -203,7 +208,17 @@ cd backend && node dev.js        # MongoDB in-memory + seed + сервер
 # Frontend (второй терминал, из корня)
 npm install --legacy-peer-deps   # только при первом запуске
 ng serve или npx ng serve        # localhost:4200
+
+# Windows (всё одной командой)
+.\start.cmd                      # или .\start.ps1 — см. encoding-windows.md
+.\stop.ps1
 ```
+
+### Windows: кодировки (обязательно для AI)
+
+Перед коммитом правок `*.ps1`: **`npm run ps1:bom`** + **`npm run ps1:check`**.
+
+Канон: [`.opencode/rules/encoding-windows.md`](rules/encoding-windows.md) — UTF-8 **с BOM** для PowerShell, LF для `.sh`, UTF-8 для `.ts`.
 
 ### Тестовые пользователи
 | Логин | Пароль | Роль |
@@ -222,6 +237,8 @@ ng serve или npx ng serve        # localhost:4200
 | `ng serve` | корень | Frontend dev |
 | `ng build` | корень | Production сборка |
 | `ng lint` | корень | ESLint проверка |
+| `npm run ps1:bom` | корень | UTF-8 BOM для `start.ps1` / `stop.ps1` / переданных `.ps1` |
+| `npm run ps1:check` | корень | BOM + синтаксис PowerShell для `.ps1` |
 
 ### Переменные окружения (.env)
 ```env
@@ -245,6 +262,7 @@ NODE_ENV=development
 6. **Обновляй документацию** — если меняешь структуру или API
 
 ### Что НЕЛЬЗЯ делать
+- Коммитить `.ps1` с кириллицей без UTF-8 BOM (см. `encoding-windows.md`)
 - Менять API контракты без согласования
 - Удалять CRUD Factory (это архитектурное решение)
 - Менять shared/types без обновления backend И frontend
@@ -254,13 +272,44 @@ NODE_ENV=development
 
 ---
 
-## 7. Статус разработки
+## 7. Статус задач (единая система)
 
-Единственный источник живого статуса модулей и прогресса:
+> **Статус задач — только в YouGile.** Markdown-файлы — спецификация (что делать), не доска.
 
-- `.opencode/project-readiness.yaml` (ручное управление)
-- `npm run readiness:sync` -> `public/project-readiness.json`
+### Для AI: автоснимок
+
+- **`.opencode/yougile-snapshot.yaml`** — живой статус всех задач (id, колонка, метки, url)
+- Обновляется GitHub Action каждые 2 часа + ручной запуск
+- **НЕ выдумывать статус** — читать только отсюда
+
+### Спецификации (что именно делать)
+
+- `.opencode/audit/UI-CONSISTENCY-PLAN.md` — UI-миграция P0–P2
+- `.opencode/audit/CHECKLIST-BACKLOG.md` — оперативный backlog
+- Feature-доки: `QUOTATION-EDITOR-BLOCKS.md`, `kp-product-picker/README.md`, `PLACEHOLDER-SYSTEM.md`
+
+### Плейсхолдеры шаблонов документов
+
+- **`src/app/shared/placeholder/placeholder.registry.ts`** — 30 токенов: `org.*` (12), `client.*` (9), `doc.*` (4), `item.*` (6)
+- **`src/app/shared/placeholder/template-placeholder.service.ts`** — `resolve(template, context)` → подстановка значений; `resolveBlock()` → полная обработка блока
+- **`src/app/shared/ui/kp-placeholder-picker/`** — диалог-пикер: поиск, категории, `placeholderSelected` output
+- **PlaceholderContext:** `{ org?, client?, doc?, item? }` — org/client из `ICounterparty`, doc из `IQuotation`, item из `IQuotationItem`
+
+### Freeze (можно ли менять файл)
+
+- `.opencode/lock/INDEX.yaml` — статус модулей (frozen/locked/wip)
+- `.opencode/lock/FREEZE-RULES.md` — правила разморозки
+
+### Для человека: доска YouGile
+
+- Доска **«KPPDF — сейчас»** — 5 колонок (Сделано · На проверке · В работе · Дальше · Блокеры)
+- Статус меняется **только перетаскиванием в YouGile**, не в md-галочках
+- Новая задача → новая карточка в YouGile в тот же день
+
+### Onboarding
+
+- `.opencode/audit/ONBOARDING.md` — единая точка входа для новых людей и AI
 
 ---
 
-*Последнее обновление: май 2026. Создан для AI-агентов Codebuff.*
+*Последнее обновление: 2026-05-29. Создан для AI-агентов Codebuff.*

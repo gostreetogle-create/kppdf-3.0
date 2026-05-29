@@ -31,6 +31,7 @@ const documentBlockSchema = new Schema(
       paddingTop: { type: Number, default: 4 },
       paddingBottom: { type: Number, default: 4 },
       columns: { type: Number },
+      hidden: { type: Boolean },
     },
   },
   { _id: true },
@@ -39,7 +40,9 @@ const documentBlockSchema = new Schema(
 const documentTemplateSchema = new Schema<DocumentTemplateDocument>(
   {
     name: { type: String, required: true },
-    organizationId: { type: String },
+    description: { type: String },
+    tags: { type: [String], default: [] },
+    organizationId: { type: String, required: true },
     docType: { type: String, required: true },
     isDefault: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },

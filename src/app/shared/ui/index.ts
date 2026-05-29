@@ -2,6 +2,12 @@ export { EmptyStateComponent } from './empty-state/empty-state.component';
 export { PageLayoutComponent } from './page-layout/page-layout.component';
 export { KpButtonComponent } from './kp-button.component';
 export { KpInputComponent } from './kp-input.component';
+export { KpSearchComponent } from './kp-search.component';
+export { KpTagComponent } from './kp-tag.component';
+export type { KpTagSeverity } from './kp-tag.component';
+export { KpTabGroupComponent } from './kp-tab-group.component';
+export type { KpTabOption } from './kp-tab-group.component';
+export { KpPaginatorComponent } from './kp-paginator.component';
 export { KpPhotoUploaderComponent } from './kp-photo-uploader.component';
 export { KpPasswordComponent } from './kp-password.component';
 export { KpSelectComponent } from './kp-select.component';
@@ -38,3 +44,4 @@ export {
   PRODUCT_KIND_LABELS,
 } from './kp-product-picker';
 export type { ProductPickerFilters } from './kp-product-picker';
+export { KpPlaceholderPickerComponent } from './kp-placeholder-picker';

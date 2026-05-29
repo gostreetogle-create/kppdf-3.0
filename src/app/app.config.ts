@@ -78,8 +78,8 @@ const KppdfPreset = definePreset(Aura, {
         paddingY: '0.5rem',
         sm: {
           fontSize: '13px',
-          paddingX: '0.75rem',
-          paddingY: '0.35rem',
+          paddingX: '0.875rem',
+          paddingY: '0.4375rem',
         },
       },
     },

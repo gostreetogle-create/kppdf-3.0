@@ -14,6 +14,8 @@
     "freeze:check": "node .opencode/lock/freeze-check.mjs --check-hashes",
     "freeze:update": "node .opencode/lock/freeze-check.mjs --update-hashes",
     "prepare": "node .opencode/lock/setup-githooks.mjs",
+    "ps1:bom": "node scripts/write-ps1-utf8bom.mjs",
+    "ps1:check": "node scripts/check-ps1-encoding.mjs",
     "backend": "cd backend && node dev.js"
   },
   "private": true,

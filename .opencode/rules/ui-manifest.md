@@ -95,7 +95,70 @@
 
 ---
 
-## 3. Кнопки (`app-kp-button`)
+## 3. Поиск (`app-kp-search`)
+
+### Человеческое правило
+
+- ВСЕГДА `app-kp-search` для поисковых полей в toolbar и фильтрах.
+- НИКОГДА raw `<input pInputText>` с иконкой — только `app-kp-search`.
+- ВСЕГДА `[(query)]` для two-way binding + `(search)` для debounced событий.
+- ВСЕГДА `[debounceMs]="300"` для списковых страниц; `0` для мгновенного поиска если нужно.
+
+### Машиночитаемая проверка
+
+```yaml
+- rule: "search fields use app-kp-search"
+  selector: "app-kp-search"
+  check: "exists-in-features"
+- rule: "no raw pInputText with search icon in toolbar"
+  selector: ".p-input-icon-left input[pInputText]"
+  check: "not-exist"
+  expected: "true"
+  hint: "Use app-kp-search component"
+```
+
+---
+
+## 4. Теги (`app-kp-tag`)
+
+### Человеческое правило
+
+- ВСЕГДА `app-kp-tag` для статусов и badges. НИКОГДА raw `<p-tag>` в features.
+- Severity: `'info' | 'success' | 'warn' | 'danger' | 'secondary' | 'contrast'`.
+- Централизовать severity maps в `shared/utils/status-severity.util.ts`.
+
+### Машиночитаемая проверка
+
+```yaml
+- rule: "tags use app-kp-tag not p-tag"
+  selector: "app-kp-tag"
+  check: "exists-in-features"
+  hint: "Use app-kp-tag wrapper"
+```
+
+---
+
+## 5. Tab Group (`app-kp-tab-group`)
+
+### Человеческое правило
+
+- ВСЕГДА `app-kp-tab-group` для segmented controls (вкладки справочников, модулей).
+- НИКОГДА кастомные `::ng-deep` над raw кнопками для таб-навигации.
+- Options: `{ label: string; value: string; icon?: string }[]`.
+- Active tab: `[(activeTab)]` two-way binding.
+
+### Машиночитаемая проверка
+
+```yaml
+- rule: "tab groups use app-kp-tab-group"
+  selector: "app-kp-tab-group"
+  check: "exists"
+  hint: "Use app-kp-tab-group for segmented navigation"
+```
+
+---
+
+## 6. Кнопки (`app-kp-button`)
 
 ### Матрица severity × variant
 
@@ -143,7 +206,7 @@
 
 ---
 
-## 4. Формы и инпуты
+## 7. Формы и инпуты
 
 ### Человеческое правило
 
@@ -175,7 +238,81 @@
 
 ---
 
-## 5. Глобальные стили (`styles.scss`)
+## 8. Дизайн-токены (`_tokens.scss`)
+
+> **Аудит 2026-05-29:** сверили 24 kp-* SCSS, `app.config.ts` KppdfPreset, и `_tokens.scss`.
+
+### Человеческое правило
+
+- ВСЕГДА `var(--kp-*)` токены в компонентах. НИКОГДА хардкод `#fff`, `13px`, `16px`.
+- Fallback-значения в `var(--kp-*, #fallback)` должны совпадать с реальным значением токена из `_tokens.scss`.
+- `--p-*` токены дублированы в `app.config.ts` (KppdfPreset). При изменении — синхронизировать ОБА файла. Preset имеет приоритет.
+
+### Карта токенов (канонический источник — `_tokens.scss`)
+
+| Токен | Значение | Где используется |
+|-------|----------|-----------------|
+| `--kp-text` | `#0f172a` | base текст |
+| `--kp-text-secondary` | `#475569` | подписи, label |
+| `--kp-text-soft` | `#64748b` | muted описания |
+| `--kp-text-muted` | `#94a3b8` | placeholder, disabled |
+| `--kp-text-on-primary` | `#ffffff` | текст на primary-фоне |
+| `--kp-border` | `#e2e8f0` | рамки |
+| `--kp-surface` | `#ffffff` | карточки, панели |
+| `--kp-surface-muted` | `#f1f5f9` | muted фон |
+| `--kp-bg-soft` | `#f1f5f9` | фоновые области |
+| `--kp-primary` | `#2563eb` | акцент |
+| `--kp-primary-hover` | `#1d4ed8` | hover акцента |
+| `--kp-primary-dark` | `#1d4ed8` | alias для hover |
+| `--kp-primary-soft` | `#dbeafe` | selected-фон |
+| `--kp-primary-muted` | `#eff6ff` | hover-фон |
+
+### Результаты аудита (исправлено 2026-05-29)
+
+| Проблема | Было | Стало | Файлы |
+|----------|------|-------|-------|
+| Расхождение `--p-button-padding-x` | `1rem` | `0.85rem` | `_tokens.scss` ↔ `app.config.ts` |
+| Расхождение `--p-dialog-content-padding` | `0 1.5rem 1rem` | `0.5rem 1.5rem 1rem` | `_tokens.scss` ↔ `app.config.ts` |
+| Неверный fallback `--kp-text-muted` | `#6b7280` | `#64748b` | `kp-product-picker.scss` (×4) |
+| Неверный fallback `--kp-border` | `#d1d5db` | `#e2e8f0` | `kp-product-picker.scss` (×2) |
+| Неверный fallback `--kp-surface-muted` | `#f9fafb`, `#f3f4f6` | `#f1f5f9` | `kp-product-picker.scss` (×4) |
+| Хардкод `#fff` | literal `#fff` | `var(--kp-text-on-primary)` | `kp-table.scss`, `kp-photo-uploader.scss` (×3), `kp-product-picker.scss` |
+| Хардкод `13px` font-size | `font-size: 13px` | `var(--kp-font-size-body)` | `kp-stat-grid.scss` (×2) |
+| Хардкод `16px` font-size | `font-size: 16px` | `var(--kp-font-size-h3)` | `kp-stat-grid.scss` |
+| Хардкод `4px` gap/padding | `gap: 4px` | `var(--kp-space-1)` | `kp-tab-group.scss` |
+| Хардкод `0.75rem` icon position | `left: 0.75rem` | `var(--kp-space-3)` | `kp-search.scss` |
+| Хардкод `12px` font-size | `font-size: 12px` | `var(--kp-font-size-sm)` | `kp-paginator.scss` (×2) |
+| Нет токена `--kp-surface-muted` | — | `#f1f5f9` | `_tokens.scss` |
+| Нет токена `--kp-primary-dark` | — | `#1d4ed8` | `_tokens.scss` |
+
+### Машиночитаемая проверка
+
+```yaml
+- rule: "no hardcoded #fff in component SCSS"
+  selector: "src/app/shared/ui/**/*.scss"
+  check: "no-hardcoded"
+  value: "#fff"
+  hint: "Use var(--kp-text-on-primary)"
+- rule: "no hardcoded #e5e7eb in component SCSS"
+  selector: "src/app/shared/ui/**/*.scss"
+  check: "no-hardcoded"
+  value: "#e5e7eb"
+  hint: "Use var(--kp-border) or #e2e8f0"
+- rule: "fallback values must match token definitions"
+  selector: "src/app/shared/ui/**/*.scss"
+  check: "fallback-match"
+  tokens:
+    --kp-text: "#0f172a"
+    --kp-text-secondary: "#475569"
+    --kp-text-muted: "#94a3b8"
+    --kp-border: "#e2e8f0"
+    --kp-surface: "#ffffff"
+    --kp-surface-muted: "#f1f5f9"
+```
+
+---
+
+## 9. Глобальные стили (`styles.scss`)
 
 ### Человеческое правило
 
@@ -186,7 +323,28 @@
 
 ---
 
-## 6. Сборка
+## 9. Плейсхолдер-пикер (`app-kp-placeholder-picker`)
+
+### Человеческое правило
+
+- Диалог выбора токенов `{{category.field}}` для вставки в текстовые блоки шаблонов документов.
+- Использовать в редакторе шаблонов рядом с текстовыми полями.
+- ВСЕГДА `[(visible)]` two-way binding + `(placeholderSelected)` для получения токена.
+- `allowedCategories` — фильтр по категориям (`['org', 'client', 'doc', 'item']`). Пустой массив = все.
+- Эмитит строку вида `{{org.name}}` — готовую к вставке в `content` блока.
+
+### Машиночитаемая проверка
+
+```yaml
+- rule: "placeholder picker uses app-kp-placeholder-picker"
+  selector: "app-kp-placeholder-picker"
+  check: "exists"
+  hint: "Use app-kp-placeholder-picker for token selection in template editor"
+```
+
+---
+
+## 10. Сборка
 
 - `ng build` — 0 errors, 0 warnings.
 - `ng lint` — 0 errors.

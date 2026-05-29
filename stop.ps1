@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   KPPDF 3.0 - Stop all processes and optionally stop Docker
 .DESCRIPTION
@@ -23,6 +23,21 @@ param(
 
 Write-Host "========== KPPDF 3.0 - Stopper ==========" -ForegroundColor Cyan
 Write-Host ""
+
+$Root = $PSScriptRoot
+$YougileDir = Join-Path (Split-Path $Root -Parent) 'yougile-sync-server'
+$KppdfRootPattern = [regex]::Escape($Root)
+$YougileDirPattern = [regex]::Escape($YougileDir)
+
+function Test-KppdfDevProcess([string]$CommandLine) {
+  if ([string]::IsNullOrWhiteSpace($CommandLine)) { return $false }
+  if ($CommandLine -match 'kppdf-ai-analyst') { return $false }
+
+  if ($CommandLine -match $YougileDirPattern) { return $true }
+  if ($CommandLine -notmatch $KppdfRootPattern) { return $false }
+
+  return ($CommandLine -match 'tsx|ng serve|backend/dev\.js|npm run dev')
+}
 
 # Helper: stop process on a port
 function Kill-ProcessOnPort($Port, $Name) {
@@ -57,14 +72,19 @@ function Kill-ProcessOnPort($Port, $Name) {
     }
   }
 
-  # Method 3: kill by process name
+  # Method 3: kill KPPDF dev node processes only (not kppdf-ai-analyst)
   if ($Name -eq "Backend") {
-    $procs = Get-Process -Name "node" -ErrorAction SilentlyContinue
-    if ($procs) {
-      Write-Host "  [KILL] $Name - all node processes" -ForegroundColor Yellow
-      $procs | Stop-Process -Force
-      return
-    }
+    try {
+      $nodes = Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue |
+        Where-Object { Test-KppdfDevProcess $_.CommandLine }
+      if ($nodes) {
+        foreach ($node in $nodes) {
+          Write-Host "  [KILL] $Name - node (PID $($node.ProcessId))" -ForegroundColor Yellow
+          Stop-Process -Id $node.ProcessId -Force -ErrorAction SilentlyContinue
+        }
+        return
+      }
+    } catch { }
   }
 
   Write-Host "  [OK]   $Name - not running" -ForegroundColor Green
@@ -107,20 +127,14 @@ if ($ngProcs) {
   $ngProcs | Stop-Process -Force
 }
 
-# Detect tsx watch processes via WMI
+# Lingering KPPDF dev node processes
 try {
-  $tsxNodes = Get-WmiObject Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { $_.CommandLine -match 'tsx|yougile-sync-server' }
-  if ($tsxNodes) {
-    $tsxPids = $tsxNodes | ForEach-Object { $_.ProcessId }
-    foreach ($pid in $tsxPids) {
-      $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
-      if ($proc) {
-        Write-Host "  [KILL] tsx watch (PID $pid)" -ForegroundColor Yellow
-        Stop-Process -Id $pid -Force
-      }
+  Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { Test-KppdfDevProcess $_.CommandLine } |
+    ForEach-Object {
+      Write-Host "  [KILL] node dev (PID $($_.ProcessId))" -ForegroundColor Yellow
+      Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
     }
-  }
 } catch {
   # Non-critical
 }

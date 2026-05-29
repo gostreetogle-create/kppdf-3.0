@@ -77,6 +77,14 @@ export const routes: Routes = [
         path: 'document-table-types',
         loadComponent: () => import('./features/document-table-types').then(c => c.DocumentTableTypesPageComponent),
       },
+      {
+        path: 'document-templates',
+        loadComponent: () => import('./features/document-templates').then(c => c.DocumentTemplatesPageComponent),
+      },
+      {
+        path: 'document-templates/:id',
+        loadComponent: () => import('./features/document-templates').then(c => c.DocumentTemplateEditorComponent),
+      },
     ],
   },
   {

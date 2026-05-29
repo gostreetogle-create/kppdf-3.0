@@ -1,19 +1,11 @@
 import { Component, signal, computed, inject, OnInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NgFor, NgIf, DecimalPipe, NgStyle } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { NgFor, NgIf, DecimalPipe, NgStyle, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, tap, catchError, finalize } from 'rxjs';
 
-import type { IQuotation, IProduct, ITender } from '../../../../shared/types';
+import type { IQuotation, IProduct, ITender, IDocTableColumn } from '../../../../shared/types';
 
-// PrimeNG button — только для block-controls (toggle-панель); остальное через app-kp-button
-/* eslint-disable no-restricted-imports */
-import { ButtonModule } from 'primeng/button';
-import { SelectModule } from 'primeng/select';
-import { ToastModule } from 'primeng/toast';
-import { TagModule } from 'primeng/tag';
-/* eslint-enable no-restricted-imports */
 import { MessageService } from 'primeng/api';
 
 // Services
@@ -32,9 +24,14 @@ import {
   KpInputNumberComponent,
   KpTextareaComponent,
   KpSelectComponent,
+  KpTagComponent,
+  KpToastComponent,
   moveSortableItems,
 } from '../../shared/ui';
 import type { KpSortableDropEvent, KpSelectOption, ProductPickerFilters } from '../../shared/ui';
+
+// ===== Helper: достать значение поля из QuotationItem =====
+type FieldValue = string | number | boolean | undefined | null;
 
 // ===== Types =====
 function formatQuotationLabel(number: string | undefined): string {
@@ -52,23 +49,13 @@ const FALLBACK_TABLE_BLOCK_OPTIONS: KpSelectOption[] = [
   { label: 'Работы', value: 'work' },
 ];
 
-/** Категории шаблонов документов (PLM-139 / 8.1.1) */
-const TEMPLATE_DOC_TYPE_OPTIONS: KpSelectOption[] = [
-  { label: 'Коммерческое предложение', value: 'quotation' },
-  { label: 'Письмо', value: 'letter' },
-  { label: 'Ответ на письмо', value: 'letter_reply' },
-  { label: 'Договор', value: 'contract' },
-  { label: 'Счёт', value: 'invoice' },
-  { label: 'Отгрузка', value: 'shipping' },
-  { label: 'Акт', value: 'act' },
-  { label: 'Спецификация', value: 'specification' },
-];
-
 /** Метаданные для подбора из справочника (загружаются динамически по dataSource типа таблицы) */
 interface PickerKindMeta {
   label: string;
   dataSource: string;
   productKind?: string;
+  /** Конфигурация колонок из IDocumentTableType.columns */
+  columns?: IDocTableColumn[];
 }
 
 const DEFAULT_PICKER_META: Record<string, PickerKindMeta> = {
@@ -76,6 +63,18 @@ const DEFAULT_PICKER_META: Record<string, PickerKindMeta> = {
   services: { label: 'Услуги', dataSource: 'services', productKind: 'SERVICE' },
   work: { label: 'Работы', dataSource: 'work', productKind: 'WORK' },
 };
+
+/** Колонки по умолчанию — зеркалируют текущую жёстко заданную таблицу */
+const DEFAULT_TABLE_COLUMNS: IDocTableColumn[] = [
+  { field: 'index', header: '№', type: 'text', width: '40px' },
+  { field: 'sku', header: 'Арт.', type: 'text', width: '80px' },
+  { field: 'photo', header: 'Фото', type: 'image', width: '60px' },
+  { field: 'name', header: 'Наименование', type: 'text' },
+  { field: 'qty', header: 'Кол-во', type: 'number', width: '80px' },
+  { field: 'unit', header: 'Ед.', type: 'text', width: '60px' },
+  { field: 'price', header: 'Цена, ₽', type: 'currency', width: '100px' },
+  { field: 'sum', header: 'Сумма, ₽', type: 'currency', width: '120px' },
+];
 
 interface BlockItemRow {
   item: QuotationItem;
@@ -120,6 +119,7 @@ interface EditorBlock {
     paddingTop: number;
     paddingBottom: number;
     columns?: number;
+    hidden?: boolean;
   };
 }
 
@@ -143,6 +143,8 @@ const BLOCK_BG_COLORS = [
 interface DocumentTemplate {
   _id?: string;
   name: string;
+  description?: string;
+  tags?: string[];
   organizationId?: string;
   docType: string;
   isDefault: boolean;
@@ -159,7 +161,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
     type: 'header',
     order: 0,
     content: '<h2>Коммерческое предложение</h2>',
-    settings: { fontSize: 18, fontWeight: 'bold', align: 'center', paddingTop: 20, paddingBottom: 12 },
+    settings: { fontSize: 18, fontWeight: 'bold', align: 'center', paddingTop: 8, paddingBottom: 12 },
   },
   {
     type: 'text',
@@ -170,7 +172,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
       { content: 'Поставщик: [Название организации]\nИНН: [ИНН]\nАдрес: [Адрес]', align: 'center' },
       { content: 'Клиент: [Название клиента]', align: 'center' },
     ],
-    settings: { fontSize: 11, fontWeight: 'normal', align: 'center', paddingTop: 8, paddingBottom: 8, columns: 2 },
+    settings: { fontSize: 11, fontWeight: 'normal', align: 'center', paddingTop: 8, paddingBottom: 8, columns: 2, borderStyle: 'none' },
   },
   {
     type: 'table',
@@ -185,19 +187,19 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
     order: 3,
     title: 'Условия',
     content: 'Условия оплаты: предоплата 100%\nСрок поставки: [количество] рабочих дней\nГарантия: [срок]',
-    settings: { fontSize: 10, fontWeight: 'normal', align: 'center', paddingTop: 8, paddingBottom: 8 },
+    settings: { fontSize: 10, fontWeight: 'normal', align: 'center', paddingTop: 8, paddingBottom: 8, borderStyle: 'none' },
   },
   {
     type: 'separator',
     order: 4,
     content: '',
-    settings: { fontSize: 11, fontWeight: 'normal', align: 'left', paddingTop: 4, paddingBottom: 4 },
+    settings: { fontSize: 11, fontWeight: 'normal', align: 'left', paddingTop: 0, paddingBottom: 4 },
   },
   {
     type: 'text',
     order: 5,
     content: 'Руководитель: ___________________  (подпись)',
-    settings: { fontSize: 11, fontWeight: 'normal', align: 'right', paddingTop: 8, paddingBottom: 8 },
+    settings: { fontSize: 11, fontWeight: 'normal', align: 'right', paddingTop: 8, paddingBottom: 8, borderStyle: 'none' },
   },
 ];
 
@@ -206,8 +208,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    NgFor, NgIf, DecimalPipe, NgStyle, FormsModule,
-    ButtonModule, SelectModule, ToastModule, TagModule,
+    NgFor, NgIf, DecimalPipe, NgStyle,
+    NgSwitch, NgSwitchCase, NgSwitchDefault,
     KpSortableListDirective, KpSortableItemDirective, KpSortableHandleDirective,
     KpSplitTextCardComponent,
     KpProductPickerComponent,
@@ -217,6 +219,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
     KpInputNumberComponent,
     KpTextareaComponent,
     KpSelectComponent,
+    KpTagComponent,
+    KpToastComponent,
   ],
   providers: [MessageService],
   template: `
@@ -235,7 +239,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
             {{ quotationToolbarTitle() }}
           </span>
           <span class="editor__toolbar-status">
-            <p-tag
+            <app-kp-tag
               *ngIf="quotation().statusId"
               [value]="quotation().statusId"
               [severity]="getSeverity(quotation().statusId)"
@@ -259,7 +263,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
             severity="secondary"
             [outlined]="true"
             size="small"
-            (buttonClick)="showTemplates = true"
+            (buttonClick)="openTemplatesFromToolbar()"
           />
           <app-kp-button
             label="Сохранить"
@@ -278,11 +282,18 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
           <div
             class="editor__canvas"
             [class.editor__canvas--reorder-locked]="blocksReorderLocked()"
-            [style.background-image]="getBackgroundCss()"
             tabindex="0"
             (click)="onCanvasClick()"
             (keydown.escape)="onCanvasClick()"
           >
+            @if (quotationBg(); as bgUrl) {
+              <img
+                class="editor__canvas-bg"
+                [src]="bgUrl"
+                alt=""
+                aria-hidden="true"
+              />
+            }
             <!-- Blocks -->
             <div
               class="editor__blocks"
@@ -324,32 +335,35 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                     <div class="editor__block-controls-section">
                       <span class="editor__block-controls-label">Выравнивание</span>
                       <div class="editor__block-controls-align" role="group" aria-label="Выравнивание блока">
-                        <p-button
+                        <app-kp-button
                           icon="pi pi-align-left"
                           [rounded]="false"
                           [outlined]="block.settings.align !== 'left'"
                           [severity]="block.settings.align === 'left' ? 'primary' : 'secondary'"
                           size="small"
                           styleClass="editor__block-controls-chip"
-                          (click)="setBlockAlign(i, 'left')"
+                          variant="flat"
+                          (buttonClick)="setBlockAlign(i, 'left')"
                         />
-                        <p-button
+                        <app-kp-button
                           icon="pi pi-align-center"
                           [rounded]="false"
                           [outlined]="block.settings.align !== 'center'"
                           [severity]="block.settings.align === 'center' ? 'primary' : 'secondary'"
                           size="small"
                           styleClass="editor__block-controls-chip"
-                          (click)="setBlockAlign(i, 'center')"
+                          variant="flat"
+                          (buttonClick)="setBlockAlign(i, 'center')"
                         />
-                        <p-button
+                        <app-kp-button
                           icon="pi pi-align-right"
                           [rounded]="false"
                           [outlined]="block.settings.align !== 'right'"
                           [severity]="block.settings.align === 'right' ? 'primary' : 'secondary'"
                           size="small"
                           styleClass="editor__block-controls-chip"
-                          (click)="setBlockAlign(i, 'right')"
+                          variant="flat"
+                          (buttonClick)="setBlockAlign(i, 'right')"
                         />
                       </div>
                     </div>
@@ -396,22 +410,24 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                       </div>
                     </div>
                     <div class="editor__block-controls-row">
-                      <p-button
+                      <app-kp-button
                         icon="pi pi-bold"
                         [rounded]="false"
                         [outlined]="block.settings.fontWeight !== 'bold'"
                         [severity]="block.settings.fontWeight === 'bold' ? 'primary' : 'secondary'"
                         size="small"
-                        (click)="toggleBlockFontWeight(i)"
+                        variant="flat"
+                        (buttonClick)="toggleBlockFontWeight(i)"
                         styleClass="editor__block-controls-btn--wide"
                       />
-                      <p-button
+                      <app-kp-button
                         icon="pi pi-stop"
                         [rounded]="false"
                         [outlined]="!blockBorderActive(block)"
                         [severity]="blockBorderActive(block) ? 'primary' : 'secondary'"
                         size="small"
-                        (click)="cycleBlockBorder(i)"
+                        variant="flat"
+                        (buttonClick)="cycleBlockBorder(i)"
                         styleClass="editor__block-controls-btn--wide"
                       />
                     </div>
@@ -419,48 +435,76 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
 
                   @if (block.type === 'text') {
                     <div class="editor__block-controls-row">
-                      <p-button
+                      <app-kp-button
                         icon="pi pi-plus"
                         [rounded]="false"
                         [outlined]="true"
                         severity="secondary"
                         size="small"
-                        (click)="onAddCell(i)"
+                        variant="flat"
+                        (buttonClick)="onAddCell(i)"
                         [disabled]="getCells(block).length >= maxTextCells"
                         styleClass="editor__block-controls-btn--wide"
                       />
-                      <p-button
+                      <app-kp-button
                         icon="pi pi-pencil"
                         [rounded]="false"
                         [outlined]="true"
                         severity="secondary"
                         size="small"
-                        (click)="editTextBlock(i)"
+                        variant="flat"
+                        (buttonClick)="editTextBlock(i)"
                         styleClass="editor__block-controls-btn--wide"
                       />
                     </div>
                   }
 
                   @if (block.type === 'separator') {
-                    <p-button
+                    <app-kp-button
                       icon="pi pi-arrows-v"
                       [rounded]="false"
                       [outlined]="true"
                       severity="secondary"
                       size="small"
-                      (click)="editBlockSettings(i)"
+                      variant="flat"
+                      (buttonClick)="editBlockSettings(i)"
+                      styleClass="editor__block-controls-btn--wide"
+                    />
+                  }
+
+                  @if (block.type === 'header') {
+                    <app-kp-button
+                      icon="pi pi-arrows-v"
+                      [rounded]="false"
+                      [outlined]="true"
+                      severity="secondary"
+                      size="small"
+                      variant="flat"
+                      (buttonClick)="editBlockSettings(i)"
+                      styleClass="editor__block-controls-btn--wide"
+                    />
+                    <app-kp-button
+                      [label]="block.settings.hidden ? 'Показать заголовок' : 'Скрыть заголовок'"
+                      [icon]="block.settings.hidden ? 'pi pi-eye' : 'pi pi-eye-slash'"
+                      [rounded]="false"
+                      [outlined]="true"
+                      severity="secondary"
+                      size="small"
+                      variant="flat"
+                      (buttonClick)="toggleHeaderHidden(i)"
                       styleClass="editor__block-controls-btn--wide"
                     />
                   }
 
                   <div class="editor__block-controls-row editor__block-controls-row--full">
-                    <p-button
+                    <app-kp-button
                       icon="pi pi-trash"
                       [rounded]="false"
                       [outlined]="true"
                       severity="danger"
                       size="small"
-                      (click)="removeBlock(i)"
+                      variant="flat"
+                      (buttonClick)="removeBlock(i)"
                       [disabled]="blocks().length <= 1"
                       styleClass="editor__block-controls-btn--wide"
                     />
@@ -470,7 +514,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                 <!-- Block Content -->
                 <!-- Header -->
                 <div
-                  *ngIf="block.type === 'header'"
+                  *ngIf="block.type === 'header' && !block.settings.hidden"
                   class="editor__block-content editor__block-drag-surface"
                   [class.editor__block-drag-surface--active]="!blocksReorderLocked()"
                   appKpSortableHandle
@@ -511,6 +555,9 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                   [style.padding-top.px]="block.settings.paddingTop"
                   [style.padding-bottom.px]="block.settings.paddingBottom"
                 >
+                  <span class="editor__separator-grip" aria-hidden="true">
+                    <i class="pi pi-arrows-v"></i>
+                  </span>
                   <hr class="editor__separator" />
                 </div>
 
@@ -550,14 +597,11 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                   <table class="editor__table">
                     <thead>
                       <tr>
-                        <th class="editor__table-col editor__table-col--idx">№</th>
-                        <th class="editor__table-col editor__table-col--sku">Арт.</th>
-                        <th class="editor__table-col editor__table-col--photo">Фото</th>
-                        <th class="editor__table-col editor__table-col--name">Наименование</th>
-                        <th class="editor__table-col editor__table-col--qty">Кол-во</th>
-                        <th class="editor__table-col editor__table-col--unit">Ед.</th>
-                        <th class="editor__table-col editor__table-col--price">Цена, ₽</th>
-                        <th class="editor__table-col editor__table-col--sum">Сумма, ₽</th>
+                        <th *ngFor="let col of tableBlockColumns(i)"
+                            class="editor__table-col"
+                            [style.width]="col.width || null">
+                          {{ col.header }}
+                        </th>
                       </tr>
                     </thead>
                     <tbody (mousedown)="stopTableBlockDrag($event)">
@@ -567,66 +611,77 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                         [class.editor__table-row--selected]="selectedItemIndex() === row.index"
                         (click)="onTableRowClick($event, row.index)"
                       >
-                        <td class="editor__table-idx">
-                          <button type="button" class="editor__table-cell-action" (click)="openRowActions(row.index)">
-                            {{ localIdx + 1 }}
-                          </button>
-                        </td>
-                        <td>
-                          <button type="button" class="editor__table-cell-action" (click)="openRowActions(row.index)">
-                            {{ row.item.sku || '—' }}
-                          </button>
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            class="editor__table-photo"
-                            (click)="openRowActions(row.index)"
-                            [attr.aria-label]="'Действия для позиции ' + (row.index + 1)"
-                          >
-                            <i class="pi pi-image" *ngIf="!row.item.photo"></i>
-                            <img *ngIf="row.item.photo" [src]="row.item.photo" class="editor__table-photo-img" alt="фото" />
-                          </button>
-                        </td>
-                        <td>
-                          <button type="button" class="editor__table-cell-action editor__table-cell-action--wide" (click)="openRowActions(row.index)">
-                            {{ row.item.name || 'Без названия' }}
-                          </button>
-                        </td>
-                        <td>
-                          <app-kp-input-number
-                            [value]="row.item.qty"
-                            (valueChange)="setItemQty(row.index, $event)"
-                            [min]="0"
-                            [useGrouping]="false"
-                            class="editor__table-number"
-                            (click)="$event.stopPropagation()"
-                            (dblclick)="$event.stopPropagation()"
-                          />
-                        </td>
-                        <td>
-                          <span class="editor__table-readonly">{{ row.item.unit || 'шт' }}</span>
-                        </td>
-                        <td>
-                          <app-kp-input-number
-                            [value]="row.item.price"
-                            (valueChange)="setItemPrice(row.index, $event)"
-                            [min]="0"
-                            [step]="0.01"
-                            [useGrouping]="false"
-                            class="editor__table-number"
-                            (click)="$event.stopPropagation()"
-                            (dblclick)="$event.stopPropagation()"
-                          />
-                        </td>
-                        <td class="editor__table-sum">
-                          {{ computeSum(row.item) | number:'1.2-2' }}
+                        <td *ngFor="let col of tableBlockColumns(i)"
+                            [style.text-align]="col.type === 'number' || col.type === 'currency' ? 'right' : null">
+                          <ng-container [ngSwitch]="col.field">
+                            <ng-container *ngSwitchCase="'index'">
+                              <app-kp-button
+                                [label]="'' + (localIdx + 1)"
+                                variant="flat"
+                                [text]="true"
+                                size="small"
+                                styleClass="editor__table-cell-action"
+                                (buttonClick)="openRowActions(row.index)"
+                              />
+                            </ng-container>
+
+                            <ng-container *ngSwitchCase="'photo'">
+                              <button
+                                type="button"
+                                class="editor__table-photo"
+                                (click)="openRowActions(row.index)"
+                                [attr.aria-label]="'Действия для позиции ' + (row.index + 1)"
+                              >
+                                <i class="pi pi-image" *ngIf="!row.item.photo"></i>
+                                <img *ngIf="row.item.photo" [src]="row.item.photo" class="editor__table-photo-img" alt="фото" />
+                              </button>
+                            </ng-container>
+
+                            <ng-container *ngSwitchCase="'qty'">
+                              <app-kp-input-number
+                                [value]="row.item.qty"
+                                (valueChange)="setItemQty(row.index, $event)"
+                                [min]="0"
+                                [useGrouping]="false"
+                                class="editor__table-number"
+                                (click)="$event.stopPropagation()"
+                                (dblclick)="$event.stopPropagation()"
+                              />
+                            </ng-container>
+
+                            <ng-container *ngSwitchCase="'price'">
+                              <app-kp-input-number
+                                [value]="row.item.price"
+                                (valueChange)="setItemPrice(row.index, $event)"
+                                [min]="0"
+                                [step]="0.01"
+                                [useGrouping]="false"
+                                class="editor__table-number"
+                                (click)="$event.stopPropagation()"
+                                (dblclick)="$event.stopPropagation()"
+                              />
+                            </ng-container>
+
+                            <ng-container *ngSwitchCase="'sum'">
+                              <span class="editor__table-sum">{{ computeSum(row.item) | number:'1.2-2' }}</span>
+                            </ng-container>
+
+                            <ng-container *ngSwitchCase="'unit'">
+                              <span class="editor__table-readonly">{{ row.item.unit || 'шт' }}</span>
+                            </ng-container>
+
+                            <ng-container *ngSwitchDefault>
+                              <button type="button" class="editor__table-cell-action" (click)="openRowActions(row.index)">
+                                {{ getItemField(row.item, col.field) || '—' }}
+                              </button>
+                            </ng-container>
+                          </ng-container>
                         </td>
                       </tr>
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td colspan="7" class="editor__table-total-label">Итого:</td>
+                        <td [attr.colspan]="tableBlockColumns(i).length - 1" class="editor__table-total-label">Итого:</td>
                         <td class="editor__table-total">{{ blockItemsTotal(block) | number:'1.2-2' }}</td>
                       </tr>
                     </tfoot>
@@ -652,16 +707,12 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                 <app-kp-button label="Разделитель" icon="pi pi-minus" [text]="true" size="small" (buttonClick)="addBlock('separator')" />
                 <div class="editor__add-menu-table" role="presentation" (buttonClick)="$event.stopPropagation()">
                   <span class="editor__add-menu-label">Таблица</span>
-                  <p-select
-                    [ngModel]="selectedTableKind()"
-                    (ngModelChange)="selectedTableKind.set($event)"
+                  <app-kp-select
+                    name="qe-add-table-kind"
+                    [value]="selectedTableKind()"
+                    (valueChange)="onAddTableKindChange($event)"
                     [options]="availableTableBlockOptions()"
-                    optionLabel="label"
-                    optionValue="value"
                     placeholder="Выберите тип"
-                    class="w-full"
-                    size="small"
-                    appendTo="body"
                     [disabled]="availableTableBlockOptions().length === 0"
                   />
                   <app-kp-button
@@ -721,18 +772,8 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
             </div>
           </div>
 
-          <div class="editor__sidebar-section">
-            <h3 class="editor__sidebar-title">Шаблон оформления</h3>
-            <div class="editor__sidebar-field">
-              <app-kp-select
-                name="qe-template-category"
-                label="Категория документа"
-                [value]="templateCategory()"
-                (valueChange)="onTemplateCategoryChange($event)"
-                [options]="templateDocTypeOptions"
-                placeholder="Категория"
-              />
-            </div>
+          <div class="editor__sidebar-section" id="editor-appearance-section">
+            <h3 class="editor__sidebar-title">Оформление документа</h3>
             <div class="editor__sidebar-field">
               <app-kp-select
                 name="qe-template-pick"
@@ -743,22 +784,24 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                 placeholder="Выберите шаблон"
               />
             </div>
-            <app-kp-button
-              label="Управление шаблонами"
-              icon="pi pi-palette"
-              severity="secondary"
-              [outlined]="true"
-              size="small"
-              (buttonClick)="showTemplates = true"
-              class="w-full"
-            />
-          </div>
-
-          <div class="editor__sidebar-section">
-            <h3 class="editor__sidebar-title">Фон документа</h3>
-            @if (quotationBg) {
+            <p class="editor__sidebar-hint">
+              Один фон на весь лист A4 (все «страницы» прокручиваются вместе). Выберите шаблон в списке «Шаблон» — фон появится на листе.
+              Превью ниже — целая картинка (шапка и подвал на одном файле). Если заголовок уже на фоне — скройте блок заголовка.
+            </p>
+            @if (hiddenHeaderBlockIndex() >= 0) {
+              <app-kp-button
+                label="Показать заголовок"
+                icon="pi pi-eye"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                styleClass="w-full"
+                (buttonClick)="toggleHeaderHidden(hiddenHeaderBlockIndex())"
+              />
+            }
+            @if (quotationBg()) {
               <div class="editor__bg-preview">
-                <img [src]="quotationBg" alt="Превью фона документа" />
+                <img [src]="quotationBg()" alt="Превью фона документа" />
               </div>
             }
             <div
@@ -776,9 +819,14 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                 <i class="pi pi-cloud-upload editor__bg-dropzone-icon" aria-hidden="true"></i>
                 <span class="editor__bg-dropzone-text">
                   Перетащите изображение или&nbsp;
-                  <button type="button" class="editor__bg-browse-btn" (click)="bgFileInput.click()">
-                    выберите файл
-                  </button>
+                  <app-kp-button
+                    label="выберите файл"
+                    variant="flat"
+                    [text]="true"
+                    size="small"
+                    styleClass="editor__bg-browse-btn"
+                    (buttonClick)="bgFileInput.click()"
+                  />
                 </span>
               }
               <input
@@ -789,7 +837,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                 (change)="onBgFileSelected($event)"
               />
             </div>
-            @if (quotationBg) {
+            @if (quotationBg()) {
               <app-kp-button
                 label="Удалить фон"
                 icon="pi pi-times"
@@ -799,6 +847,37 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
                 (buttonClick)="removeBackgroundImage()"
               />
             }
+            <div class="editor__sidebar-actions">
+              <app-kp-button
+                label="Сохранить копию в библиотеку"
+                icon="pi pi-save"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                styleClass="w-full"
+                (buttonClick)="showSaveTemplateInput()"
+              />
+              @if (activeTemplateId()) {
+                <app-kp-button
+                  label="Открыть шаблон в библиотеке"
+                  icon="pi pi-external-link"
+                  severity="secondary"
+                  [text]="true"
+                  size="small"
+                  styleClass="w-full"
+                  (buttonClick)="openTemplateInLibrary()"
+                />
+                <app-kp-button
+                  label="Удалить шаблон"
+                  icon="pi pi-trash"
+                  severity="danger"
+                  [outlined]="true"
+                  size="small"
+                  styleClass="w-full"
+                  (buttonClick)="deleteActiveTemplate()"
+                />
+              }
+            </div>
           </div>
 
           <div class="editor__sidebar-section">
@@ -908,63 +987,20 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
       </div>
     </div>
 
-    <!-- ═══ Template Dialog ═══ -->
+    <!-- ═══ Apply Template Confirm ═══ -->
     <app-kp-dialog
-      [(visible)]="showTemplates"
-      header="Шаблоны оформления"
-      width="520px"
+      [(visible)]="showApplyTemplateConfirm"
+      header="Применить шаблон"
+      width="420px"
     >
-      <div class="tmpl-list">
-        <div class="tmpl-list__header">
-          <app-kp-select
-            name="qe-tmpl-dialog-category"
-            label="Категория"
-            [value]="templateCategory()"
-            (valueChange)="onTemplateCategoryChange($event)"
-            [options]="templateDocTypeOptions"
-          />
-          <app-kp-button
-            label="Сохранить как шаблон"
-            icon="pi pi-save"
-            size="small"
-            (buttonClick)="showSaveTemplateInput()"
-            [outlined]="true"
-          />
-        </div>
-
-        <div class="tmpl-list__items">
-          <div
-            *ngFor="let tmpl of templatesForCategory(); trackBy: trackByTemplate"
-            class="tmpl-card"
-            [class.tmpl-card--active]="activeTemplateId() === tmpl._id"
-            (buttonClick)="applyTemplate(tmpl)" (keydown.enter)="applyTemplate(tmpl)" tabindex="0" role="button"
-          >
-            <div class="tmpl-card__info">
-              <span class="tmpl-card__name">{{ tmpl.name }}</span>
-              <span class="tmpl-card__meta">{{ tmpl.blocks.length || 0 }} блоков</span>
-            </div>
-            <p-tag
-              *ngIf="tmpl.isDefault"
-              value="По умолчанию"
-              severity="info"
-              styleClass="tmpl-card__tag"
-            />
-            <div class="tmpl-card__actions">
-              <app-kp-button
-                icon="pi pi-trash"
-                [rounded]="true"
-                [text]="true"
-                severity="danger"
-                size="small"
-                (buttonClick)="$event.stopPropagation(); deleteTemplate(tmpl)"
-              />
-            </div>
-          </div>
-
-          <div *ngIf="templatesForCategory().length === 0" class="tmpl-list__empty">
-            <p>Нет шаблонов в категории «{{ templateCategoryLabel() }}»</p>
-          </div>
-        </div>
+      @if (pendingTemplate(); as tmpl) {
+        <p class="editor__dialog-confirm-text">
+          Применить шаблон «{{ tmpl.name }}»? Текущие блоки будут заменены.
+        </p>
+      }
+      <div kpDialogFooter class="editor__dialog-footer">
+        <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="cancelApplyTemplate()" />
+        <app-kp-button label="Применить" size="small" (buttonClick)="confirmApplyTemplate()" />
       </div>
     </app-kp-dialog>
 
@@ -1189,10 +1225,10 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
       </div>
     </app-kp-dialog>
 
-    <!-- ═══ Separator Padding Dialog ═══ -->
+    <!-- ═══ Block Padding Dialog ═══ -->
     <app-kp-dialog
       [(visible)]="showPaddingDialog"
-      header="Отступ разделителя"
+      [header]="paddingDialogMode === 'header' ? 'Отступы заголовка' : 'Отступ разделителя'"
       width="350px"
     >
       <app-kp-input-number
@@ -1200,9 +1236,19 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
         label="Отступ сверху (px)"
         [(value)]="paddingDialogValue"
         [min]="0"
-        [max]="100"
+        [max]="paddingDialogMode === 'header' ? 120 : maxSeparatorPadding"
         [useGrouping]="false"
       />
+      @if (paddingDialogMode === 'header') {
+        <app-kp-input-number
+          name="qe-padding-bottom-value"
+          label="Отступ снизу (px)"
+          [(value)]="paddingDialogBottomValue"
+          [min]="0"
+          [max]="120"
+          [useGrouping]="false"
+        />
+      }
       <div kpDialogFooter class="editor__dialog-footer">
         <app-kp-button label="Отмена" severity="secondary" [outlined]="true" size="small" (buttonClick)="showPaddingDialog = false" />
         <app-kp-button label="Готово" size="small" (buttonClick)="confirmPadding()" />
@@ -1238,7 +1284,7 @@ const DEFAULT_BLOCKS: EditorBlock[] = [
       (productSelected)="onProductReplaced($event)"
     />
 
-    <p-toast position="top-right" />
+    <app-kp-toast position="top-right" />
   `,
   styleUrl: './quotation-editor.component.scss',
 })
@@ -1273,15 +1319,15 @@ export class QuotationEditorComponent implements OnInit {
   readonly blocks = signal<EditorBlock[]>([]);
   readonly templates = signal<DocumentTemplate[]>([]);
   readonly activeTemplateId = signal<string | undefined>(undefined);
-  readonly templateCategory = signal<string>('quotation');
-  readonly templateDocTypeOptions = TEMPLATE_DOC_TYPE_OPTIONS;
   readonly counterpartyOptions = signal<KpSelectOption[]>([]);
   readonly counterpartyLoading = signal(true);
   readonly bgDragOver = signal(false);
   readonly bgProcessing = signal(false);
 
+  /** true = блоки загружены из templateSnapshot, не перезаписывать из шаблона */
+  #blocksFromSnapshot = false;
+
   // UI State
-  showTemplates = false;
   showAddMenu = false;
   readonly selectedTableKind = signal<string>('products');
   readonly tableBlockOptions = signal<KpSelectOption[]>(FALLBACK_TABLE_BLOCK_OPTIONS);
@@ -1372,7 +1418,7 @@ export class QuotationEditorComponent implements OnInit {
   });
 
   readonly templatesForCategory = computed(() =>
-    this.templates().filter((t) => (t.docType || 'quotation') === this.templateCategory()),
+    this.templates().filter((t) => (t.docType || 'quotation') === 'quotation'),
   );
 
   readonly templateSelectOptions = computed((): KpSelectOption[] =>
@@ -1382,8 +1428,8 @@ export class QuotationEditorComponent implements OnInit {
     })),
   );
 
-  readonly templateCategoryLabel = computed(() =>
-    TEMPLATE_DOC_TYPE_OPTIONS.find((o) => o.value === this.templateCategory())?.label ?? this.templateCategory(),
+  readonly hiddenHeaderBlockIndex = computed(() =>
+    this.blocks().findIndex((b) => b.type === 'header' && b.settings.hidden),
   );
 
   readonly sidebarItemRows = computed((): BlockItemRow[] => {
@@ -1409,9 +1455,16 @@ export class QuotationEditorComponent implements OnInit {
   showPhotoZoomDialog = false;
   photoZoomUrl = '';
 
+  readonly pendingTemplate = signal<DocumentTemplate | null>(null);
+  showApplyTemplateConfirm = false;
+
+  readonly maxSeparatorPadding = 500;
+
   showPaddingDialog = false;
   paddingDialogIndex = -1;
+  paddingDialogMode: 'separator' | 'header' = 'separator';
   paddingDialogValue: number | null = 4;
+  paddingDialogBottomValue: number | null = 0;
 
   showTemplateNameDialog = false;
   templateNameValue = '';
@@ -1446,19 +1499,18 @@ export class QuotationEditorComponent implements OnInit {
     this.quotation().validUntil = v;
   }
 
-  get quotationBg(): string | undefined {
-    if (this.activeTemplateId()) {
-      const tmpl = this.templates().find(t => t._id === this.activeTemplateId());
-      return tmpl?.backgroundImage;
-    }
-    return undefined;
-  }
+  readonly quotationBg = computed(() => {
+    const id = this.activeTemplateId();
+    if (!id) return undefined;
+    return this.templates().find((t) => t._id === id)?.backgroundImage;
+  });
 
-  getBackgroundCss(): string {
-    if (this.quotationBg) {
-      return `url(${this.quotationBg})`;
-    }
-    return 'none';
+  private patchActiveTemplateBackground(url: string | undefined): void {
+    const id = this.activeTemplateId();
+    if (!id) return;
+    this.templates.update((list) =>
+      list.map((t) => (t._id === id ? { ...t, backgroundImage: url } : t)),
+    );
   }
 
   ngOnInit(): void {
@@ -1495,17 +1547,36 @@ export class QuotationEditorComponent implements OnInit {
     this.patchQuotationField('counterpartyId', value ? String(value) : '');
   }
 
-  onTemplateCategoryChange(value: string | number | boolean | null): void {
-    if (typeof value !== 'string' || !value) return;
-    this.templateCategory.set(value);
+  onAddTableKindChange(value: string | number | boolean | null): void {
+    if (typeof value === 'string' && value) {
+      this.selectedTableKind.set(value);
+    }
   }
 
   onTemplatePick(value: string | number | boolean | null): void {
     if (!value || typeof value !== 'string') return;
     const tmpl = this.templates().find((t) => t._id === value);
+    if (!tmpl || tmpl._id === this.activeTemplateId()) return;
+    this.pendingTemplate.set(tmpl);
+    this.showApplyTemplateConfirm = true;
+  }
+
+  openTemplatesFromToolbar(): void {
+    document.getElementById('editor-appearance-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  confirmApplyTemplate(): void {
+    const tmpl = this.pendingTemplate();
     if (tmpl) {
-      this.applyTemplate(tmpl);
+      this.activateTemplate(tmpl);
     }
+    this.showApplyTemplateConfirm = false;
+    this.pendingTemplate.set(null);
+  }
+
+  cancelApplyTemplate(): void {
+    this.showApplyTemplateConfirm = false;
+    this.pendingTemplate.set(null);
   }
 
   private initNewQuotation(): void {
@@ -1557,8 +1628,20 @@ export class QuotationEditorComponent implements OnInit {
           next: (data) => {
             this.quotation.set(data);
             this.items.set(this.normalizeItems(data.items || []));
-            if (data.templateId) {
+            // Priority: templateSnapshot > templateId > isDefault > DEFAULT_BLOCKS
+            if (data.templateSnapshot && Array.isArray(data.templateSnapshot) && data.templateSnapshot.length > 0) {
+              this.blocks.set(this.normalizeBlocks(JSON.parse(JSON.stringify(data.templateSnapshot))));
+              this.#blocksFromSnapshot = true;
+              if (data.templateId) {
+                this.activeTemplateId.set(data.templateId);
+              }
+            } else if (data.templateId) {
               this.activeTemplateId.set(data.templateId);
+              // Apply template blocks if already loaded; if not, loadTemplates will handle it
+              const tmpl = this.templates().find((t: DocumentTemplate) => t._id === data.templateId);
+              if (tmpl?.blocks?.length) {
+                this.blocks.set(this.normalizeBlocks(JSON.parse(JSON.stringify(tmpl.blocks))));
+              }
             } else {
               this.initDefaultBlocks();
             }
@@ -1604,6 +1687,7 @@ export class QuotationEditorComponent implements OnInit {
               label: t.label || t.title || t.name,
               dataSource: t.dataSource || DEFAULT_PICKER_META[t.name]?.dataSource || '',
               productKind: t.productKind || DEFAULT_PICKER_META[t.name]?.productKind,
+              columns: t.columns,
             };
           }
           this.pickerMetaByKind.set(meta);
@@ -1618,12 +1702,12 @@ export class QuotationEditorComponent implements OnInit {
         tap({
           next: (res) => {
             this.templates.set(res.data || []);
-            this.syncTemplateCategoryFromActive();
 
             const activeId = this.activeTemplateId();
 
             // If we have an active template, apply its blocks on reload
-            if (activeId && (res.data || []).length > 0) {
+            // (skip if blocks were loaded from a templateSnapshot — they have priority)
+            if (activeId && (res.data || []).length > 0 && !this.#blocksFromSnapshot) {
               const tmpl = res.data.find((t: DocumentTemplate) => t._id === activeId);
               if (tmpl && tmpl.blocks && tmpl.blocks.length > 0) {
                 this.blocks.set(this.normalizeBlocks(JSON.parse(JSON.stringify(tmpl.blocks))));
@@ -1635,10 +1719,11 @@ export class QuotationEditorComponent implements OnInit {
             }
 
             // If no template loaded yet and we have templates, apply default
-            if (!activeId && (res.data || []).length > 0) {
+            // (skip if blocks were loaded from a templateSnapshot — they have priority)
+            if (!activeId && (res.data || []).length > 0 && !this.#blocksFromSnapshot) {
               const defaultTmpl = res.data.find((t: DocumentTemplate) => t.isDefault && t.docType === 'quotation');
               if (defaultTmpl) {
-                this.applyTemplate(defaultTmpl);
+                this.activateTemplate(defaultTmpl);
               } else {
                 this.initDefaultBlocks();
               }
@@ -1665,6 +1750,7 @@ export class QuotationEditorComponent implements OnInit {
         sum: (item.qty || 0) * (item.price || 0),
       })),
       templateId: this.activeTemplateId(),
+      templateSnapshot: JSON.parse(JSON.stringify(this.blocks())),
       total: this.totalSum(),
     };
 
@@ -1792,6 +1878,15 @@ export class QuotationEditorComponent implements OnInit {
     return this.items()
       .filter((item) => (item.tableKind ?? DEFAULT_TABLE_KIND) === kind)
       .reduce((acc, item) => acc + (item.qty || 0) * (item.price || 0), 0);
+  }
+
+  tableBlockColumns(blockIndex: number): IDocTableColumn[] {
+    const block = this.blocks()[blockIndex];
+    if (!block || block.type !== 'table') return [];
+    const kind = this.resolveTableKind(block);
+    const meta = this.pickerMetaByKind()[kind];
+    if (meta?.columns?.length) return meta.columns;
+    return DEFAULT_TABLE_COLUMNS;
   }
 
   trackByBlockItemRow(_index: number, row: BlockItemRow): string {
@@ -2013,6 +2108,13 @@ export class QuotationEditorComponent implements OnInit {
     return (item.qty || 0) * (item.price || 0);
   }
 
+  getItemField(item: QuotationItem, field: string): FieldValue {
+    if (field === 'sum') return (item.qty || 0) * (item.price || 0);
+    if (field === 'index') return item.order + 1;
+    const key = field as keyof QuotationItem;
+    return item[key];
+  }
+
   showPhotoInput(index: number): void {
     this.selectItem(index);
     this.photoDialogIndex = index;
@@ -2049,6 +2151,7 @@ export class QuotationEditorComponent implements OnInit {
         align: 'center',
         paddingTop: 8,
         paddingBottom: 8,
+        ...(type === 'text' ? { borderStyle: 'none' as const } : {}),
       },
     };
     if (type === 'text') {
@@ -2431,6 +2534,9 @@ export class QuotationEditorComponent implements OnInit {
       paddingTop: block.settings.paddingTop ?? 8,
       paddingBottom: block.settings.paddingBottom ?? 8,
     };
+    if (block.settings.borderStyle === undefined) {
+      settings.borderStyle = 'dashed';
+    }
     if (block.cells && block.cells.length > 0) {
       return {
         ...block,
@@ -2446,7 +2552,26 @@ export class QuotationEditorComponent implements OnInit {
   }
 
   private normalizeBlocks(blocks: EditorBlock[]): EditorBlock[] {
-    return blocks.map((block) => this.withClientKey(this.normalizeTableBlock(this.normalizeTextBlock(block))));
+    return blocks.map((block, index) =>
+      this.withClientKey(
+        this.normalizeTableBlock(
+          this.normalizeTextBlock(this.normalizeFirstBlockSpacing(block, index)),
+        ),
+      ),
+    );
+  }
+
+  /** Сбрасывает чрезмерный верхний отступ у первого блока (часто separator с paddingTop до 500). */
+  private normalizeFirstBlockSpacing(block: EditorBlock, index: number): EditorBlock {
+    if (index !== 0) return block;
+    const settings = { ...block.settings };
+    if (block.type === 'separator') {
+      const top = settings.paddingTop ?? 0;
+      settings.paddingTop = top > 48 ? 0 : Math.min(top, 8);
+    } else if (block.type === 'header') {
+      settings.paddingTop = Math.min(settings.paddingTop ?? 0, 12);
+    }
+    return { ...block, settings };
   }
 
   private normalizeTableBlock(block: EditorBlock): EditorBlock {
@@ -2472,22 +2597,56 @@ export class QuotationEditorComponent implements OnInit {
     };
   }
 
+  toggleHeaderHidden(index: number): void {
+    if (!this.isValidBlockIndex(index)) return;
+    const block = this.blocks()[index];
+    if (block.type !== 'header') return;
+    this.blocks.update((blocks) => {
+      const updated = [...blocks];
+      const current = updated[index];
+      if (!current || current.type !== 'header') return blocks;
+      updated[index] = {
+        ...current,
+        settings: { ...current.settings, hidden: !current.settings.hidden },
+      };
+      return updated;
+    });
+  }
+
   editBlockSettings(index: number): void {
     const block = this.blocks()[index];
     if (block.type === 'separator') {
+      this.paddingDialogMode = 'separator';
       this.paddingDialogIndex = index;
       this.paddingDialogValue = block.settings.paddingTop;
+      this.showPaddingDialog = true;
+    } else if (block.type === 'header') {
+      this.paddingDialogMode = 'header';
+      this.paddingDialogIndex = index;
+      this.paddingDialogValue = block.settings.paddingTop;
+      this.paddingDialogBottomValue = block.settings.paddingBottom;
       this.showPaddingDialog = true;
     }
   }
 
   confirmPadding(): void {
     if (this.paddingDialogIndex >= 0) {
+      const max = this.paddingDialogMode === 'header' ? 120 : this.maxSeparatorPadding;
+      const top = Math.min(max, Math.max(0, this.paddingDialogValue ?? 0));
+      const bottom = this.paddingDialogMode === 'header'
+        ? Math.min(120, Math.max(0, this.paddingDialogBottomValue ?? 0))
+        : undefined;
       this.blocks.update(blocks => {
         const updated = [...blocks];
+        const block = updated[this.paddingDialogIndex];
+        if (!block) return blocks;
         updated[this.paddingDialogIndex] = {
-          ...updated[this.paddingDialogIndex],
-          settings: { ...updated[this.paddingDialogIndex].settings, paddingTop: this.paddingDialogValue ?? 0 },
+          ...block,
+          settings: {
+            ...block.settings,
+            paddingTop: top,
+            ...(bottom !== undefined ? { paddingBottom: bottom } : {}),
+          },
         };
         return updated;
       });
@@ -2584,6 +2743,7 @@ export class QuotationEditorComponent implements OnInit {
 
     const activeId = this.activeTemplateId();
     if (activeId) {
+      this.patchActiveTemplateBackground(url);
       this.crudApi.update('/document-templates', activeId, { backgroundImage: url })
         .pipe(
           takeUntilDestroyed(this.destroyRef),
@@ -2598,7 +2758,7 @@ export class QuotationEditorComponent implements OnInit {
 
     this.crudApi.create<DocumentTemplate>('/document-templates', {
       name: 'Фон для КП',
-      docType: this.templateCategory(),
+      docType: 'quotation',
       isDefault: false,
       backgroundImage: url,
       blocks: this.blocks(),
@@ -2606,7 +2766,7 @@ export class QuotationEditorComponent implements OnInit {
       takeUntilDestroyed(this.destroyRef),
       tap((result: DocumentTemplate) => {
         this.activeTemplateId.set(result._id);
-        this.syncTemplateCategoryFromActive();
+        this.templates.update((list) => [...list, { ...result, backgroundImage: url }]);
         this.loadTemplates();
         this.notification.add({ severity: 'success', summary: 'Фон загружен' });
       }),
@@ -2616,6 +2776,7 @@ export class QuotationEditorComponent implements OnInit {
   removeBackgroundImage(): void {
     const activeId = this.activeTemplateId();
     if (activeId) {
+      this.patchActiveTemplateBackground(undefined);
       this.crudApi.update('/document-templates', activeId, { backgroundImage: undefined })
         .pipe(
           takeUntilDestroyed(this.destroyRef),
@@ -2626,28 +2787,23 @@ export class QuotationEditorComponent implements OnInit {
   }
 
   // ===== Templates =====
-  applyTemplate(tmpl: DocumentTemplate): void {
+  private activateTemplate(tmpl: DocumentTemplate): void {
     this.activeTemplateId.set(tmpl._id);
-    if (tmpl.docType) {
-      this.templateCategory.set(tmpl.docType);
-    }
     if (tmpl.blocks && tmpl.blocks.length > 0) {
-      this.blocks.set(this.normalizeBlocks(JSON.parse(JSON.stringify(tmpl.blocks))));
+      this.blocks.set(this.normalizeBlocks(structuredClone(tmpl.blocks)));
     } else {
       this.initDefaultBlocks();
     }
-    this.showTemplates = false;
   }
 
-  private syncTemplateCategoryFromActive(): void {
+  deleteActiveTemplate(): void {
     const activeId = this.activeTemplateId();
     if (!activeId) return;
     const tmpl = this.templates().find((t) => t._id === activeId);
-    if (tmpl?.docType) {
-      this.templateCategory.set(tmpl.docType);
+    if (tmpl) {
+      this.deleteTemplate(tmpl);
     }
   }
-
   showSaveTemplateInput(): void {
     this.templateNameValue = '';
     this.showTemplateNameDialog = true;
@@ -2662,10 +2818,11 @@ export class QuotationEditorComponent implements OnInit {
 
     const template: Partial<DocumentTemplate> & { name: string } = {
       name,
-      docType: this.templateCategory(),
+      docType: 'quotation',
+      organizationId: this.quotation().organizationId || '',
       isDefault: false,
       blocks: this.blocks(),
-      backgroundImage: this.quotationBg,
+      backgroundImage: this.quotationBg(),
     };
 
     this.crudApi.create<DocumentTemplate>('/document-templates', template)
@@ -2705,13 +2862,16 @@ export class QuotationEditorComponent implements OnInit {
       .subscribe();
   }
 
-  trackByTemplate(index: number, tmpl: DocumentTemplate): string | undefined {
-    return tmpl._id || String(index);
-  }
-
   // ===== Navigation =====
   goBack(): void {
     this.router.navigate(['/quotations']);
+  }
+
+  openTemplateInLibrary(): void {
+    const activeId = this.activeTemplateId();
+    if (activeId) {
+      window.open(`/document-templates/${activeId}`, '_blank');
+    }
   }
 
   // ===== Utilities =====

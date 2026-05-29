@@ -2,10 +2,11 @@ import { Component, input, output, model, computed, inject, ChangeDetectionStrat
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
-import { InputTextModule } from 'primeng/inputtext';
 import { EmptyStateComponent } from './empty-state/empty-state.component';
 import { KpButtonComponent } from './kp-button.component';
+import { KpSearchComponent } from './kp-search.component';
+import { KpTagComponent } from './kp-tag.component';
+import { KpPaginatorComponent } from './kp-paginator.component';
 import { AuthService } from '../../core/auth.service';
 import type { CrudAction } from '../crud/crud-page.types';
 
@@ -40,9 +41,9 @@ export interface KpPageEvent {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, FormsModule,
-    TableModule, TagModule, InputTextModule,
-    EmptyStateComponent, KpButtonComponent,
-    NgTemplateOutlet,
+    TableModule,
+    EmptyStateComponent, KpButtonComponent, KpSearchComponent, KpTagComponent,
+    KpPaginatorComponent, NgTemplateOutlet,
   ],
   template: `
     <div class="kp-table-panel">
@@ -61,20 +62,12 @@ export interface KpPageEvent {
           </div>
           <div class="kp-table__toolbar-right">
             @if (showSearch()) {
-              <span class="p-input-icon-left kp-table__search">
-                <i class="pi pi-search" aria-hidden="true"></i>
-                <label class="visually-hidden" [attr.for]="searchInputId">Поиск</label>
-                <input
-                  [id]="searchInputId"
-                  pInputText
-                  type="search"
-                  placeholder="Поиск..."
-                  [attr.aria-label]="'Поиск'"
-                  [ngModel]="searchQuery()"
-                  (ngModelChange)="onSearch($event)"
-                  size="small"
-                />
-              </span>
+              <app-kp-search
+                [(query)]="searchQuery"
+                placeholder="Поиск..."
+                [debounceMs]="300"
+                (searchChange)="onSearch($event)"
+              />
             }
             <ng-content select="[table-actions]" />
           </div>
@@ -91,19 +84,13 @@ export interface KpPageEvent {
           [value]="data()"
           [stripedRows]="true"
           [resizableColumns]="true"
-          [paginator]="paginator()"
-          [rows]="limit()"
-          [totalRecords]="total()"
-          [rowsPerPageOptions]="rowsPerPageOptions()"
+          [paginator]="false"
           [lazy]="true"
           [sortField]="sortField()"
           [sortOrder]="sortOrder()"
-          (onPage)="pageEvent.emit($event)"
           (onSort)="onSortHandler($event)"
           size="small"
           styleClass="p-datatable-striped kp-table__datatable"
-          [showCurrentPageReport]="true"
-          currentPageReportTemplate="Записи {first}–{last} из {totalRecords}"
         >
           <ng-template pTemplate="header">
             <tr>
@@ -130,7 +117,7 @@ export interface KpPageEvent {
                 <td [class.kp-table__td--tag]="col.type === 'tag'">
                   @switch (col.type) {
                     @case ('tag') {
-                      <p-tag
+                      <app-kp-tag
                         [value]="getSelectLabel(col, row[col.field])"
                         [severity]="($any(severityFn())(row[col.field]))"
                       />
@@ -242,6 +229,16 @@ export interface KpPageEvent {
           </ng-template>
         </p-table>
         </div>
+
+        @if (paginator() && total() > 0) {
+          <app-kp-paginator
+            [first]="paginatorFirst()"
+            [rows]="limit()"
+            [totalRecords]="total()"
+            [rowsPerPageOptions]="rowsPerPageOptions()"
+            (pageChange)="onPaginatorPageChange($event)"
+          />
+        }
       }
     </div>
 
@@ -263,7 +260,6 @@ export interface KpPageEvent {
   styleUrl: './kp-table.component.scss',
 })
 export class KpTableComponent {
-  readonly searchInputId = `kp-search-${Math.random().toString(36).slice(2, 9)}`;
   private readonly authService = inject(AuthService);
 
   readonly columns = input.required<KpColumn[]>();
@@ -298,6 +294,9 @@ export class KpTableComponent {
   readonly searchChange = output<string>();
   readonly edit = output<Record<string, unknown>>();
   readonly deleteRow = output<Record<string, unknown>>();
+
+  /** first-индекс текущей страницы (0-based), вычисляется из page и limit */
+  readonly paginatorFirst = computed(() => (this.page() - 1) * this.limit());
 
   /** Тулбар всегда виден: поиск, действия и/или счётчик записей */
   readonly showToolbar = computed(
@@ -338,6 +337,13 @@ export class KpTableComponent {
   onSearch(value: string): void {
     this.searchQuery.set(value);
     this.searchChange.emit(value);
+  }
+
+  onPaginatorPageChange(event: { first: number; rows: number }): void {
+    const page = Math.floor(event.first / event.rows) + 1;
+    this.page.set(page);
+    this.limit.set(event.rows);
+    this.pageEvent.emit(event);
   }
 
   getSelectLabel(col: KpColumn, value: unknown): string {

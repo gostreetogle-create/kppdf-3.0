@@ -23,6 +23,7 @@ import { CounterpartyOptionsService } from '../../shared/services/counterparty-o
 import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createTendersStore } from './tenders.store';
 import { PERMISSIONS } from '../../core/permissions';
+import { tenderSeverity as _tenderSeverity } from '../../shared/utils/status-severity.util';
 import type { CrudAction } from '../../shared/crud/crud-page.types';
 
 const TENDER_STATUS_OPTIONS: KpSelectOption[] = [
@@ -32,17 +33,6 @@ const TENDER_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Выигран', value: 'won' },
   { label: 'Проигран', value: 'lost' },
 ];
-
-function tenderSeverity(value: unknown): string {
-  const map: Record<string, string> = {
-    new: 'info',
-    in_progress: 'warn',
-    kp_sent: 'info',
-    won: 'success',
-    lost: 'danger',
-  };
-  return map[String(value)] || 'info';
-}
 
 @Component({
   selector: 'app-tenders-page',
@@ -224,7 +214,7 @@ function tenderSeverity(value: unknown): string {
 })
 export class TendersPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
-  readonly tenderSeverity = tenderSeverity;
+  readonly tenderSeverity = _tenderSeverity;
   readonly statusOptions = TENDER_STATUS_OPTIONS;
 
   private readonly router = inject(Router);

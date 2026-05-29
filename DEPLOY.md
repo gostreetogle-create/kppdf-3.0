@@ -111,7 +111,21 @@ chmod 600 ~/.ssh/authorized_keys
 sed -i 's/\r$//' deploy.sh deploy/deploy.sh deploy/synology/deploy.sh
 ```
 
-### 2. Sudo требует пароль
+### 2. PowerShell `.ps1` без UTF-8 BOM (локальный dev)
+
+**Симптом:** `ParserError`, «Отсутствует закрывающий знак "}"», кракозябры в `Write-Host`, `.\start.ps1` не запускается.
+**Причина:** Windows PowerShell 5.1 читает `.ps1` без BOM как CP1251; кириллица и символы `—`/`→` ломают строки.
+
+**Решение:**
+
+```powershell
+npm run ps1:bom
+npm run ps1:check
+```
+
+Канон: [`.opencode/rules/encoding-windows.md`](.opencode/rules/encoding-windows.md). Pre-commit выставляет BOM для staged `*.ps1` автоматически.
+
+### 3. Sudo требует пароль
 
 **Симптом:** `sudo: a password is required`
 **Причина:** По умолчанию `tiit` требует пароль для sudo.
@@ -126,7 +140,7 @@ ssh tiit@HOST "echo 'PASSWORD' | sudo -S bash -c 'docker ps'"
 ssh tiit@HOST "echo 'PASSWORD' | sudo -S docker ps"
 ```
 
-### 3. Monitoring не открывается (127.0.0.1)
+### 4. Monitoring не открывается (127.0.0.1)
 
 **Симптом:** `http://192.168.1.46:3001` — ERR_CONNECTION_REFUSED,
 но `curl http://localhost:3001` изнутри сервера работает.
@@ -152,12 +166,12 @@ ssh tiit@HOST "echo 'PASSWORD' | sudo -S docker ps"
    # Должен быть 0.0.0.0:3001, НЕ 127.0.0.1
    ```
 
-### 4. Angular budget exceeded
+### 5. Angular budget exceeded
 
 **Симптом:** `Warning: quotation-editor.component.scss exceeded maximum budget`
 **Решение:** Это **warning**, а не ошибка. Сборка проходит успешно. Можно игнорировать.
 
-### 5. Seed дублирует данные
+### 6. Seed дублирует данные
 
 **Симптом:** Seed падает при повторном запуске.
 **Решение:** При обновлении — **всегда `--skip-seed`**. Только первый деплой — без флага.

@@ -24,8 +24,11 @@ import {
   KpSelectComponent,
   KpInputNumberComponent,
   KpButtonComponent,
+  KpTabGroupComponent,
+  type KpTabOption,
   type KpSelectOption,
 } from '../../shared/ui';
+import { directorySeverity } from '../../shared/utils/status-severity.util';
 
 // Store
 import { createDirStores, type DirStores } from './directories.store';
@@ -114,35 +117,8 @@ const QUICK_PRESETS: Partial<Record<DirKey, QuickPreset[]>> = {
   ],
 };
 
-// ── Severity function ──────────────────────────────────────────
-function dirSeverity(value: unknown): string {
-  const map: Record<string, string> = {
-    active: 'success',
-    draft: 'warn',
-    archived: 'danger',
-    admin: 'info',
-    manager: 'warn',
-    viewer: 'secondary',
-    ООО: 'info',
-    ИП: 'success',
-    АО: 'warn',
-    ПАО: 'warn',
-    Физлицо: 'secondary',
-    Другое: 'secondary',
-    ORDER: 'info',
-    ORDER_ITEM: 'secondary',
-    WORK_TASK: 'warn',
-    MATERIAL_REQUEST: 'success',
-    materials: 'info',
-    work: 'warn',
-    task: 'success',
-    drawing: 'secondary',
-    client: 'info',
-    supplier: 'success',
-    company: 'warn',
-  };
-  return map[String(value)] || 'info';
-}
+// ── Severity functions ──────────────────────────────────────────
+const dirSeverity = directorySeverity;
 
 /** Build CrudPermissions from PERMISSIONS entry */
 function perms(key: DirKey): CrudPermissions {
@@ -287,6 +263,7 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
     KpSelectComponent,
     KpInputNumberComponent,
     KpButtonComponent,
+    KpTabGroupComponent,
   ],
   template: `
     <app-page-layout>
@@ -302,19 +279,12 @@ const DIR_DISPLAYS: Record<DirKey, DirDisplay> = {
             <span class="dir-dept__label">{{ group.label }}</span>
           </div>
           <div class="dir-dept__tabs">
-            @for (key of group.keys; track key) {
-              @if (canView(key)) {
-                <app-kp-button
-                  [label]="DIR_DISPLAYS[key].label"
-                  [icon]="DIR_DISPLAYS[key].icon"
-                  severity="secondary"
-                  size="small"
-                  [text]="activeKey() !== key"
-                  [styleClass]="'dir-dept__btn' + (activeKey() === key ? ' dir-dept__btn--active' : '')"
-                  (buttonClick)="selectDir(key)"
-                />
-              }
-            }
+            <app-kp-tab-group
+              [options]="groupTabOptions(group)"
+              [(activeTab)]="activeKey"
+              (tabChange)="onTabChange($event)"
+              [ariaLabel]="group.label + ' — разделы'"
+            />
           </div>
         </div>
       }
@@ -830,6 +800,22 @@ export class DirectoriesPageComponent implements OnInit {
 
   selectDir(key: DirKey): void {
     this.activeKey.set(key);
+  }
+
+  onTabChange(key: string): void {
+    if (this.isDirKey(key)) {
+      this.activeKey.set(key);
+    }
+  }
+
+  groupTabOptions(group: DirGroup): KpTabOption[] {
+    return group.keys
+      .filter((k) => this.canView(k))
+      .map((k) => ({
+        label: DIR_DISPLAYS[k].label,
+        value: k,
+        icon: DIR_DISPLAYS[k].icon,
+      }));
   }
 
   createPreset(value: Record<string, unknown>): void {

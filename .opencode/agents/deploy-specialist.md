@@ -84,7 +84,22 @@ sed -i 's/\r$//' deploy.sh deploy/deploy.sh deploy/synology/deploy.sh
 
 ---
 
-### 2. Sudo требует пароль
+### 2. PowerShell `.ps1` без UTF-8 BOM (локальный dev на Windows)
+
+**Симптом:** `ParserError` при `.\start.ps1`, «Отсутствует закрывающий знак "}"», кракозябры в сообщениях.
+**Причина:** PowerShell 5.1 без BOM читает файл как CP1251; кириллица в строках ломает парсер.
+**Решение:**
+
+```powershell
+npm run ps1:bom
+npm run ps1:check
+```
+
+**Протокол:** [`.opencode/rules/encoding-windows.md`](../rules/encoding-windows.md) — только ASCII `-` / `->` в строках, русский в одинарных кавычках, pre-commit выставляет BOM.
+
+---
+
+### 3. Sudo требует пароль
 
 **Симптом:** `sudo: a password is required`
 **Причина:** По умолчанию `tiit` на Ubuntu требует пароль для sudo.

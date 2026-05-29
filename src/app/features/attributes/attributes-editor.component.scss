@@ -12,18 +12,7 @@
   color: var(--kp-text);
 }
 
-.attributes-editor__loading,
-.attributes-editor__empty {
-  color: var(--kp-text-secondary);
-  font-size: 0.875rem;
-  padding: 1rem 0;
-}
 
-.attributes-editor__error {
-  color: var(--kp-danger);
-  font-size: 0.875rem;
-  padding: 0.5rem 0;
-}
 
 .attributes-editor__grid {
   display: grid;

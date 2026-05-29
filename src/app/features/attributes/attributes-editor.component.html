@@ -2,15 +2,30 @@
   <h3 class="attributes-editor__title">Характеристики</h3>
 
   @if (loading) {
-    <div class="attributes-editor__loading">Загрузка...</div>
+    <app-empty-state
+      icon="pi-spin pi-spinner"
+      title="Загрузка..."
+      [compact]="true"
+      [tone]="'muted'"
+    />
   }
 
   @if (error) {
-    <div class="attributes-editor__error">{{ error }}</div>
+    <app-empty-state
+      icon="pi-exclamation-triangle"
+      [title]="error"
+      [compact]="true"
+    />
   }
 
-  @if (!loading && attributes.length === 0) {
-    <div class="attributes-editor__empty">Нет дополнительных характеристик для этой сущности</div>
+  @if (!loading && !error && attributes.length === 0) {
+    <app-empty-state
+      icon="pi-info-circle"
+      title="Нет дополнительных характеристик"
+      description="Для этой сущности не настроены дополнительные атрибуты"
+      [compact]="true"
+      [tone]="'muted'"
+    />
   }
 
   @if (!loading && attributes.length > 0) {

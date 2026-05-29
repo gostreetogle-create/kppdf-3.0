@@ -16,6 +16,7 @@
 | [ui-manifest.md](ui-manifest.md) | UI-манифест — Конституция интерфейсов, правила + YAML-проверки |
 | [golden-samples.ts](../golden-samples.ts) | Эталонные паттерны UI-компонентов (таблица с пагинацией, CRUD-диалог) |
 | [FREEZE-RULES.md](../lock/FREEZE-RULES.md) | FreezeGuard — frozen/locked файлы, алгоритм STOP для AI |
+| [encoding-windows.md](encoding-windows.md) | **Кодировки Windows:** UTF-8 BOM для `.ps1`, LF для `.sh`, UTF-8 для `.ts` |
 
 ## Основные принципы
 

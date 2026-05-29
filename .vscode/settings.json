@@ -1,0 +1,8 @@
+{
+  "[powershell]": {
+    "files.encoding": "utf8bom"
+  },
+  "files.associations": {
+    "*.ps1": "powershell"
+  }
+}

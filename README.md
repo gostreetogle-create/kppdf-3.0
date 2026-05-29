@@ -17,6 +17,15 @@
 
 ### Установка и запуск
 
+**Windows (рекомендуется):**
+
+```powershell
+.\start.cmd    # Docker MongoDB + backend + frontend + YouGile sync + браузер
+.\stop.ps1     # остановка процессов
+```
+
+**Вручную (любая ОС):**
+
 ```bash
 # 1. Backend (MongoDB + seed + сервер — одной командой)
 cd backend
@@ -29,6 +38,16 @@ ng.cmd serve                      # http://localhost:4200
 ```
 
 > Если `ng` не найден — используй `npx ng serve` или `ng.cmd serve`.
+
+### Кодировки на Windows
+
+| Что | Правило |
+|-----|---------|
+| `start.ps1`, `stop.ps1`, любые `*.ps1` | **UTF-8 с BOM** — иначе ParserError и «кракозябры» в PowerShell 5.1 |
+| После правки `.ps1` | `npm run ps1:bom` и `npm run ps1:check` |
+| Деплой `.sh` с Windows | LF без CRLF — см. [DEPLOY.md](./DEPLOY.md) |
+
+Полный протокол для AI и разработчиков: [`.opencode/rules/encoding-windows.md`](.opencode/rules/encoding-windows.md)
 
 ### Вход в систему
 | Логин | Пароль | Роль |
@@ -158,6 +177,10 @@ GET /api/v1/dashboard/stats → счётчики по всем таблицам
 | `npm run seed` | `backend/` | Заполнение БД тестовыми данными |
 | `npm run test` | `backend/` | Jest unit-тесты |
 | `npm run build` | `backend/` | TypeScript компиляция |
+| `.\start.cmd` / `.\start.ps1` | корень | Запуск dev-окружения (Windows) |
+| `.\stop.ps1` | корень | Остановка dev (Windows) |
+| `npm run ps1:bom` | корень | UTF-8 BOM для `.ps1` |
+| `npm run ps1:check` | корень | Проверка BOM и синтаксиса `.ps1` |
 
 ---
 
@@ -262,10 +285,11 @@ bash deploy.sh --skip-seed
 
 ## Source Of Truth
 
+- **Статус задач:** YouGile «KPPDF — сейчас» · для AI: `.opencode/yougile-snapshot.yaml`
 - Статус модулей (проценты, чеклисты, этапы): `.opencode/project-readiness.yaml`
-- Публикация readiness в UI: `npm run readiness:sync` -> `public/project-readiness.json`
 - Архитектура и структура документации: `docs/ARCHITECTURE.md`, `docs/INDEX.md`
 - Деплой (canonical): `DEPLOY.md`
+- Onboarding (единая точка входа): `.opencode/audit/ONBOARDING.md`
 
 ## Лицензия
 

@@ -133,7 +133,7 @@ export const MODULE_CONFIGS: ModuleConfig[] = [
     columns: [
       { field: 'number', header: 'Номер', type: 'text', width: '140px' },
       { field: 'date', header: 'Дата', type: 'date', width: '120px' },
-      { field: 'statusId', header: 'Статус', type: 'tag', width: '110px' },
+      { field: 'statusId', header: 'Статус', type: 'tag', width: '110px', options: [{ label: 'Черновик', value: 'draft' }, { label: 'Отправлена', value: 'sent' }, { label: 'Утверждена', value: 'approved' }, { label: 'Отменена', value: 'cancelled' }] },
     ],
   },
   {
@@ -144,7 +144,7 @@ export const MODULE_CONFIGS: ModuleConfig[] = [
     idField: '_id',
     columns: [
       { field: 'name', header: 'Название', type: 'text' },
-      { field: 'type', header: 'Тип', type: 'tag', width: '140px' },
+      { field: 'type', header: 'Тип', type: 'tag', width: '140px', options: [{ label: 'Сырьё', value: 'raw_materials' }, { label: 'Производство', value: 'production' }, { label: 'Готовая продукция', value: 'finished_goods' }] },
       { field: 'address', header: 'Адрес', type: 'text' },
       { field: 'isActive', header: 'Активен', type: 'boolean', width: '100px' },
     ],
@@ -157,7 +157,7 @@ export const MODULE_CONFIGS: ModuleConfig[] = [
     idField: '_id',
     columns: [
       { field: 'date', header: 'Дата', type: 'date', width: '120px' },
-      { field: 'type', header: 'Тип', type: 'tag', width: '130px' },
+      { field: 'type', header: 'Тип', type: 'tag', width: '130px', options: [{ label: 'Поступление', value: 'receipt' }, { label: 'Списание', value: 'write_off' }, { label: 'Перемещение (приход)', value: 'transfer_in' }, { label: 'Перемещение (расход)', value: 'transfer_out' }] },
       { field: 'productId', header: 'Товар', type: 'text', ref: 'product' },
       { field: 'warehouseId', header: 'Склад', type: 'text', ref: 'warehouse' },
       { field: 'qty', header: 'Кол-во', type: 'number', width: '100px' },
@@ -184,7 +184,7 @@ export const MODULE_CONFIGS: ModuleConfig[] = [
       { field: 'workOrderId', header: 'Наряд', type: 'text', ref: 'workOrder' },
       { field: 'operationId', header: 'Операция', type: 'text', ref: 'operation' },
       { field: 'order', header: '№', type: 'number', width: '50px' },
-      { field: 'statusId', header: 'Статус', type: 'tag', width: '110px' },
+      { field: 'statusId', header: 'Статус', type: 'tag', width: '110px', options: [{ label: 'Ожидает', value: 'pending' }, { label: 'В работе', value: 'in_progress' }, { label: 'Выполнена', value: 'completed' }, { label: 'Отменена', value: 'cancelled' }] },
     ],
   },
   {
@@ -207,7 +207,7 @@ export const MODULE_CONFIGS: ModuleConfig[] = [
     idField: '_id',
     columns: [
       { field: 'orderId', header: 'Заказ', type: 'text', ref: 'order' },
-      { field: 'type', header: 'Тип', type: 'tag', width: '120px' },
+      { field: 'type', header: 'Тип', type: 'tag', width: '120px', options: [{ label: 'Материалы', value: 'material' }, { label: 'Работы', value: 'labor' }, { label: 'Накладные', value: 'overhead' }] },
       { field: 'amount', header: 'Сумма', type: 'number', width: '120px' },
       { field: 'date', header: 'Дата', type: 'date', width: '120px' },
     ],
@@ -221,7 +221,7 @@ export const MODULE_CONFIGS: ModuleConfig[] = [
     columns: [
       { field: 'number', header: 'Номер', type: 'text', width: '140px', readonly: true },
       { field: 'date', header: 'Дата', type: 'date', width: '120px' },
-      { field: 'type', header: 'Тип', type: 'tag', width: '110px' },
+      { field: 'type', header: 'Тип', type: 'tag', width: '110px', options: [{ label: 'ТОРГ-12', value: 'torg12' }, { label: 'ТТН', value: 'ttn' }, { label: 'Счёт-фактура', value: 'invoice' }] },
       { field: 'shipmentId', header: 'Отгрузка', type: 'text', ref: 'shipment' },
       { field: 'totalAmount', header: 'Сумма', type: 'number', width: '120px' },
     ],
@@ -247,7 +247,7 @@ export const MODULE_CONFIGS: ModuleConfig[] = [
     idField: '_id',
     columns: [
       { field: 'counterpartyId', header: 'Контрагент', type: 'text', ref: 'counterparty' },
-      { field: 'type', header: 'Тип', type: 'tag', width: '110px' },
+      { field: 'type', header: 'Тип', type: 'tag', width: '110px', options: [{ label: 'Звонок', value: 'call' }, { label: 'Email', value: 'email' }, { label: 'Встреча', value: 'meeting' }, { label: 'Заметка', value: 'note' }, { label: 'Система', value: 'system' }] },
       { field: 'description', header: 'Описание', type: 'text' },
     ],
   },

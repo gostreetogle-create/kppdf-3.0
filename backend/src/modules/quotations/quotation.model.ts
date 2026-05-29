@@ -22,6 +22,7 @@ const quotationItemSchema = new Schema(
 const quotationSchema = new Schema<QuotationDocument>(
   {
     number: { type: String, required: true, unique: true },
+    organizationId: { type: String },
     counterpartyId: { type: String, required: true },
     tenderId: { type: String },
     date: { type: Date, default: Date.now },
@@ -31,6 +32,7 @@ const quotationSchema = new Schema<QuotationDocument>(
     notes: { type: String },
     isActive: { type: Boolean, default: true },
     templateId: { type: String },
+    templateSnapshot: { type: Schema.Types.Mixed },
     items: { type: [quotationItemSchema], default: [] },
   },
   { timestamps: true },

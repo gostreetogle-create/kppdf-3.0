@@ -28,10 +28,10 @@ file_hashes:
   shared/types/product.interface.ts: 926cf9492fd3087b2455f86d559b21b4b63e93847c1e01b4232e72f7e435f00b
   backend/src/modules/products/product.model.ts: 852e8d0099547e546e142f70351656fe99c76012e52718dce48d9dbc5b3ff6d2
   backend/src/modules/products/product.router.ts: 84185a77c02d8223532daa1d4f6991a2736795cfa0081e601cc4325606952495
-  src/app/features/products/index.ts: 16b95444e4d1a3dcea102e9f1180e7131b9c2c60266665a3e97d07288f95d30a
-  src/app/features/products/products-page.component.spec.ts: 1dc6d2ebf6a469938d6507a28180d641d18415d5a736c12026482cbb4272b2b7
-  src/app/features/products/products-page.component.ts: 2141a89b26b92c47fe15249de2ec8274244cc6ae7fe00390c54d1afbbc7388ae
-  src/app/features/products/products.store.ts: 37bcaba331172df9822982b20aca93b53f7b221d6cffb9d59abd79875574275c
-  src/app/features/attributes/attributes-editor.component.html: 8b299de079eb118360872cec23734cf9fa867da54ec5d252b009eccbb896fdb3
-  src/app/features/attributes/attributes-editor.component.scss: e0677f636fa7b141e0ccba6502c16a7305b2350034796a07a8b2bf9bf9c6a459
-  src/app/features/attributes/attributes-editor.component.ts: af007b73418c621761dc84d5bd1ca86f26d575552677cda93dcf960b65e13fe0
+  src/app/features/products/index.ts: 7c9e0ed353d95ba4c627f572c834202c1e1e4aefbc46c145f57b19e2b1076bc4
+  src/app/features/products/products-page.component.spec.ts: ae8a16f97e90869539a06a9a6276a18044d8b8d93550fe9fa6e621fc9287374d
+  src/app/features/products/products-page.component.ts: beaff883c956ae318ac6b0e46486d027154e06a30cdba71134a1c4dcd50d7a2d
+  src/app/features/products/products.store.ts: 948092d2ae9f2ae9b1fcf059d6f92449580e800fd734e720014bdc1fefe4dde4
+  src/app/features/attributes/attributes-editor.component.html: 6721f892d3498e997cc8dc5e26371b5ec09b5c64aa88ca42c1acc6f550867fba
+  src/app/features/attributes/attributes-editor.component.scss: 89dcabd598c2a987c2c1e6a7e33595f1bed66ce0bc712eb91c75f4d70cf81f72
+  src/app/features/attributes/attributes-editor.component.ts: eceb30b838ee4179417e8dbbbda07e8bbaa701a24d4a1daa3438d6aad61b9356

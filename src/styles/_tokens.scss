@@ -14,6 +14,8 @@
   --kp-danger-hover: #dc2626;
   --kp-danger-soft: #fef2f2;
 
+  --kp-primary-dark: #1d4ed8;
+
   --kp-success: #10b981;
   --kp-success-soft: #ecfdf5;
 
@@ -60,6 +62,8 @@
   --kp-border-light: #f1f5f9;
   --kp-border-strong: #cbd5e1;
 
+  --kp-surface-muted: #f1f5f9;
+
   /* ── Shadows (layered, premium) ── */
   --kp-shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
   --kp-shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
@@ -81,6 +85,11 @@
 
   /* Buttons */
   --kp-button-border-radius: var(--kp-radius-md);
+  --kp-button-min-height-sm: 36px;
+  --kp-button-min-height: 40px;
+  --kp-button-padding-y-sm: 0.4375rem;
+  --kp-button-padding-x-sm: 0.875rem;
+  --kp-button-icon-gap: var(--kp-space-2);
 
   /* ── Spacing (4px grid) ── */
   --kp-space-1: 4px;
@@ -185,10 +194,13 @@
   /* Dialog */
   --p-dialog-border-radius: 16px;
   --p-dialog-header-padding: 1.25rem 1.5rem 0.75rem;
-  --p-dialog-content-padding: 0 1.5rem 1rem;
+  --p-dialog-content-padding: 0.5rem 1.5rem 1rem;
   --p-dialog-footer-padding: 0.75rem 1.5rem 1.25rem;
   --p-dialog-header-font-size: 16px;
   --p-dialog-header-font-weight: 600;
+
+  /* ⚠️ --p-* токены ниже дублируют значения из app.config.ts (KppdfPreset).
+     При изменении значений — синхронизировать ОБА файла. Preset имеет приоритет. */
 
   /* InputText */
   --p-inputtext-padding-y: 0.5rem;
@@ -269,10 +281,12 @@
   --p-datepicker-date-hover-background: var(--kp-surface-hover);
 
   /* Button */
-  --p-button-sm-padding-y: 0.35rem;
-  --p-button-sm-padding-x: 0.85rem;
+  --p-button-sm-padding-y: var(--kp-button-padding-y-sm);
+  --p-button-sm-padding-x: var(--kp-button-padding-x-sm);
   --p-button-sm-font-size: 13px;
   --p-button-border-radius: var(--kp-button-border-radius);
+  --p-button-padding-y: 0.5rem;
+  --p-button-padding-x: 0.85rem;
   --p-button-icon-only-width: 30px;
   --p-button-icon-only-height: 30px;
   --p-button-icon-only-sm-width: 28px;

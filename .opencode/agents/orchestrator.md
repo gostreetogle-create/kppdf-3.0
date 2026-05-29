@@ -66,6 +66,7 @@ permission:
 5. **PrimeNG** — если проект на Angular, никаких raw `<button>`/`<input>`/`<table>`
 6. **Только `inject()`** — никакого constructor DI
 7. **`any` запрещён** — только `unknown` с гардой
+8. **Кодировки Windows** — `.ps1` только UTF-8 с BOM; после правки `npm run ps1:bom` + `ps1:check` ([encoding-windows.md](../rules/encoding-windows.md))
 
 ## Делегирование
 

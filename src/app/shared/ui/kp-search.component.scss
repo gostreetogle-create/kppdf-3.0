@@ -1,0 +1,60 @@
+.kp-search {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--kp-space-1, 4px);
+}
+
+.kp-search__label {
+  font-size: var(--kp-font-size-sm, 12px);
+  font-weight: var(--kp-font-weight-medium, 500);
+  color: var(--kp-text-secondary);
+  padding-left: 2px;
+}
+
+.kp-search__input-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+}
+
+.kp-search__icon {
+  position: absolute;
+  left: var(--kp-space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--kp-text-muted);
+  font-size: var(--kp-font-size-sm, 12px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+:host ::ng-deep .kp-search__control.p-inputtext {
+  width: 100%;
+  padding-left: 2.25rem;
+  border-radius: var(--kp-radius-md, 8px);
+  border: 1px solid var(--kp-border);
+  transition:
+    border-color var(--kp-transition-fast, 100ms ease),
+    box-shadow var(--kp-transition-fast, 100ms ease);
+
+  &:focus {
+    border-color: var(--kp-primary);
+    box-shadow: var(--kp-focus-ring-premium, 0 0 0 4px rgba(37, 99, 235, 0.14));
+    outline: none;
+  }
+
+  &::placeholder {
+    color: var(--kp-text-muted);
+  }
+}
+
+:host.kp-search--large ::ng-deep .kp-search__control.p-inputtext {
+  min-height: 2.5rem;
+  font-size: var(--kp-font-size-body, 14px);
+  padding-left: 2.5rem;
+}
+
+:host.kp-search--large .kp-search__icon {
+  font-size: var(--kp-font-size-body, 14px);
+}

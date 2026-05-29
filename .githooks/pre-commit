@@ -97,6 +97,26 @@ if [ -n "$STAGED_BACKEND" ]; then
 fi
 
 # ─────────────────────────────────────────────────────
+#  PowerShell .ps1 — UTF-8 BOM (Windows PowerShell 5.1)
+# ─────────────────────────────────────────────────────
+STAGED_PS1=$(git diff --cached --name-only --diff-filter=ACM | grep '\.ps1$' || true)
+
+if [ -n "$STAGED_PS1" ] && command -v node >/dev/null 2>&1; then
+  echo "📝 Encoding: UTF-8 BOM для staged .ps1 ..."
+  for ps1 in $STAGED_PS1; do
+    node "$PROJECT_ROOT/scripts/write-ps1-utf8bom.mjs" "$ps1" || HAS_ERRORS=1
+    git add "$ps1" 2>/dev/null || true
+  done
+  if ! node "$PROJECT_ROOT/scripts/check-ps1-encoding.mjs" $STAGED_PS1; then
+    echo "❌ .ps1: нет BOM или ошибка синтаксиса. См. .opencode/rules/encoding-windows.md"
+    HAS_ERRORS=1
+  else
+    echo "✅ .ps1: UTF-8 BOM + синтаксис OK"
+  fi
+  echo ""
+fi
+
+# ─────────────────────────────────────────────────────
 #  FreezeGuard — блокировка frozen/locked файлов
 # ─────────────────────────────────────────────────────
 if command -v node >/dev/null 2>&1 && [ -f "$PROJECT_ROOT/.opencode/lock/freeze-check.mjs" ]; then

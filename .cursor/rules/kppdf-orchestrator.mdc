@@ -27,6 +27,7 @@ alwaysApply: true
 | Деплой, CI/CD, nginx | `kppdf-deploy-synology.mdc` → deploy/synology/RUNBOOK.md |
 | Сводка аудита | .opencode/agents/chief-architect.md |
 | FreezeGuard / frozen-файлы | `.opencode/lock/FREEZE-RULES.md` + `kppdf-freezeguard.mdc` |
+| Кодировки `.ps1` / `.sh` / Windows dev | `.opencode/rules/encoding-windows.md` + `kppdf-encoding-windows.mdc` |
 
 ## Протокол работы
 
@@ -36,7 +37,8 @@ alwaysApply: true
 4. Если задача сложная — используй таблицу, прочитай правило специалиста
 5. После UI-работы: UI-specialist → UI-QA (Red Team) → UI-auditor
 6. После любого изменения: проверь сборку (ng build / npm test)
-7. ВАЖНО: никогда не читай все правила сразу — только то, что нужно под задачу
+7. После правки `*.ps1`: `npm run ps1:bom` + `npm run ps1:check` (см. encoding-windows.md)
+8. ВАЖНО: никогда не читай все правила сразу — только то, что нужно под задачу
 
 ## Git commit (только AI, не пользователь)
 

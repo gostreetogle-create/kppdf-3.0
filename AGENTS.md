@@ -158,6 +158,22 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 
 ---
 
+## 🔤 Кодировки (Windows) — обязательный протокол
+
+> Канон: [`.opencode/rules/encoding-windows.md`](.opencode/rules/encoding-windows.md). Cursor rule: `kppdf-encoding-windows.mdc` (globs `*.ps1`).
+
+| Файлы | Кодировка | После правки AI |
+|-------|-----------|-----------------|
+| `*.ps1` | **UTF-8 с BOM** | `npm run ps1:bom` + `npm run ps1:check` |
+| `*.sh` (деплой) | **LF**, без CRLF | `sed -i 's/\r$//' ...` перед деплоем (см. DEPLOY.md) |
+| `*.ts`, `*.scss` | UTF-8 (не UTF-16) | `ng build` |
+
+- 🔴 **`.ps1` с кириллицей без BOM** — ParserError в PowerShell 5.1 (реальный инцидент `start.ps1`).
+- 🔴 В строках `.ps1` не использовать Unicode `—`, `→` — только ASCII `-`, `->`.
+- ✅ Pre-commit автоматически выставляет BOM для staged `*.ps1`.
+
+---
+
 ## 🚦 Процесс работы
 
 ### Перед каждой задачей
@@ -166,13 +182,20 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 2. **Собрать контекст** — file-picker, code-searcher, read_files
 3. **Проверить наличие существующих решений** — не дублировать `CrudStore`, `kp-*`, `core/permissions`
 
+### При добавлении нового маршрута
+
+1. **`ROUTE_LABELS` обязателен** — добавить русскую метку в `kp-breadcrumbs.component.ts`
+2. **Родитель в `ROUTE_PARENTS`** — если вложенный маршрут (например, `'document-templates': 'directories'`)
+3. **Проверить хлебные крошки** — вся цепочка на русском: Главная → Родитель → Страница
+
 ### После каждого изменения
 
 1. **`ng build`** — сборка должна проходить без ошибок
 2. **`ng lint`** — проверить ESLint (границы, запрещённые импорты, стиль)
 3. **Проверить импорты** — не нарушены ли архитектурные слои
-4. **Code review** — запустить `code-reviewer-deepseek-flash` для проверки стандартов качества
-5. **Документация** — обновить README/AGENTS.md если изменилась структура
+4. **Правили `*.ps1`** → `npm run ps1:bom` + `npm run ps1:check` (см. encoding-windows.md)
+5. **Code review** — запустить `code-reviewer-deepseek-flash` для проверки стандартов качества
+6. **Документация** — обновить README/AGENTS.md если изменилась структура
 
 ---
 
@@ -186,6 +209,9 @@ export const DIR_PERM_PREFIX: Record<string, string> = { ... };
 - 🔴 Менять shared/types без синхронизации FE и BE
 - 🔴 Игнорировать ESLint-ошибки — `// eslint-disable-next-line` только с обоснованием
 - 🔴 **Удалять или рефакторить `QuotationEditor` (маршрут `/quotations/:id`)** — P0-фича, восстановлена после случайного удаления в `f74863a`. Любые изменения — только с задачей и approval @chief-architect.
+- 🔴 **Коммитить `.ps1` с кириллицей без UTF-8 BOM** — ломает `.\start.ps1` на Windows PowerShell 5.1.
+- 🔴 **Английские названия в UI** — все breadcrumbs, заголовки страниц, пункты меню, кнопки, подписи и placeholder-ы **только на русском**. Никаких fallback-ов `humanizeSegment()`.
+- 🔴 **Новый маршрут без `ROUTE_LABELS`** — при добавлении lazy-маршрута в `app.routes.ts` обязательно добавить русскую метку в `ROUTE_LABELS` (файл `src/app/shared/ui/kp-breadcrumbs.component.ts`). Без записи — английский fallback из URL, это баг.
 
 ---
 

@@ -7,115 +7,154 @@
 
 // ============================================================
 // SAMPLE 1: TableWithPagination
-// Эталонная таблица со striped, пагинатором, тэгами, action-колонкой
+// Эталонная таблица через app-kp-table + app-kp-crud-page
 // ============================================================
 //
-// <!-- ===== Template ===== -->
-// <p-table
-//   [value]="rows()"
-//   [paginator]="true"
-//   [rows]="limit()"
-//   [totalRecords]="totalRecords()"
-//   [lazy]="true"
-//   (onPage)="onPageChange($event)"
-//   size="small"
-//   styleClass="p-datatable-striped"
-//   [showCurrentPageReport]="true"
-//   currentPageReportTemplate="Записи {first}–{last} из {totalRecords}"
-// >
-//   <ng-template pTemplate="header">
-//     <tr>
-//       <th *ngFor="let col of columns" [style.width]="col.width">{{ col.header }}</th>
-//       <th style="width:90px">Действия</th>
-//     </tr>
-//   </ng-template>
-//   <ng-template pTemplate="body" let-row>
-//     <tr>
-//       <td *ngFor="let col of columns">
-//         <ng-container [ngSwitch]="col.type">
-//           <p-tag
-//             *ngSwitchCase="'tag'"
-//             [value]="row[col.field]"
-//             [severity]="getSeverity(row[col.field])"
-//           />
-//           <span *ngSwitchDefault>{{ row[col.field] }}</span>
-//         </ng-container>
-//       </td>
-//       <td>
-//         <div class="dir-actions">
-//           <p-button
-//             icon="pi pi-pencil"
-//             severity="secondary"
-//             size="small"
-//             (click)="showEdit(row)"
-//             pTooltip="Редактировать"
-//           />
-//           <p-button
-//             icon="pi pi-trash"
-//             severity="danger"
-//             size="small"
-//             (click)="confirmDelete(row)"
-//             pTooltip="Удалить"
-//           />
-//         </div>
-//       </td>
-//     </tr>
-//   </ng-template>
-//   <ng-template pTemplate="emptymessage">
-//     <tr>
-//       <td [attr.colspan]="columns.length + 1" class="dir-empty">
-//         <i class="pi pi-inbox dir-empty__icon"></i>
-//         <div class="dir-empty__text">Нет данных. Нажмите «Добавить» чтобы создать запись.</div>
-//       </td>
-//     </tr>
-//   </ng-template>
-// </p-table>
+// <!-- ===== Template (внутри app-kp-crud-page) ===== -->
+// <app-kp-crud-page
+//   [config]="{
+//     title: 'Товары',
+//     entityLabel: 'товара',
+//     apiPath: '/api/v1/products',
+//     permPrefix: 'products',
+//     columns: [
+//       { field: 'name', header: 'Наименование', type: 'text' },
+//       { field: 'sku', header: 'Артикул', type: 'text', width: '120px' },
+//       { field: 'categoryId', header: 'Категория', type: 'select', options: categoryOptions },
+//       { field: 'status', header: 'Статус', type: 'tag', options: statusOptions, sortable: true },
+//       { field: 'listPrice', header: 'Цена', type: 'number', width: '100px' },
+//     ],
+//     severityFn: (val: unknown) => {
+//       const map: Record<string, string> = { 'active': 'success', 'draft': 'warn', 'archived': 'secondary' };
+//       return map[String(val)] ?? 'info';
+//     },
+//     dialogFields: [
+//       { field: 'name', label: 'Наименование', type: 'text', required: true },
+//       { field: 'sku', label: 'Артикул', type: 'text', required: true },
+//       { field: 'categoryId', label: 'Категория', type: 'select', options: categoryOptions, required: true },
+//       { field: 'listPrice', label: 'Цена', type: 'number' },
+//     ],
+//     extraRowActions: [...],
+//   }"
+//   (rowEdit)="onEdit($event)"
+//   (rowDelete)="onDelete($event)"
+// />
+
+// ============================================================
+// SAMPLE 2: Buttons (app-kp-button)
+// ============================================================
 //
-// <!-- ===== SCSS (override inside ::ng-deep) ===== -->
-// /* Zebra: even rows background */
-// .p-datatable-striped .p-datatable-tbody > tr:nth-child(even) {
-//   background: #FAFBFC;
-//   &:hover { background: #F3F4F6; }
-// }
-// /* Action buttons: icon-only compact */
-// .p-button.p-button-sm.p-button-icon-only {
-//   padding: 0.35rem !important;
-//   width: 30px;
-//   height: 30px;
-//   &.p-button-secondary {
-//     background: transparent !important;
-//     border: transparent !important;
-//     color: #6B7280 !important;
-//     &:hover { background: #F3F4F6 !important; color: #374151 !important; }
-//   }
-//   &.p-button-danger {
-//     background: transparent !important;
-//     border: transparent !important;
-//     color: #9CA3AF !important;
-//     &:hover { background: #FEF2F2 !important; color: #DC2626 !important; }
-//   }
-// }
-// /* Tag compact */
-// .p-tag {
-//   font-size: 11.5px;
-//   font-weight: 500;
-//   padding: 0.15rem 0.6rem;
-//   border-radius: 999px;
+// <!-- Primary CTA (default premium) -->
+// <app-kp-button
+//   label="Создать товар"
+//   icon="pi pi-plus"
+//   size="small"
+//   (buttonClick)="openCreate()"
+// />
+//
+// <!-- Secondary outlined (Cancel in dialog) -->
+// <app-kp-button
+//   label="Отмена"
+//   severity="secondary"
+//   size="small"
+//   [outlined]="true"
+//   (buttonClick)="closeDialog()"
+// />
+//
+// <!-- Danger (Delete confirmation) -->
+// <app-kp-button
+//   label="Удалить"
+//   severity="danger"
+//   size="small"
+//   (buttonClick)="confirmDelete()"
+// />
+//
+// <!-- Icon-only edit (table row actions) -->
+// <app-kp-button
+//   icon="pi pi-pencil"
+//   [rounded]="true"
+//   [text]="true"
+//   severity="secondary"
+//   variant="flat"
+//   size="small"
+//   tooltip="Редактировать"
+//   (buttonClick)="edit.emit(row)"
+// />
+//
+// <!-- Icon-only delete (table row actions) -->
+// <app-kp-button
+//   icon="pi pi-trash"
+//   [rounded]="true"
+//   [text]="true"
+//   severity="danger"
+//   variant="flat"
+//   size="small"
+//   tooltip="Удалить"
+//   (buttonClick)="deleteRow.emit(row)"
+// />
+
+// ============================================================
+// SAMPLE 3: Search (app-kp-search)
+// ============================================================
+//
+// <!-- В тулбаре таблицы -->
+// <app-kp-search
+//   [(query)]="searchQuery"
+//   placeholder="Поиск..."
+//   [debounceMs]="300"
+//   (searchChange)="onSearch($event)"
+// />
+
+// ============================================================
+// SAMPLE 4: Tags (app-kp-tag)
+// ============================================================
+//
+// <!-- Статус тегом -->
+// <app-kp-tag
+//   [value]="statusLabel"
+//   [severity]="severityMap[status]"
+// />
+//
+// <!-- severityMap пример -->
+// const severityMap: Record<string, KpTagSeverity> = {
+//   'completed': 'success',
+//   'sent': 'warn',
+//   'confirmed': 'info',
+//   'pending': 'secondary',
+//   'error': 'danger',
+// };
+
+// ============================================================
+// SAMPLE 5: Tab Group (app-kp-tab-group)
+// ============================================================
+//
+// <app-kp-tab-group
+//   [options]="[
+//     { label: 'Товары', value: 'products' },
+//     { label: 'Категории', value: 'categories' },
+//     { label: 'Контрагенты', value: 'counterparties' },
+//   ]"
+//   [(activeTab)]="currentTab"
+//   ariaLabel="Разделы справочника"
+// />
+//
+// <!-- Использование activeTab -->
+// @switch (currentTab()) {
+//   @case ('products') { ... }
+//   @case ('categories') { ... }
+//   @case ('counterparties') { ... }
 // }
 
 // ============================================================
-// SAMPLE 2: CrudDialog
-// Эталонный диалог создания/редактирования с формой
+// SAMPLE 6: CrudDialog (app-kp-dialog)
 // ============================================================
 //
 // <!-- ===== Template ===== -->
-// <p-dialog
+// <app-kp-dialog
 //   [(visible)]="dialogVisible"
 //   [header]="dialogTitle"
-//   [modal]="true"
-//   [style]="{ width: '520px' }"
-//   (onHide)="closeDialog()"
-//   [draggable]="false"
+//   [width]="'520px'"
+//   (hide)="closeDialog()"
 // >
 //   <div class="dialog-form">
 //     <div *ngFor="let field of fields" class="dialog-form__field">
@@ -123,47 +162,43 @@
 //         {{ field.label }}
 //         <span *ngIf="field.required" class="dialog-form__required">*</span>
 //       </label>
-//       <input
+//       <app-kp-input
 //         *ngIf="field.type === 'text'"
-//         pInputText
-//         [(ngModel)]="editRow[field.key]"
-//         style="width:100%"
+//         [name]="field.key"
+//         [(value)]="editRow[field.key]"
+//         [required]="field.required"
 //       />
-//       <p-inputNumber
+//       <app-kp-input-number
 //         *ngIf="field.type === 'number'"
-//         [(ngModel)]="editRow[field.key]"
-//         style="width:100%"
+//         [(value)]="editRow[field.key]"
 //       />
-//       <p-select
+//       <app-kp-select
 //         *ngIf="field.type === 'select'"
+//         [name]="field.key"
 //         [options]="field.options || []"
-//         [(ngModel)]="editRow[field.key]"
-//         optionLabel="label"
-//         optionValue="value"
-//         placeholder="Выберите..."
-//         [showClear]="!field.required"
-//         style="width:100%"
+//         [(value)]="editRow[field.key]"
+//         [placeholder]="'Выберите...'"
 //       />
 //     </div>
 //   </div>
-//   <ng-template pTemplate="footer">
-//     <p-button
+//   <div kpDialogFooter>
+//     <app-kp-button
 //       label="Отмена"
 //       severity="secondary"
 //       size="small"
-//       (click)="closeDialog()"
-//       [disabled]="saving()"
+//       [outlined]="true"
+//       (buttonClick)="closeDialog()"
 //     />
-//     <p-button
+//     <app-kp-button
 //       label="Сохранить"
 //       size="small"
-//       (click)="save()"
 //       [loading]="saving()"
+//       (buttonClick)="save()"
 //     />
-//   </ng-template>
-// </p-dialog>
+//   </div>
+// </app-kp-dialog>
 //
-// <!-- ===== SCSS (inside ::ng-deep) ===== -->
+// <!-- ===== SCSS ===== -->
 // .dialog-form {
 //   display: flex;
 //   flex-direction: column;
@@ -176,39 +211,7 @@
 //     label {
 //       font-size: 13px;
 //       font-weight: 500;
-//       color: #6B7280;
+//       color: var(--kp-text-secondary);
 //     }
-//     .p-inputtext,
-//     .p-inputnumber,
-//     .p-select { width: 100%; }
-//     .p-inputtext {
-//       padding: 0.45rem 0.75rem;
-//       font-size: 13.5px;
-//       border-radius: 8px;
-//     }
-//     .p-inputnumber .p-inputnumber-input {
-//       padding: 0.45rem 0.75rem;
-//       font-size: 13.5px;
-//       border-radius: 8px;
-//       width: 100%;
-//     }
-//     .p-select {
-//       border-radius: 8px;
-//       font-size: 13.5px;
-//       min-height: 38px;
-//       .p-select-label {
-//         padding: 0.4rem 0.75rem;
-//         font-size: 13.5px;
-//       }
-//     }
-//   }
-// }
-// .p-dialog-footer {
-//   padding: 0.75rem 1.5rem 1.25rem !important;
-//   gap: 8px;
-//   .p-button {
-//     padding: 0.45rem 1rem !important;
-//     font-size: 13px !important;
-//     border-radius: 8px !important;
 //   }
 // }

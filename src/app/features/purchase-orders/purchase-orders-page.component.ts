@@ -21,6 +21,7 @@ import { CounterpartyOptionsService } from '../../shared/services/counterparty-o
 import { patchCrudColumnOptions } from '../../shared/services/crud-column-options.util';
 import { createPurchaseOrdersStore } from './purchase-orders.store';
 import { PERMISSIONS } from '../../core/permissions';
+import { purchaseOrderSeverity as _poSeverity } from '../../shared/utils/status-severity.util';
 
 const PO_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Новый', value: 'new' },
@@ -30,18 +31,6 @@ const PO_STATUS_OPTIONS: KpSelectOption[] = [
   { label: 'Выполнен', value: 'completed' },
   { label: 'Отменён', value: 'cancelled' },
 ];
-
-function poSeverity(value: unknown): string {
-  const map: Record<string, string> = {
-    new: 'warn',
-    sent: 'info',
-    confirmed_by_supplier: 'success',
-    partially_received: 'info',
-    completed: 'success',
-    cancelled: 'danger',
-  };
-  return map[String(value)] || 'info';
-}
 
 @Component({
   selector: 'app-purchase-orders-page',
@@ -149,7 +138,7 @@ function poSeverity(value: unknown): string {
 })
 export class PurchaseOrdersPageComponent implements OnInit {
   readonly PERMISSIONS = PERMISSIONS;
-  readonly poSeverity = poSeverity;
+  readonly poSeverity = _poSeverity;
   readonly statusOptions = PO_STATUS_OPTIONS;
 
   readonly supplierOptions = signal<KpSelectOption[]>([]);

@@ -32,6 +32,26 @@ const DESCRIPTIONS = {
 - [x] Таблицы — \`table-layout: fixed\`, перенос текста в пределах A4
 
 **Ссылка в репо:** config/yougile-task-registry.yaml → PLM-139`,
+  "PLM-137": `**Категория:** 08 Документы
+**EPIC:** [EPIC #DOCS] Редакторы и печатные формы
+**Родитель:** 8.3 UI: раздел «Документы» (PLM-142)
+
+Hub-страница коммерческих документов с RBAC-фильтрацией карточек.
+
+**Маршрут:** \`/documents\`, \`/documents/:id\` → redirect \`/quotations/:id\`
+**Dev:** http://localhost:4200/documents
+
+**Код:** \`src/app/features/documents/documents-page.component.ts\`
+
+## Чеклист
+- [x] Маршрут /documents и redirect /documents/:id
+- [x] Hub с карточками КП / Заказы / Запросы
+- [x] RBAC-фильтрация карточек (AuthService.hasPermission)
+- [x] Empty state без прав + кнопка «На главную»
+- [x] Пункт меню «Документы»
+- [ ] Breadcrumbs через «Документы» на /quotations (отдельная задача)
+
+**Ссылка в репо:** config/yougile-task-registry.yaml → PLM-137`,
 };
 
 function request(method, urlPath, body) {

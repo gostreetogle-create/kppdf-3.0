@@ -1,4 +1,4 @@
-# KPPDF 3.0 — preflight перед деплоем (Windows PowerShell)
+﻿# KPPDF 3.0 — preflight перед деплоем (Windows PowerShell)
 # Usage: .\deploy\synology\preflight.ps1
 
 $ErrorActionPreference = "Stop"

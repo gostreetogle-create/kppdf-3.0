@@ -1,0 +1,60 @@
+/* ── kp-paginator — единый пагинатор (обёртка p-paginator) ── */
+:host ::ng-deep .kp-paginator.p-paginator {
+  padding: var(--kp-space-2) 0;
+  border: none;
+  background: transparent;
+  font-size: var(--kp-font-size-sm, 12px);
+  gap: var(--kp-space-1);
+  flex-wrap: wrap;
+  justify-content: center;
+
+  .p-paginator-pages .p-paginator-page {
+    min-width: 30px;
+    height: 30px;
+    border-radius: var(--kp-button-border-radius, var(--kp-radius-md));
+    font-weight: var(--kp-font-weight-normal, 400);
+    color: var(--kp-text-secondary);
+    transition: all var(--kp-transition-fast);
+    margin: 0 1px;
+
+    &:hover {
+      background: var(--kp-primary-muted, #eff6ff);
+      color: var(--kp-primary);
+    }
+
+    &.p-highlight {
+      background: var(--kp-primary);
+      color: var(--kp-text-on-primary);
+      font-weight: var(--kp-font-weight-semibold, 600);
+    }
+  }
+
+  .p-paginator-first,
+  .p-paginator-prev,
+  .p-paginator-next,
+  .p-paginator-last {
+    min-width: 30px;
+    height: 30px;
+    border-radius: var(--kp-button-border-radius, var(--kp-radius-md));
+    color: var(--kp-text-soft);
+    transition: all var(--kp-transition-fast);
+
+    &:hover {
+      background: var(--kp-primary-muted, #eff6ff);
+      color: var(--kp-primary);
+    }
+
+    &.p-disabled {
+      opacity: 0.3;
+    }
+  }
+
+  .p-paginator-current {
+    font-size: var(--kp-font-size-sm);
+    color: var(--kp-text-soft);
+  }
+
+  .p-paginator-rpp-options .p-select-label {
+    font-size: var(--kp-font-size-sm) !important;
+  }
+}

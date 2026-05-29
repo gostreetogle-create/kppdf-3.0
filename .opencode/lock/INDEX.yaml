@@ -22,7 +22,7 @@ index:
     status: wip
     path: modules/dashboard.yaml
   directories-page:
-    status: wip
+    status: frozen
     path: modules/directories-page.yaml
   modules-page:
     status: frozen
@@ -36,7 +36,7 @@ index:
     status: locked
     path: modules/auth.yaml
   platform:
-    status: locked
+    status: wip
     path: modules/platform.yaml
 
   # --- wip (заглушки Phase 1) ---
@@ -44,7 +44,7 @@ index:
     status: wip
     path: modules/quotations.yaml
   orders:
-    status: wip
+    status: frozen
     path: modules/orders.yaml
   ui-kit:
     status: wip

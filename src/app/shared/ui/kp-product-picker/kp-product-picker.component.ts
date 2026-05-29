@@ -11,11 +11,11 @@ import {
   signal,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { PaginatorModule, type PaginatorState } from 'primeng/paginator';
+import { KpPaginatorComponent } from '../kp-paginator.component';
 
 import type { IProduct } from '../../../../../shared/types/product.interface';
 import { KpDialogComponent } from '../kp-dialog.component';
-import { KpInputComponent } from '../kp-input.component';
+import { KpSearchComponent } from '../kp-search.component';
 import { KpSelectComponent } from '../kp-select.component';
 import { KpCheckboxComponent } from '../kp-checkbox.component';
 import { KpButtonComponent } from '../kp-button.component';
@@ -35,9 +35,9 @@ import {
   providers: [KpProductPickerService],
   imports: [
     DecimalPipe,
-    PaginatorModule,
+    KpPaginatorComponent,
     KpDialogComponent,
-    KpInputComponent,
+    KpSearchComponent,
     KpSelectComponent,
     KpCheckboxComponent,
     KpButtonComponent,
@@ -63,10 +63,10 @@ import {
       <div class="kp-product-picker">
         <div class="kp-product-picker__filters">
           <div class="kp-product-picker__filters-search">
-            <app-kp-input
-              name="product-picker-search"
+            <app-kp-search
+              [(query)]="searchQuery"
               placeholder="Поиск по названию или артикулу..."
-              [(value)]="searchQuery"
+              [debounceMs]="0"
             />
           </div>
           <div class="kp-product-picker__filters-field">
@@ -227,15 +227,12 @@ import {
 
         @if (!picker.loading() && picker.total() > 0) {
           <div class="kp-product-picker__pagination">
-            <p-paginator
-              class="kp-product-picker__paginator"
+            <app-kp-paginator
+              [first]="paginationFirst()"
               [rows]="pageSize"
               [totalRecords]="picker.total()"
-              [first]="paginationFirst()"
-              [showFirstLastIcon]="true"
-              [showCurrentPageReport]="true"
               currentPageReportTemplate="Показано {first}–{last} из {totalRecords}"
-              (onPageChange)="onPageChange($event)"
+              (pageChange)="onPageChange($event)"
             />
           </div>
         }
@@ -432,9 +429,9 @@ export class KpProductPickerComponent {
     };
   }
 
-  onPageChange(event: PaginatorState): void {
-    const rows = event.rows ?? PRODUCT_PICKER_PAGE_SIZE;
-    const page = Math.floor((event.first ?? 0) / rows) + 1;
+  onPageChange(event: { first: number; rows: number }): void {
+    const rows = event.rows;
+    const page = Math.floor(event.first / rows) + 1;
     if (page !== this.picker.page()) {
       this.picker.loadProductsImmediate(this.buildFilters(page));
     }

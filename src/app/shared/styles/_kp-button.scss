@@ -3,8 +3,8 @@
    Матрица severity × variant:
      primary   + premium → gradient синий + lift + shadow
      primary   + flat    → solid синий, без lift
-     secondary + premium → outlined + gradient border + lift
-     secondary + flat    → outlined, без lift
+     secondary + premium → outlined border + lift (filled и [outlined])
+     secondary + flat    → outlined, без lift (filled и [outlined])
      danger    + premium → solid red + red glow + lift
      danger    + flat    → solid red, без lift
    ============================================================ */

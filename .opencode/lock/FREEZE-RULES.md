@@ -89,9 +89,10 @@ npm run freeze:update   # после изменений frozen/locked (@chief-ar
 ```text
 1. ng lint && ng build && ng test (ChromeHeadlessCI)
 2. cd backend && npm test
-3. npm run freeze:update   ← если менялись frozen/locked файлы (с approval)
-4. npm run freeze:check    ← exit 0 обязателен
-5. git add … && git commit   ← только AI, только если шаг 4 OK
+3. npm run ps1:bom && npm run ps1:check   ← если менялись *.ps1 (см. encoding-windows.md)
+4. npm run freeze:update   ← если менялись frozen/locked файлы (с approval)
+5. npm run freeze:check    ← exit 0 обязателен
+6. git add … && git commit   ← только AI, только если шаг 5 OK
 ```
 
 ### Когда что запускать

@@ -1,4 +1,4 @@
-# Деплой одной командой (Windows)
+﻿# Деплой одной командой (Windows)
 # Usage: .\deploy\synology\deploy-synology.ps1 [-Seed] [-SkipBuild]
 
 param(

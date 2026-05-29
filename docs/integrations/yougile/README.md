@@ -85,6 +85,45 @@ Token:    yougile-sync-server/.env (YG_TOKEN) или tools/yougile-sync.ps1
 
 ---
 
+## Snapshot для AI
+
+> **Как AI видит доску в репозитории.** Автоснимок каждые 2 часа.
+
+### Принцип работы
+
+1. GitHub Action (`.github/workflows/yougile-snapshot.yml`) запускает `tools/yougile-export-snapshot.js`
+2. Скрипт читает все задачи с доски «KPPDF — сейчас» через REST API
+3. Пишет `.opencode/yougile-snapshot.yaml` — id, title, column, labels, url
+4. Коммитит snapshot в `main` (если изменился)
+
+### Формат snapshot
+
+```yaml
+updated_at: "2026-05-29T12:00:00Z"
+board: "KPPDF — сейчас"
+tasks:
+  - id: "UI-P0-03"
+    title: "UI-P0-03 · kp-search — единое поле поиска"
+    column: "📋 Дальше"
+    labels: ["UI"]
+    completed: false
+    yougile_url: "https://yougile.com/team/0bdbccb0610e#task-id"
+```
+
+### Требования
+
+- **GitHub Secret:** `YOUGILE_TOKEN` — токен API (ротация обязательна, хардкод удалён)
+- **Доска:** «KPPDF — сейчас» должна существовать в YouGile
+- **Seed:** первый запуск `node tools/yougile-seed-kppdf-board.js` создаёт доску и карточки
+
+### Для AI
+
+При получении id задачи (UI-P0-03, BL-P1-02):
+1. Прочитать `.opencode/yougile-snapshot.yaml` → колонка, метки
+2. Прочитать спецификацию из md (UI-CONSISTENCY-PLAN, CHECKLIST-BACKLOG)
+3. Проверить FreezeGuard (`.opencode/lock/INDEX.yaml`)
+4. Не выдумывать статус — он только в snapshot
+
 ## Быстрые ссылки
 
 | Ресурс | URL / ID |

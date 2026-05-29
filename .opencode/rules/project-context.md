@@ -121,3 +121,34 @@ npm run readiness:sync
 ```
 
 Результат синхронизации: `public/project-readiness.json`.
+
+## Единая система задач
+
+> **Статус задач — в YouGile.** Markdown — спецификация, не доска.
+
+### Где что
+
+| Источник | Что содержит | Для кого |
+|----------|-------------|----------|
+| YouGile «KPPDF — сейчас» | Статус: Сделано / В работе / Дальше / Блокеры | Человек (браузер) |
+| `.opencode/yougile-snapshot.yaml` | Автоснимок доски (id, колонка, метки) | AI (в репо) |
+| `.opencode/audit/UI-CONSISTENCY-PLAN.md` | Спецификация UI-задач (что делать) | AI + человек |
+| `.opencode/audit/CHECKLIST-BACKLOG.md` | Спецификация backlog-задач | AI + человек |
+| `.opencode/lock/INDEX.yaml` | FreezeGuard (можно ли менять файл) | AI (всегда) |
+
+### Как AI читает задачу
+
+1. Вы копируете id карточки (UI-P0-03) → вставляете в чат
+2. AI читает `.opencode/yougile-snapshot.yaml` → колонка, метки
+3. AI читает спецификацию (UI-CONSISTENCY-PLAN.md) → что делать
+4. AI проверяет `.opencode/lock/INDEX.yaml` → можно ли менять файлы
+5. AI выполняет задачу
+
+### Правила
+
+- Статус меняется **только в YouGile**, не в md-галочках
+- Новая задача → карточка в «Дальше» в тот же день
+- Закончили → «Сделано» или «На проверке»
+- Snapshot обновляется GitHub Action каждые 2 часа
+- Onboarding: `.opencode/audit/ONBOARDING.md`
+

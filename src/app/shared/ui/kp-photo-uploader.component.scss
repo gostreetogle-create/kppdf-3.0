@@ -115,7 +115,7 @@
   border: none;
   border-radius: var(--kp-radius-sm);
   background: rgba(0, 0, 0, 0.5);
-  color: #fff;
+  color: var(--kp-text-on-primary);
   font-size: 0.75rem;
   cursor: pointer;
   opacity: 0;
@@ -216,7 +216,7 @@
     justify-content: center;
     padding: var(--kp-space-2);
     font-size: var(--kp-font-size-caption);
-    color: #fff;
+    color: var(--kp-text-on-primary);
     background: linear-gradient(transparent, rgba(15, 23, 42, 0.6));
     pointer-events: none;
   }

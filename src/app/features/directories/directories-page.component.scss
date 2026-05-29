@@ -40,19 +40,6 @@
     display: flex;
     gap: 4px;
     flex-wrap: wrap;
-
-    :host ::ng-deep .dir-dept__btn.p-button {
-      padding: 0.35rem 0.75rem;
-      font-size: 0.8125rem;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-
-    :host ::ng-deep .dir-dept__btn--active.p-button {
-      background: var(--kp-primary) !important;
-      border-color: var(--kp-primary) !important;
-      color: var(--kp-text-on-primary) !important;
-    }
   }
 }
 

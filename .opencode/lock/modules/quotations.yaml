@@ -1,7 +1,18 @@
 module: quotations
 label: Коммерческие предложения
 status: wip
+frozen_since: 2026-05-29T00:00:00.000Z
 level: module
-locked_files: []
-check_hash: false
-file_hashes: {}
+locked_files:
+  - src/app/features/quotations/index.ts
+  - src/app/features/quotations/quotation-editor.component.ts
+  - src/app/features/quotations/quotation-editor.component.scss
+  - src/app/features/quotations/quotations-page.component.ts
+  - src/app/features/quotations/quotations.store.ts
+check_hash: true
+file_hashes:
+  src/app/features/quotations/index.ts: a7c79f6bc9e4599b0e4bba269f2dd8cdb76d4ae817d6cc54ce9fc3e4bdb12bb7
+  src/app/features/quotations/quotation-editor.component.ts: 4f0fc24fdc70d66ba95b57c14a7bd08245a1187546ea62a5337a94bd4f49ef22
+  src/app/features/quotations/quotation-editor.component.scss: 11d773dedbf2768b4ceb375d504050c318ec803d5cb6fb5a7c72358e19a73d98
+  src/app/features/quotations/quotations-page.component.ts: a361dcbb53176361395152ea77fb67d5007a3441a7e0e60739b6294ec5f79212
+  src/app/features/quotations/quotations.store.ts: 583519c9d2ce795430b51f49f783b1ef71f8fc9d503a0b2ac920bf2095a84bb1
